@@ -1,0 +1,85 @@
+# MSP Readiness Configuration Example
+# Copy this to config.yaml and customize for your project
+
+project:
+  # Project name for reports
+  name: "Your Project Name"
+
+  # Path to project documentation directory
+  docs_path: "../your-project/docs/managed-service-provider"
+
+  # Path to infrastructure code (CDK, Terraform, etc.)
+  infra_path: "../your-project/cdk"
+
+  # Project repository URL (optional)
+  repo_url: "https://github.com/your-org/your-project"
+
+aws:
+  # AWS profile to use (from ~/.aws/config)
+  profile: "default"
+
+  # Primary region
+  region: "us-east-1"
+
+  # Stage/environment to assess
+  stage: "test"
+
+  # Additional regions (for multi-region deployments)
+  additional_regions:
+    - "us-east-2"  # DR region
+
+msp:
+  # MSP Program checklist version
+  version: "Feb2026-Aug2026"
+
+  # CIS Implementation Group level (1, 2, or 3)
+  ig_level: 1
+
+  # Organization info (for generated documents)
+  organization:
+    name: "Your Organization"
+    contact: "msp-team@example.com"
+
+output:
+  # Directory for collected evidence
+  evidence_path: "./evidence"
+
+  # Directory for generated playbooks
+  playbooks_path: "./playbooks"
+
+  # Dashboard output file
+  dashboard_path: "./dashboard.html"
+
+  # Report format (markdown, html, or both)
+  report_format: "both"
+
+assessment:
+  # Skip requirements that don't apply (e.g., if not using certain AWS services)
+  skip_requirements:
+    # - "OPSP-004"  # Example: skip if not providing 24/7 support
+
+  # Override default priorities (critical, high, medium, low)
+  custom_priorities:
+    # SECP-001: "critical"
+    # SECP-002: "critical"
+
+  # Include optional/recommended requirements
+  include_recommended: true
+
+  # Automatically collect evidence (requires AWS access)
+  auto_collect_evidence: true
+
+  # Generate missing documentation
+  auto_generate_docs: true
+
+templates:
+  # Use custom templates (optional)
+  custom_templates_path: null
+
+  # Template variables
+  variables:
+    company_name: "Your Company"
+    sla_response_critical: "15 minutes"
+    sla_response_high: "1 hour"
+    support_email: "support@example.com"
+    support_slack: "#your-support-channel"

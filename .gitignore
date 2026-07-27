@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Environment
+.env
+.env.local
+.env.*.local
+config.yaml
+config.local.yaml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Generated outputs
+evidence/
+output/
+dashboard.html
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# AWS
+.aws/
+credentials
+
+# Debug
+debug.log

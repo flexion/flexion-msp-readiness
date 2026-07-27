@@ -1,0 +1,307 @@
+# Flexion MSP Readiness Automation
+
+A Claude Code skill and toolkit for automating AWS MSP Program readiness assessment, evidence collection, playbook generation, and compliance dashboard creation.
+
+## Overview
+
+This tool automates the process of preparing for AWS Managed Service Provider (MSP) Program requirements by:
+
+1. **Assessing** existing project documentation and AWS infrastructure against MSP requirements
+2. **Collecting** evidence from AWS services (Config, CloudTrail, Security Hub, Inspector, etc.)
+3. **Generating** required playbooks, runbooks, and documentation
+4. **Creating** a real-time compliance dashboard showing readiness status
+
+### What Problem Does This Solve?
+
+Manual MSP readiness preparation is time-consuming and error-prone:
+- Hours spent mapping existing controls to MSP requirements
+- Manual evidence collection from multiple AWS services
+- Repetitive playbook/runbook authoring following similar patterns
+- No single view of overall readiness status
+- Risk of missing requirements or inconsistent documentation
+
+This tool automates 80% of the preparation work, allowing teams to focus on gaps and decision-making.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      Claude Code Skill                          │
+│                     (msp-readiness)                             │
+└────────────┬────────────────────────────────────────────────────┘
+             │
+             ├── Assessors (analyze current state)
+             │   ├── Documentation Scanner
+             │   ├── AWS Config Analyzer
+             │   ├── IAM Policy Evaluator
+             │   └── Security Hub Inspector
+             │
+             ├── Collectors (gather evidence)
+             │   ├── CloudTrail Evidence
+             │   ├── Config Rules Evidence
+             │   ├── Backup Verification
+             │   └── Security Findings
+             │
+             ├── Generators (create artifacts)
+             │   ├── Playbook Generator
+             │   ├── Runbook Generator
+             │   ├── Evidence Matrix Builder
+             │   └── Self-Assessment Filler
+             │
+             └── Dashboard (visualize status)
+                 ├── Requirement Coverage Map
+                 ├── Evidence Completeness
+                 ├── Gap Analysis View
+                 └── Effort Estimates
+```
+
+## Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/flexion/flexion-msp-readiness.git
+cd flexion-msp-readiness
+
+# Install dependencies
+npm install
+
+# Set up AWS credentials
+export AWS_PROFILE=your-profile
+export AWS_REGION=us-east-1
+
+# Initialize configuration
+cp config.example.yaml config.yaml
+# Edit config.yaml with your project paths
+```
+
+### Using the Claude Code Skill
+
+```bash
+# From your project directory (e.g., fipco-infra)
+claude
+
+# Run the MSP readiness assessment
+/msp-readiness assess
+
+# Generate missing artifacts
+/msp-readiness generate --all
+
+# Create the dashboard
+/msp-readiness dashboard
+
+# Full end-to-end run
+/msp-readiness run --stage test
+```
+
+## Features
+
+### 1. Automated Assessment
+
+Scans your project for:
+- Existing documentation (README, CLAUDE.md, docs/)
+- AWS infrastructure state (via AWS SDK)
+- Current security controls (Security Hub, Config)
+- Existing playbooks and runbooks
+- Evidence artifacts
+
+Outputs:
+- Requirement coverage matrix
+- Gap analysis with priorities
+- Implementation effort estimates
+- Compliance percentage by category
+
+### 2. Evidence Collection
+
+Automatically collects evidence for MSP requirements:
+
+| Requirement | Evidence Source | Automation |
+|-------------|----------------|------------|
+| SECP-001 | AWS Health Events | CloudWatch Events subscription |
+| SECP-002 | AWS Config Rules | Config rule deployment + findings |
+| SEC-003 | AWS Config | Resource inventory snapshots |
+| SEC-007 | Inspector | Vulnerability scan results |
+| OPS-004 | CloudTrail | Log retention verification |
+| OPS-005 | AWS Backup | Backup job status + test restores |
+
+### 3. Playbook & Runbook Generation
+
+Generates documentation using templates and project-specific context:
+
+- **Playbooks**: High-level operational procedures (Incident Response, Deployment, DR)
+- **Runbooks**: Step-by-step technical procedures
+- **Evidence matrices**: Pre-populated with collected evidence
+- **Self-assessment**: Auto-filled checklist responses
+
+All generated content is:
+- Based on proven templates (from fipco-infra MSP work)
+- Customized with actual AWS resource details
+- CIS Controls v8 aligned
+- Ready for review (not requiring rewrite)
+
+### 4. Compliance Dashboard
+
+Interactive HTML dashboard showing:
+
+```
+┌───────────────────────────────────────────────────────┐
+│  MSP Readiness Dashboard - Project: fipco-infra       │
+│  Overall Completion: 67% (20/30 requirements)         │
+├───────────────────────────────────────────────────────┤
+│  ✅ Addressed (8)  ⚠️  Partial (7)  ❌ Gap (4)  ⬜ N/A (11) │
+├───────────────────────────────────────────────────────┤
+│  By Category:                                         │
+│  Security:       ████████░░ 80% (12/15)              │
+│  Operations:     ██████░░░░ 60% (6/10)               │
+│  Support:        ███░░░░░░░ 30% (2/5)                │
+├───────────────────────────────────────────────────────┤
+│  Critical Gaps (blocking MSP approval):               │
+│  🔴 SECP-001: Access Key Exposure Detection           │
+│  🔴 SECP-002: Public Resource Detection               │
+│  🔴 OPS-006: Change Management Playbook               │
+│  🔴 SEC-008: Vulnerability Remediation SLA            │
+├───────────────────────────────────────────────────────┤
+│  Next Actions:                                        │
+│  1. Deploy Config rules (SECP-002) - 8h              │
+│  2. Create Change Management playbook - 6h           │
+│  3. Document vuln remediation SLA - 2h               │
+├───────────────────────────────────────────────────────┤
+│  Evidence Status:                                     │
+│  📊 12 evidence files collected                       │
+│  📝 8 playbooks/runbooks generated                    │
+│  ⏱️  Last updated: 2026-07-27 14:23 UTC              │
+└───────────────────────────────────────────────────────┘
+```
+
+## Configuration
+
+Edit `config.yaml` to customize:
+
+```yaml
+project:
+  name: "Compliance Concierge"
+  docs_path: "../fipco-infra/docs/managed-service-provider"
+  cdk_path: "../fipco-infra/cdk"
+  
+aws:
+  profile: "default"
+  region: "us-east-1"
+  stage: "test"
+  
+msp:
+  version: "Feb2026-Aug2026"
+  ig_level: 1  # CIS IG1
+  
+output:
+  evidence_path: "./evidence"
+  playbooks_path: "./playbooks"
+  dashboard_path: "./dashboard.html"
+  
+assessment:
+  skip_requirements: []  # Optional: skip N/A requirements
+  custom_priorities: {}  # Optional: override priority levels
+```
+
+## Project Structure
+
+```
+flexion-msp-readiness/
+├── .claude/
+│   └── skills/
+│       └── msp-readiness.md      # Main Claude Code skill
+├── src/
+│   ├── assessors/                # Assessment modules
+│   │   ├── doc-scanner.ts
+│   │   ├── aws-config-analyzer.ts
+│   │   ├── iam-evaluator.ts
+│   │   └── security-hub-checker.ts
+│   ├── collectors/               # Evidence collection
+│   │   ├── cloudtrail-collector.ts
+│   │   ├── config-collector.ts
+│   │   ├── backup-collector.ts
+│   │   └── inspector-collector.ts
+│   ├── generators/               # Content generation
+│   │   ├── playbook-generator.ts
+│   │   ├── runbook-generator.ts
+│   │   ├── evidence-matrix.ts
+│   │   └── self-assessment.ts
+│   ├── dashboard/                # Dashboard creation
+│   │   ├── builder.ts
+│   │   ├── templates/
+│   │   └── assets/
+│   └── cli.ts                    # CLI entry point
+├── templates/                    # Document templates
+│   ├── playbooks/
+│   ├── runbooks/
+│   └── evidence/
+├── docs/                         # Project documentation
+│   ├── DEVELOPMENT.md
+│   ├── ARCHITECTURE.md
+│   └── SKILL-USAGE.md
+├── examples/                     # Example outputs
+│   └── fipco-infra-assessment/
+├── tests/
+├── package.json
+├── tsconfig.json
+├── config.example.yaml
+└── README.md
+```
+
+## Development Status
+
+### Phase 1: Foundation ✅ (Current)
+- [x] Repository structure
+- [x] README and documentation
+- [x] TypeScript setup
+- [x] Configuration system
+- [x] MSP requirements data model
+
+### Phase 2: Core Assessment (In Progress)
+- [ ] Documentation scanner
+- [ ] AWS Config analyzer
+- [ ] Requirement matcher
+- [ ] Gap analyzer
+- [ ] Effort estimator
+
+### Phase 3: Evidence Collection
+- [ ] CloudTrail collector
+- [ ] Config rules collector
+- [ ] Security Hub collector
+- [ ] Backup verification
+- [ ] Evidence file generator
+
+### Phase 4: Content Generation
+- [ ] Playbook templates
+- [ ] Runbook templates
+- [ ] Template renderer
+- [ ] Context injection
+- [ ] Validation
+
+### Phase 5: Dashboard
+- [ ] Data aggregator
+- [ ] HTML/CSS dashboard
+- [ ] Interactive features
+- [ ] Export functionality
+
+### Phase 6: Claude Skill
+- [ ] Skill definition
+- [ ] Conversation flow
+- [ ] Error handling
+- [ ] User prompts
+- [ ] Final integration
+
+## Contributing
+
+See [DEVELOPMENT.md](docs/DEVELOPMENT.md) for development setup, architecture decisions, and contribution guidelines.
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Credits
+
+Based on the MSP readiness work for Compliance Concierge (Flexion/FIPCO), specifically:
+- AWS MSP Program Self-Assessment Checklist (Feb 2026 - Aug 2026)
+- CIS Controls v8 Cloud Companion Guide
+- Operations & Security Playbook patterns
