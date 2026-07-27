@@ -13,6 +13,12 @@ import { matchRequirements, calculateSummary, AWSAnalysisResults } from './asses
 import { analyzeAWSConfig, printAWSConfigSummary } from './assessors/aws-config-analyzer';
 import { analyzeIAM, printIAMSummary } from './assessors/iam-evaluator';
 import { analyzeSecurityHub, printSecurityHubSummary } from './assessors/security-hub-checker';
+import { collectCloudTrailEvidence, saveCloudTrailEvidence, printCloudTrailEvidenceSummary } from './collectors/cloudtrail-collector';
+import { collectConfigRulesEvidence, saveConfigRulesEvidence, printConfigRulesEvidenceSummary } from './collectors/config-collector';
+import { collectBackupEvidence, saveBackupEvidence, printBackupEvidenceSummary } from './collectors/backup-collector';
+import { collectInspectorEvidence, saveInspectorEvidence, printInspectorEvidenceSummary } from './collectors/inspector-collector';
+import { generateManifest, saveManifest, printManifestSummary } from './collectors/manifest-generator';
+import { EvidenceArtifact } from './types';
 import {
   generateProjectAssessment,
   generateMarkdownReport,
@@ -166,6 +172,96 @@ program
       console.log(chalk.bold.green('\n✅ Assessment complete!\n'));
     } catch (error) {
       console.error(chalk.red('\n❌ Error during assessment:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Collect-evidence command - collect evidence from AWS
+ */
+program
+  .command('collect-evidence')
+  .description('Collect compliance evidence from AWS services')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .action(async (options) => {
+    try {
+      console.log(chalk.bold.blue('\n📦 Collecting MSP Evidence\n'));
+
+      const spinner = ora('Loading configuration...').start();
+      const config = loadConfig(options.config);
+      spinner.succeed('Configuration loaded');
+      printConfigSummary(config);
+
+      const artifacts: EvidenceArtifact[] = [];
+      const evidencePath = config.output.evidence_path;
+
+      // Collect CloudTrail evidence
+      spinner.text = 'Collecting CloudTrail evidence...';
+      spinner.start();
+      try {
+        const cloudTrailEvidence = await collectCloudTrailEvidence(config.aws.region, config.aws.profile);
+        const artifact = saveCloudTrailEvidence(cloudTrailEvidence, `${evidencePath}/cloudtrail-status.json`);
+        artifacts.push(artifact);
+        spinner.succeed('CloudTrail evidence collected');
+        printCloudTrailEvidenceSummary(cloudTrailEvidence);
+      } catch (error) {
+        spinner.warn(`CloudTrail collection failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+
+      // Collect Config rules evidence
+      spinner.text = 'Collecting Config rules evidence...';
+      spinner.start();
+      try {
+        const configEvidence = await collectConfigRulesEvidence(config.aws.region, config.aws.profile);
+        const artifact = saveConfigRulesEvidence(configEvidence, `${evidencePath}/config-snapshot.json`);
+        artifacts.push(artifact);
+        spinner.succeed('Config rules evidence collected');
+        printConfigRulesEvidenceSummary(configEvidence);
+      } catch (error) {
+        spinner.warn(`Config collection failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+
+      // Collect Backup evidence
+      spinner.text = 'Collecting Backup evidence...';
+      spinner.start();
+      try {
+        const backupEvidence = await collectBackupEvidence(config.aws.region, config.aws.profile);
+        const artifact = saveBackupEvidence(backupEvidence, `${evidencePath}/backup-status.json`);
+        artifacts.push(artifact);
+        spinner.succeed('Backup evidence collected');
+        printBackupEvidenceSummary(backupEvidence);
+      } catch (error) {
+        spinner.warn(`Backup collection failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+
+      // Collect Inspector evidence
+      spinner.text = 'Collecting Inspector evidence...';
+      spinner.start();
+      try {
+        const inspectorEvidence = await collectInspectorEvidence(config.aws.region, config.aws.profile);
+        const artifact = saveInspectorEvidence(inspectorEvidence, `${evidencePath}/inspector-findings.json`);
+        artifacts.push(artifact);
+        spinner.succeed('Inspector evidence collected');
+        printInspectorEvidenceSummary(inspectorEvidence);
+      } catch (error) {
+        spinner.warn(`Inspector collection failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+
+      // Generate manifest
+      spinner.text = 'Generating evidence manifest...';
+      spinner.start();
+      const manifest = generateManifest(artifacts);
+      saveManifest(manifest, `${evidencePath}/MANIFEST.md`);
+      spinner.succeed('Evidence manifest generated');
+      printManifestSummary(manifest);
+
+      console.log(chalk.bold.green(`\n✅ Evidence collection complete!\n`));
+      console.log(chalk.cyan(`  Evidence directory: ${evidencePath}`));
+      console.log(chalk.cyan(`  Manifest: ${evidencePath}/MANIFEST.md\n`));
+
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error collecting evidence:'));
       console.error(error);
       process.exit(1);
     }
