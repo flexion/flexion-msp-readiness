@@ -1,0 +1,203 @@
+# Runbook: AWS Access Key Rotation
+
+**Project**: {{projectName}}
+**Requirement**: SECP-001 (Access Key Exposure Detection)
+**Last Updated**: {{date}}
+
+## Purpose
+
+Rotate AWS IAM access keys to maintain security and comply with 90-day rotation policy.
+
+## When to Use
+
+- Scheduled rotation (every 90 days)
+- Suspected key compromise
+- Employee offboarding
+- Security audit findings
+
+## Prerequisites
+
+- [ ] AWS Console access with IAM permissions
+- [ ] List of affected services/applications using the key
+- [ ] Ability to update key in all consuming services
+
+## Procedure
+
+### Step 1: Identify Keys to Rotate
+
+```bash
+# List all access keys and their age
+aws iam list-access-keys --user-name <username> --profile {{stage}}
+
+# Check key age
+aws iam get-access-key-last-used --access-key-id <key-id> --profile {{stage}}
+```
+
+**Decision**: Keys older than 90 days should be rotated.
+
+### Step 2: Create New Access Key
+
+```bash
+# Create new access key
+aws iam create-access-key --user-name <username> --profile {{stage}}
+```
+
+**Important**: Save the `AccessKeyId` and `SecretAccessKey` immediately. The secret will not be shown again.
+
+### Step 3: Update Services
+
+Update the new key in all services that use it:
+
+**Common locations**:
+- [ ] GitHub Secrets (for CI/CD)
+- [ ] Application secrets in AWS Secrets Manager
+- [ ] Local development environments
+- [ ] Third-party integrations
+
+**For {{projectName}}**:
+```bash
+# Update in Secrets Manager
+aws secretsmanager update-secret \
+  --secret-id {{stage}}/app/aws-credentials \
+  --secret-string '{"accessKeyId":"NEW_KEY","secretAccessKey":"NEW_SECRET"}' \
+  --profile {{stage}}
+```
+
+### Step 4: Test New Key
+
+Before deactivating old key, test that new key works:
+
+```bash
+# Test AWS CLI access with new key
+AWS_ACCESS_KEY_ID=<new-key-id> \
+AWS_SECRET_ACCESS_KEY=<new-secret> \
+aws sts get-caller-identity
+
+# Expected output: Should return user identity
+```
+
+**In {{projectName}}**:
+- [ ] Restart affected services with new key
+- [ ] Verify services start successfully
+- [ ] Check logs for authentication errors
+- [ ] Monitor for 10-15 minutes
+
+### Step 5: Deactivate Old Key
+
+Once new key is confirmed working:
+
+```bash
+# Deactivate old key (but don't delete yet)
+aws iam update-access-key \
+  --access-key-id <old-key-id> \
+  --status Inactive \
+  --user-name <username> \
+  --profile {{stage}}
+```
+
+**Wait 24 hours** before deleting to ensure no missed integrations.
+
+### Step 6: Monitor
+
+After deactivation:
+- [ ] Monitor CloudWatch logs for access denied errors
+- [ ] Check application error rates
+- [ ] Review service health metrics
+- [ ] Confirm no alerts triggered
+
+### Step 7: Delete Old Key (After 24 Hours)
+
+If no issues detected:
+
+```bash
+# Delete old access key permanently
+aws iam delete-access-key \
+  --access-key-id <old-key-id> \
+  --user-name <username> \
+  --profile {{stage}}
+```
+
+## Rollback
+
+If issues occur after activating new key:
+
+```bash
+# Reactivate old key
+aws iam update-access-key \
+  --access-key-id <old-key-id> \
+  --status Active \
+  --user-name <username> \
+  --profile {{stage}}
+
+# Deactivate new key
+aws iam update-access-key \
+  --access-key-id <new-key-id> \
+  --status Inactive \
+  --user-name <username> \
+  --profile {{stage}}
+```
+
+## Verification
+
+After completion:
+```bash
+# Verify only new key is active
+aws iam list-access-keys --user-name <username> --profile {{stage}}
+
+# Should show:
+# - New key: Status=Active
+# - Old key: Status=Deleted or not listed
+```
+
+## Documentation
+
+Record rotation in:
+- [ ] Update key inventory spreadsheet
+- [ ] Note rotation date in IAM user tags
+- [ ] Create Freshdesk ticket documenting rotation
+- [ ] Update runbook if any issues encountered
+
+## Emergency Key Compromise
+
+If key is compromised:
+
+1. **Immediately deactivate** - Don't wait for testing
+2. **Generate new key** - Follow steps 2-3 above
+3. **Investigate usage** - Check CloudTrail for unauthorized access
+4. **Notify security team** - Report via {{slackChannel}}
+5. **Review permissions** - Reduce scope if over-permissive
+
+## Automation
+
+Consider automating with:
+- AWS Secrets Manager rotation
+- Lambda function for automated rotation
+- Terraform/CDK to manage keys as code
+
+## Troubleshooting
+
+**Issue**: Service fails after key rotation
+- **Check**: New key was properly updated in all locations
+- **Check**: Key has correct IAM permissions
+- **Action**: Reactivate old key temporarily while investigating
+
+**Issue**: "Access Denied" errors
+- **Check**: IAM policy hasn't changed
+- **Check**: Key is definitely Active status
+- **Action**: Review CloudTrail logs for specific denial reason
+
+## Related Documents
+
+- IAM Access Management Policy
+- Secrets Management Procedures
+- Security Incident Response Playbook
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| {{date}} | Initial runbook generated | MSP Readiness Tool |
+
+---
+
+**🤖 Generated by MSP Readiness Automation**

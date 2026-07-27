@@ -7,6 +7,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
+import * as path from 'path';
 import { loadConfig, printConfigSummary, ConfigError } from './config/loader';
 import { scanDocumentation, printScanSummary } from './assessors/doc-scanner';
 import { matchRequirements, calculateSummary, AWSAnalysisResults } from './assessors/requirement-matcher';
@@ -19,6 +20,8 @@ import { collectBackupEvidence, saveBackupEvidence, printBackupEvidenceSummary }
 import { collectInspectorEvidence, saveInspectorEvidence, printInspectorEvidenceSummary } from './collectors/inspector-collector';
 import { generateManifest, saveManifest, printManifestSummary } from './collectors/manifest-generator';
 import { EvidenceArtifact } from './types';
+import { generatePlaybooks, identifyMissingPlaybooks, AVAILABLE_PLAYBOOKS, AVAILABLE_RUNBOOKS, printGenerationSummary } from './generators/playbook-generator';
+import { buildEvidenceMatrix, saveEvidenceMatrix, printEvidenceMatrixSummary } from './generators/evidence-matrix';
 import {
   generateProjectAssessment,
   generateMarkdownReport,
@@ -262,6 +265,76 @@ program
 
     } catch (error) {
       console.error(chalk.red('\n❌ Error collecting evidence:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Generate command - generate playbooks, runbooks, and evidence matrix
+ */
+program
+  .command('generate')
+  .description('Generate missing playbooks, runbooks, and evidence matrix')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('--playbooks-only', 'Generate only playbooks')
+  .option('--runbooks-only', 'Generate only runbooks')
+  .option('--matrix-only', 'Generate only evidence matrix')
+  .action(async (options) => {
+    try {
+      console.log(chalk.bold.blue('\n📝 Generating MSP Documentation\n'));
+
+      const spinner = ora('Loading configuration...').start();
+      const config = loadConfig(options.config);
+      spinner.succeed('Configuration loaded');
+
+      const outputDir = config.output.playbooks_path;
+
+      // Scan existing docs
+      spinner.text = 'Scanning existing documentation...';
+      spinner.start();
+      const docScan = await scanDocumentation(config.project.docs_path);
+      const existingDocs = docScan.files.map((f) => f.relativePath);
+      spinner.succeed(`Found ${docScan.totalFiles} existing files`);
+
+      // Generate playbooks/runbooks
+      if (!options.matrixOnly) {
+        const includePlaybooks = !options.runbooksOnly;
+        const includeRunbooks = !options.playbooksOnly;
+
+        const missing = identifyMissingPlaybooks(existingDocs, includePlaybooks, includeRunbooks);
+
+        if (missing.length === 0) {
+          console.log(chalk.green('✓ All playbooks and runbooks already exist'));
+        } else {
+          spinner.text = `Generating ${missing.length} missing document(s)...`;
+          spinner.start();
+
+          const generated = await generatePlaybooks(config, missing, outputDir);
+          spinner.succeed(`Generated ${generated.length} document(s)`);
+          printGenerationSummary(generated);
+        }
+      }
+
+      // Generate evidence matrix
+      if (!options.playbooksOnly && !options.runbooksOnly) {
+        spinner.text = 'Generating evidence matrix...';
+        spinner.start();
+
+        // Run quick assessment
+        const assessments = matchRequirements(docScan, config.assessment.skip_requirements);
+        const matrix = buildEvidenceMatrix(assessments, config.output.evidence_path);
+        saveEvidenceMatrix(matrix, path.join(outputDir, 'evidence-matrix.md'));
+
+        spinner.succeed('Evidence matrix generated');
+        printEvidenceMatrixSummary(matrix);
+      }
+
+      console.log(chalk.bold.green(`\n✅ Generation complete!\n`));
+      console.log(chalk.cyan(`  Output directory: ${outputDir}\n`));
+
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error generating documentation:'));
       console.error(error);
       process.exit(1);
     }
