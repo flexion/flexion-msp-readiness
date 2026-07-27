@@ -1,6 +1,6 @@
 {
   "projectName": "Compliance Concierge",
-  "assessmentDate": "2026-07-27T21:16:03.202Z",
+  "assessmentDate": "2026-07-27T21:29:56.298Z",
   "version": "Feb2026-Aug2026",
   "overallStatus": {
     "addressed": 19,
@@ -42,7 +42,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:106",
           "details": "| **OPSP-001** | Incident Management (IT and Security incidents) | Playbook 1: Production Incident Response | ✅ Addressed |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -50,7 +50,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:38",
           "details": "| **OPSP-001** | Incident Management | ✅ | `evidence/self-assessment/Prerequisites-Operations.md` + `Incident-Management-Plan.md` | Management approva",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -58,7 +58,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:164",
           "details": "#### 6. Operational Playbooks (OPSP-001, OPSP-002, OPSP-003, SEC-010, OPS-006)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -66,7 +66,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:306",
           "details": "| **OPSP-001** | Incident Management - IT & Security incidents | ⚠️ PARTIAL | Partial (IT only) | HIGH |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -74,7 +74,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:248",
           "details": "### OPSP-001: Incident Management 🟡 IN PROGRESS",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -82,7 +82,7 @@
           "summary": "Strong reference in STATUS-CORRECTIONS-2026-07-10.md:65",
           "details": "#### OPSP-001: Incident Management",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -90,7 +90,7 @@
           "summary": "Strong reference in evidence/self-assessment/Prerequisites-Operations.md:13",
           "details": "### OPSP-001 Requirement Statement",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -98,7 +98,7 @@
           "summary": "Strong reference in evidence/self-assessment/Prerequisites-Operations.md:807",
           "details": "## 11. Summary - OPSP-001 Compliance Confirmation",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -106,7 +106,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:52",
           "details": "### ✅ OPSP-001: Incident Management (Operations Prerequisites)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -114,7 +114,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:203",
           "details": "| **OPSP-001** | Incident Management | ✅ COMPLETE | Prerequisites-Operations.md | 95% |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -122,21 +122,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:123",
           "details": "#### OPSP-001",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPSP-001",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPSP-001",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -170,7 +170,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:107",
           "details": "| **OPSP-002** | Problem Management (post-incident analysis) | Playbook 1: Production Incident Response (Section 1.6) | ⚠️ Partial - needs customer co",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -178,7 +178,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:39",
           "details": "| **OPSP-002** | Problem Management | 🟡 | Post-incident review process documented in OPSP-001 | Example completed post-incident report with customer ",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -186,7 +186,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:164",
           "details": "#### 6. Operational Playbooks (OPSP-001, OPSP-002, OPSP-003, SEC-010, OPS-006)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -194,7 +194,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:307",
           "details": "| **OPSP-002** | Problem Management - Post-incident analysis | ❌ NOT STARTED | Missing | HIGH |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -202,7 +202,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:283",
           "details": "### OPSP-002: Problem Management 🟡 IN PROGRESS",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -210,7 +210,7 @@
           "summary": "Strong reference in STATUS-CORRECTIONS-2026-07-10.md:74",
           "details": "#### OPSP-002: Problem Management",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -218,7 +218,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:98",
           "details": "### OPSP-002: Problem Management",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -226,7 +226,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:204",
           "details": "| **OPSP-002** | Problem Management | ⚠️ PARTIAL | Prerequisites-Operations.md | 70% |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -234,21 +234,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:143",
           "details": "#### OPSP-002",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPSP-002",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPSP-002",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -287,7 +287,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:123",
           "details": "| **OPSP-003** | Deployment Risk Management | Playbook 2: Production Deployment Support | ❌ NOT STARTED - playbook needed |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -295,7 +295,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:40",
           "details": "| **OPSP-003** | Deployment Risk | 🟠 | ECS circuit breaker exists, staged environments (test→staging→uat→prod) | Deployment risk management playbook ",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -303,7 +303,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:164",
           "details": "#### 6. Operational Playbooks (OPSP-001, OPSP-002, OPSP-003, SEC-010, OPS-006)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -311,7 +311,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:308",
           "details": "| **OPSP-003** | Deployment Risk Management - Canary/blue-green | ⚠️ PARTIAL | Partial (staged) | MEDIUM |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -319,7 +319,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:307",
           "details": "### OPSP-003: Deployment Risk Management ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -327,7 +327,7 @@
           "summary": "Strong reference in STATUS-CORRECTIONS-2026-07-10.md:80",
           "details": "#### OPSP-003: Deployment Risk Management",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -335,7 +335,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:115",
           "details": "### OPSP-003: Deployment Risk Management",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -343,7 +343,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:205",
           "details": "| **OPSP-003** | Deployment Risk Mgmt | ❌ NOT STARTED | - | 0% |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -351,21 +351,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:152",
           "details": "#### OPSP-003",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPSP-003",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPSP-003",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -403,7 +403,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:124",
           "details": "| **OPSP-005** | Service Continuity (BC tests annually) | Playbook 4: Disaster Recovery | ⚠️ Partial - DR process exists, no annual test conducted |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -411,7 +411,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:42",
           "details": "| **OPSP-005** | Service Continuity | 🟠 | DR process documented (`docs/disaster-recovery/process.md`) | Annual BC test execution + results, convert t",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -419,7 +419,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:148",
           "details": "#### 5. Multi-Region Architecture (OPS-005, OPS-011, OPSP-005)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -427,7 +427,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:310",
           "details": "| **OPSP-005** | Service Continuity - BC tests conducted annually | ❌ NOT STARTED | Missing (DR doc exists) | HIGH |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -435,7 +435,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:349",
           "details": "### OPSP-005: Service Continuity ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -443,7 +443,7 @@
           "summary": "Strong reference in STATUS-CORRECTIONS-2026-07-10.md:92",
           "details": "#### OPSP-005: Service Continuity",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -451,7 +451,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:121",
           "details": "### OPSP-005: Service Continuity",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -459,7 +459,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:207",
           "details": "| **OPSP-005** | Service Continuity | ❌ NOT STARTED | - | 0% |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -467,21 +467,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:170",
           "details": "#### OPSP-005",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPSP-005",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPSP-005",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -521,7 +521,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:109",
           "details": "| **OPS-003** | Monitoring and Alerting | Section 1.5 (Tooling Backbone), CIS Control 8 | ✅ Addressed |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -529,7 +529,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:127",
           "details": "| **OPS-003** | Monitoring | ✅ | CloudWatch alarms, Container Insights, SNS/Slack, EventBridge | Architecture document + demo preparation | 4 |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -537,7 +537,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:133",
           "details": "#### 4. Monitoring & Alerting (OPS-003, OPS-004)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -545,7 +545,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:375",
           "details": "| **OPS-003** | Monitoring and Alerting | ✅ STRONG | Available (CloudWatch) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -553,7 +553,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1023",
           "details": "### OPS-003: Monitoring and Alerting ✅ STRONG",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -561,21 +561,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:530",
           "details": "#### OPS-003",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPS-003",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPS-003",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -614,7 +614,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:110",
           "details": "| **OPS-004** | Logging | CIS Control 8 (Audit Log Management) | ⚠️ Partial - retention gap (3-30d → 90d required) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -622,7 +622,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:128",
           "details": "| **OPS-004** | Logging | 🟠 | CloudTrail, VPC Flow Logs, application logs enabled | Increase retention to 90 days (CIS 8.10), document architecture |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -630,7 +630,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:133",
           "details": "#### 4. Monitoring & Alerting (OPS-003, OPS-004)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -638,7 +638,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:376",
           "details": "| **OPS-004** | Logging | ⚠️ GAP | Available (retention non-compliant) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -646,7 +646,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1044",
           "details": "### OPS-004: Logging ⚠️ IN PROGRESS - CIS NON-COMPLIANCE",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -654,21 +654,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:539",
           "details": "#### OPS-004",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPS-004",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPS-004",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -707,7 +707,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:111",
           "details": "| **OPS-005** | Backup and Recovery | CIS Control 11 (Data Recovery) | ⚠️ Partial - process documented, 1d retention insufficient |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -715,7 +715,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:129",
           "details": "| **OPS-005** | Backup & Recovery | 🟡 | RDS automated backups, cross-region replication, DR process | Increase retention to 30 days, execute restore ",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -723,7 +723,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:148",
           "details": "#### 5. Multi-Region Architecture (OPS-005, OPS-011, OPSP-005)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -731,7 +731,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:377",
           "details": "| **OPS-005** | Backup and Recovery | ⚠️ GAP | Available (1d retention insufficient) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -739,7 +739,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1067",
           "details": "### OPS-005: Backup and Recovery ⚠️ IN PROGRESS",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -747,21 +747,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:550",
           "details": "#### OPS-005",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPS-005",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPS-005",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -796,7 +796,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:119",
           "details": "| **OPS-006** | Change Management | Playbook 2: Production Deployment Support | ❌ NOT STARTED - playbook needed |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -804,7 +804,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:130",
           "details": "| **OPS-006** | Change Management | 🟠 | Staged environments (test→staging→uat→prod), CDK deployment | Change management process documentation | 8-12 ",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -812,7 +812,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:164",
           "details": "#### 6. Operational Playbooks (OPSP-001, OPSP-002, OPSP-003, SEC-010, OPS-006)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -820,7 +820,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:378",
           "details": "| **OPS-006** | Change Management | ❌ NOT STARTED | Missing |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -828,7 +828,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1091",
           "details": "### OPS-006: Change Management ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -836,21 +836,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:566",
           "details": "#### OPS-006",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPS-006",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPS-006",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -888,7 +888,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:120",
           "details": "| **OPS-008** | Patch Management | Playbook 6: Vulnerability & Patch Management | ❌ NOT STARTED - playbook needed |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -896,7 +896,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:132",
           "details": "| **OPS-008** | Patch Management | 🟠 | Container image scanning (Inspector) | Patch management process (testing, scheduling, emergency) | 8-12 |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -904,7 +904,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:380",
           "details": "| **OPS-008** | Patch Management | ❌ NOT STARTED | Missing |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -912,7 +912,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1133",
           "details": "### OPS-008: Patch Management ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -920,21 +920,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:599",
           "details": "#### OPS-008",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPS-008",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPS-008",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -975,7 +975,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:112",
           "details": "| **OPS-011** | Availability Management | CIS Control 11 (Data Recovery), DR procedures | ✅ Addressed |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -983,7 +983,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:135",
           "details": "| **OPS-011** | Availability Mgmt | 🟡 | Multi-region DR, ECS health checks, ALB health checks | Availability management process documentation | 4-8 |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -991,7 +991,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:148",
           "details": "#### 5. Multi-Region Architecture (OPS-005, OPS-011, OPSP-005)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -999,7 +999,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:383",
           "details": "| **OPS-011** | Availability Management | ⚠️ PARTIAL | Partial (multi-region DR) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -1007,7 +1007,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1194",
           "details": "### OPS-011: Availability Management ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -1015,21 +1015,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:633",
           "details": "#### OPS-011",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for OPS-011",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for OPS-011",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         }
       ],
       "evidence": [],
@@ -1074,7 +1074,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:113",
           "details": "| **SEC-001** | Security Policies and Procedures | Entire playbook (aligned to CIS Controls v8) | ✅ Addressed |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -1082,7 +1082,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:107",
           "details": "| **SEC-001** | Security Policies | 🟢 | CIS Controls v8 documented (all 18 controls) | Management review + approval records | 4 |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -1090,7 +1090,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:112",
           "details": "#### 3. Security Foundations (SEC-001, SEC-003, SEC-004, SECP-001, SECP-002)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -1098,7 +1098,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:358",
           "details": "| **SEC-001** | Security Policies and Procedures | ❌ NOT STARTED | Missing |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -1106,7 +1106,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:782",
           "details": "### SEC-001: Security Policies and Procedures ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
@@ -1114,21 +1114,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:409",
           "details": "#### SEC-001",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.201Z"
+          "timestamp": "2026-07-27T21:29:56.297Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for SEC-001",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for SEC-001",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         }
       ],
       "evidence": [],
@@ -1174,7 +1174,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:114",
           "details": "| **SEC-003** | AWS Account Configuration (Appendix A minimum) | CIS Controls 4, 5, 6, 8, 12, 13 | ✅ Strong - Control Tower deployment |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1182,7 +1182,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:109",
           "details": "| **SEC-003** | AWS Account Config | ✅ | Control Tower + LZA deployed, Security Hub enabled | Export Security Hub dashboard, document findings/remedia",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1190,7 +1190,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:112",
           "details": "#### 3. Security Foundations (SEC-001, SEC-003, SEC-004, SECP-001, SECP-002)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1198,7 +1198,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:211",
           "details": "#### 9. AWS WAF Protection (SEC-003, SECP-002)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1206,7 +1206,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:360",
           "details": "| **SEC-003** | AWS Account Configuration - Appendix A minimum | ✅ STRONG | Available (Security Hub) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1214,7 +1214,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:822",
           "details": "### SEC-003: AWS Account Configuration ✅ STRONG",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1222,21 +1222,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:429",
           "details": "#### SEC-003",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for SEC-003",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for SEC-003",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         }
       ],
       "evidence": [],
@@ -1276,7 +1276,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:115",
           "details": "| **SEC-004** | Identity and Access Management | CIS Controls 5 & 6 (Access Management) | ✅ Addressed |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1284,7 +1284,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:110",
           "details": "| **SEC-004** | IAM | ✅ | IAM Identity Center (SSO) deployed | Document authentication process | 2 |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1292,7 +1292,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:112",
           "details": "#### 3. Security Foundations (SEC-001, SEC-003, SEC-004, SECP-001, SECP-002)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1300,7 +1300,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:361",
           "details": "| **SEC-004** | Identity and Access Management - Centralized IdP | ✅ COMPLETE | Available (IAM Identity Center) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1308,7 +1308,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:842",
           "details": "### SEC-004: Identity and Access Management ✅ COMPLETE",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1316,21 +1316,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:438",
           "details": "#### SEC-004",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for SEC-004",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for SEC-004",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         }
       ],
       "evidence": [],
@@ -1368,7 +1368,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:116",
           "details": "| **SEC-007** | Vulnerability Scanning | CIS Control 7 (Continuous Vulnerability Management) | ⚠️ Partial - Inspector enabled, daily scan config neede",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1376,7 +1376,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:113",
           "details": "| **SEC-007** | Vulnerability Scanning | 🟡 | Amazon Inspector enabled | Configure daily scans, export last 30 days results | 4 |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1384,7 +1384,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:364",
           "details": "| **SEC-007** | Vulnerability Scanning - Regular scans | ⚠️ PARTIAL | Partial (Inspector enabled) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1392,7 +1392,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:899",
           "details": "### SEC-007: Vulnerability Scanning ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1400,7 +1400,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1539",
           "details": "- [ ] Configure Inspector scan frequency (daily recommended) (**SEC-007**)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1408,21 +1408,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:465",
           "details": "#### SEC-007",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for SEC-007",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for SEC-007",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         }
       ],
       "evidence": [],
@@ -1460,7 +1460,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:117",
           "details": "| **SEC-008** | Vulnerability Remediation | CIS Control 7 (Continuous Vulnerability Management) | ⚠️ Partial - needs remediation SLA documentation |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1468,7 +1468,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:114",
           "details": "| **SEC-008** | Vuln Remediation | 🟠 | Inspector findings exist | Remediation process + SLAs + examples | 8-12 |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1476,7 +1476,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:365",
           "details": "| **SEC-008** | Vulnerability Remediation - Timely remediation | ❌ NOT STARTED | Missing |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1484,7 +1484,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:917",
           "details": "### SEC-008: Vulnerability Remediation ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1492,7 +1492,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1551",
           "details": "- [ ] Document vulnerability remediation process (**SEC-008**)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1500,21 +1500,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:474",
           "details": "#### SEC-008",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for SEC-008",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for SEC-008",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         }
       ],
       "evidence": [],
@@ -1554,7 +1554,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:118",
           "details": "| **SEC-009** | Data Protection (at rest and in transit) | CIS Control 3 (Data Protection) | ✅ Addressed |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1562,7 +1562,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:115",
           "details": "| **SEC-009** | Data Protection | ✅ | RDS encryption, Secrets Manager, TLS/HTTPS | Comprehensive documentation (encryption at rest/transit, key mgmt) ",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1570,7 +1570,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:366",
           "details": "| **SEC-009** | Data Protection - At rest and in transit | ✅ STRONG | Available (encryption) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1578,7 +1578,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:935",
           "details": "### SEC-009: Data Protection ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1586,7 +1586,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1454",
           "details": "- [ ] Prepare comprehensive data protection documentation (**SEC-009**)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1594,21 +1594,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:483",
           "details": "#### SEC-009",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for SEC-009",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for SEC-009",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         }
       ],
       "evidence": [],
@@ -1646,7 +1646,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:108",
           "details": "| **SEC-010** | Incident Response (security incidents) | Playbook 1: Production Incident Response | ⚠️ Partial - needs security incident expansion |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1654,7 +1654,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:116",
           "details": "| **SEC-010** | Incident Response | 🟢 | Production Incident Response playbook (IT), CIS-17 (Security) | Expand OPSP-001 to explicitly cover security ",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1662,7 +1662,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:164",
           "details": "#### 6. Operational Playbooks (OPSP-001, OPSP-002, OPSP-003, SEC-010, OPS-006)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1670,7 +1670,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:367",
           "details": "| **SEC-010** | Incident Response - Security incidents | ⚠️ PARTIAL | Partial (IT playbook exists) |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1678,7 +1678,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:957",
           "details": "### SEC-010: Incident Response ⚠️ PARTIAL",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1686,7 +1686,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1576",
           "details": "- [ ] Expand to explicitly cover Security incidents (**SEC-010**)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1694,28 +1694,28 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:492",
           "details": "#### SEC-010",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Playbook analysis",
           "summary": "Relevant playbook found for security requirement",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for SEC-010",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for SEC-010",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         }
       ],
       "evidence": [],
@@ -1754,7 +1754,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:121",
           "details": "| **SECP-001** | Access Key Exposure Detection | CIS Control 6 (Access Management) | ❌ GAP - AWS Health event monitoring not implemented |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1762,7 +1762,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:36",
           "details": "| **SECP-001** | Access Key Exposure | 🔴 | None | EventBridge → Lambda → FreshDesk automation + procedure | 12-16 |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1770,7 +1770,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:112",
           "details": "#### 3. Security Foundations (SEC-001, SEC-003, SEC-004, SECP-001, SECP-002)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1778,7 +1778,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:304",
           "details": "| **SECP-001** | Access Key Exposure Detection - AWS Health monitoring | ❌ NOT STARTED | Missing | 🔴 CRITICAL |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1786,7 +1786,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:193",
           "details": "### SECP-001: Access Key Exposure Detection ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1794,7 +1794,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:128",
           "details": "### SECP-001: Access Key Exposure Detection",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1802,7 +1802,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:201",
           "details": "| **SECP-001** | Access Key Exposure | ❌ NOT STARTED | - | 0% |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1810,21 +1810,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:90",
           "details": "#### SECP-001",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for SECP-001",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for SECP-001",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         }
       ],
       "evidence": [],
@@ -1862,7 +1862,7 @@
           "summary": "Strong reference in Compliance Concierge Operations and Security Playbook.md:122",
           "details": "| **SECP-002** | Public Resources Detection | CIS Control 4 (Secure Configuration) | ❌ GAP - Config rules not implemented |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1870,7 +1870,7 @@
           "summary": "Strong reference in MSP-EVIDENCE-MATRIX.md:37",
           "details": "| **SECP-002** | Public Resources | 🔴 | None | AWS Config rules + Security Hub + remediation procedure | 8-12 |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1878,7 +1878,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:112",
           "details": "#### 3. Security Foundations (SEC-001, SEC-003, SEC-004, SECP-001, SECP-002)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1886,7 +1886,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:211",
           "details": "#### 9. AWS WAF Protection (SEC-003, SECP-002)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1894,7 +1894,7 @@
           "summary": "Strong reference in MSP-READINESS-ASSESSMENT.md:305",
           "details": "| **SECP-002** | Public Resources - Detection/prevention tooling | ❌ NOT STARTED | Missing | 🔴 CRITICAL |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1902,7 +1902,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:217",
           "details": "### SECP-002: Public Resources ⚠️ NOT STARTED",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1910,7 +1910,7 @@
           "summary": "Strong reference in MSP-READINESS-CHECKLIST.md:1481",
           "details": "- [ ] Enable AWS Config rules for public resource detection (**SECP-002**)",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1918,7 +1918,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:134",
           "details": "### SECP-002: Public Resources Detection",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1926,7 +1926,7 @@
           "summary": "Strong reference in evidence/self-assessment/README.md:202",
           "details": "| **SECP-002** | Public Resources | ❌ NOT STARTED | - | 0% |",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
@@ -1934,21 +1934,21 @@
           "summary": "Strong reference in research/AWS-MSP-REQUIREMENTS-EXTRACTED.md:103",
           "details": "#### SECP-002",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Evidence analysis",
           "summary": "Evidence documentation found for SECP-002",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         },
         {
           "type": "documentation",
           "source": "Self-assessment",
           "summary": "Self-assessment entry found for SECP-002",
           "supportive": true,
-          "timestamp": "2026-07-27T21:16:03.202Z"
+          "timestamp": "2026-07-27T21:29:56.298Z"
         }
       ],
       "evidence": [],

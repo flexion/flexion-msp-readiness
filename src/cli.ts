@@ -9,7 +9,10 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { loadConfig, printConfigSummary, ConfigError } from './config/loader';
 import { scanDocumentation, printScanSummary } from './assessors/doc-scanner';
-import { matchRequirements, calculateSummary } from './assessors/requirement-matcher';
+import { matchRequirements, calculateSummary, AWSAnalysisResults } from './assessors/requirement-matcher';
+import { analyzeAWSConfig, printAWSConfigSummary } from './assessors/aws-config-analyzer';
+import { analyzeIAM, printIAMSummary } from './assessors/iam-evaluator';
+import { analyzeSecurityHub, printSecurityHubSummary } from './assessors/security-hub-checker';
 import {
   generateProjectAssessment,
   generateMarkdownReport,
@@ -32,6 +35,7 @@ program
   .option('-c, --config <path>', 'Path to config file', 'config.yaml')
   .option('-o, --output <path>', 'Output path for report', './assessment-report')
   .option('--format <format>', 'Report format: markdown, json, or both', 'both')
+  .option('--skip-aws', 'Skip AWS infrastructure analysis')
   .action(async (options) => {
     try {
       console.log(chalk.bold.blue('\n🔍 MSP Readiness Assessment\n'));
@@ -59,12 +63,39 @@ program
       spinner.succeed(`Documentation scanned (${docScan.totalFiles} files)`);
       printScanSummary(docScan);
 
+      // Analyze AWS infrastructure (optional)
+      let awsAnalysis: AWSAnalysisResults | undefined;
+      if (!options.skipAws) {
+        try {
+          spinner.text = 'Analyzing AWS infrastructure...';
+          spinner.start();
+
+          const [configAnalysis, iamAnalysis, securityHubAnalysis] = await Promise.all([
+            analyzeAWSConfig(config.aws.region, config.aws.profile),
+            analyzeIAM(config.aws.region, config.aws.profile),
+            analyzeSecurityHub(config.aws.region, config.aws.profile),
+          ]);
+
+          awsAnalysis = { configAnalysis, iamAnalysis, securityHubAnalysis };
+          spinner.succeed('AWS infrastructure analyzed');
+
+          printAWSConfigSummary(configAnalysis);
+          printIAMSummary(iamAnalysis);
+          printSecurityHubSummary(securityHubAnalysis);
+        } catch (error) {
+          spinner.warn('AWS analysis failed - continuing with documentation only');
+          console.log(chalk.yellow(`  ${error instanceof Error ? error.message : String(error)}`));
+          console.log(chalk.gray('  Tip: Use --skip-aws to skip AWS analysis\n'));
+        }
+      }
+
       // Match requirements
       spinner.text = 'Matching requirements...';
       spinner.start();
       const requirementAssessments = matchRequirements(
         docScan,
-        config.assessment.skip_requirements
+        config.assessment.skip_requirements,
+        awsAnalysis
       );
       spinner.succeed('Requirements matched');
 

@@ -10,13 +10,23 @@ import {
 } from '../types';
 import { DocScanResult } from './doc-scanner';
 import { MSP_REQUIREMENTS } from '../data/msp-requirements';
+import { AWSConfigAnalysis } from './aws-config-analyzer';
+import { IAMAnalysis } from './iam-evaluator';
+import { SecurityHubAnalysis } from './security-hub-checker';
+
+export interface AWSAnalysisResults {
+  configAnalysis?: AWSConfigAnalysis;
+  iamAnalysis?: IAMAnalysis;
+  securityHubAnalysis?: SecurityHubAnalysis;
+}
 
 /**
  * Match documentation scan results to MSP requirements
  */
 export function matchRequirements(
   docScan: DocScanResult,
-  skipRequirements: string[] = []
+  skipRequirements: string[] = [],
+  awsAnalysis?: AWSAnalysisResults
 ): RequirementAssessment[] {
   const assessments: RequirementAssessment[] = [];
 
@@ -27,8 +37,8 @@ export function matchRequirements(
       continue;
     }
 
-    // Assess based on documentation
-    const assessment = assessRequirement(requirement, docScan);
+    // Assess based on documentation and AWS
+    const assessment = assessRequirement(requirement, docScan, awsAnalysis);
     assessments.push(assessment);
   }
 
@@ -40,11 +50,25 @@ export function matchRequirements(
  */
 function assessRequirement(
   requirement: MSPRequirement,
-  docScan: DocScanResult
+  docScan: DocScanResult,
+  awsAnalysis?: AWSAnalysisResults
 ): RequirementAssessment {
   const findings: AssessmentFinding[] = [];
   const gaps: string[] = [];
   const recommendations: string[] = [];
+
+  // Add AWS findings if available
+  if (awsAnalysis) {
+    if (awsAnalysis.configAnalysis) {
+      findings.push(...awsAnalysis.configAnalysis.findings);
+    }
+    if (awsAnalysis.iamAnalysis) {
+      findings.push(...awsAnalysis.iamAnalysis.findings);
+    }
+    if (awsAnalysis.securityHubAnalysis) {
+      findings.push(...awsAnalysis.securityHubAnalysis.findings);
+    }
+  }
 
   // Check for mentions of this requirement
   const mentions = docScan.requirementMentions.get(requirement.id) || [];
