@@ -127,7 +127,8 @@ export function generateMarkdownReport(assessment: ProjectAssessment): string {
 
     const categoryAddressed = categoryReqs.filter(a => a.status === 'addressed').length;
     const categoryTotal = categoryReqs.filter(a => a.status !== 'not-applicable').length;
-    const categoryPercent = categoryTotal > 0 ? Math.round((categoryAddressed / categoryTotal) * 100) : 0;
+    const categoryPercent =
+      categoryTotal > 0 ? Math.round((categoryAddressed / categoryTotal) * 100) : 0;
 
     md += `**Completion**: ${categoryPercent}% (${categoryAddressed}/${categoryTotal})\n\n`;
 

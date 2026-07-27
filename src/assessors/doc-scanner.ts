@@ -66,21 +66,13 @@ export async function scanDocumentation(docsPath: string): Promise<DocScanResult
   }
 
   // Categorize files
-  const playbooksFound = files
-    .filter(f => f.type === 'playbook')
-    .map(f => f.relativePath);
+  const playbooksFound = files.filter(f => f.type === 'playbook').map(f => f.relativePath);
 
-  const runbooksFound = files
-    .filter(f => f.type === 'runbook')
-    .map(f => f.relativePath);
+  const runbooksFound = files.filter(f => f.type === 'runbook').map(f => f.relativePath);
 
-  const evidenceFound = files
-    .filter(f => f.type === 'evidence')
-    .map(f => f.relativePath);
+  const evidenceFound = files.filter(f => f.type === 'evidence').map(f => f.relativePath);
 
-  const assessmentFiles = files
-    .filter(f => f.type === 'assessment')
-    .map(f => f.relativePath);
+  const assessmentFiles = files.filter(f => f.type === 'assessment').map(f => f.relativePath);
 
   const totalRequirementMentions = Array.from(requirementMentions.values()).reduce(
     (sum, refs) => sum + refs.length,

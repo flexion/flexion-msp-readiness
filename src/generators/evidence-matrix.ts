@@ -27,12 +27,12 @@ export function buildEvidenceMatrix(
 
   // Get list of evidence files
   const evidenceFiles = fs.existsSync(evidencePath)
-    ? fs.readdirSync(evidencePath).filter((f) => f.endsWith('.json'))
+    ? fs.readdirSync(evidencePath).filter(f => f.endsWith('.json'))
     : [];
 
   for (const assessment of assessments) {
     // Find evidence files for this requirement
-    const reqEvidence = evidenceFiles.filter((file) => {
+    const reqEvidence = evidenceFiles.filter(file => {
       const content = fs.readFileSync(path.join(evidencePath, file), 'utf-8');
       return content.includes(assessment.requirement.id);
     });
@@ -52,9 +52,7 @@ export function buildEvidenceMatrix(
 /**
  * Generate evidence matrix markdown
  */
-export function generateEvidenceMatrixMarkdown(
-  matrix: EvidenceMatrixEntry[]
-): string {
+export function generateEvidenceMatrixMarkdown(matrix: EvidenceMatrixEntry[]): string {
   const lines: string[] = [];
 
   lines.push('# Evidence Matrix\n');
@@ -62,9 +60,9 @@ export function generateEvidenceMatrixMarkdown(
   lines.push('Links MSP requirements to collected evidence.\n\n');
 
   lines.push('## Summary\n\n');
-  const addressed = matrix.filter((e) => e.status === 'addressed').length;
-  const partial = matrix.filter((e) => e.status === 'partial').length;
-  const gaps = matrix.filter((e) => e.status === 'gap').length;
+  const addressed = matrix.filter(e => e.status === 'addressed').length;
+  const partial = matrix.filter(e => e.status === 'partial').length;
+  const gaps = matrix.filter(e => e.status === 'gap').length;
 
   lines.push(`- ✅ **Addressed**: ${addressed} requirements\n`);
   lines.push(`- ⚠️ **Partial**: ${partial} requirements\n`);
@@ -75,12 +73,7 @@ export function generateEvidenceMatrixMarkdown(
   lines.push('|-------------|--------|----------------|------|\n');
 
   for (const entry of matrix) {
-    const icon =
-      entry.status === 'addressed'
-        ? '✅'
-        : entry.status === 'partial'
-          ? '⚠️'
-          : '❌';
+    const icon = entry.status === 'addressed' ? '✅' : entry.status === 'partial' ? '⚠️' : '❌';
 
     const evidence = entry.evidenceFiles.join(', ');
     const gaps = entry.gaps.length > 0 ? entry.gaps.slice(0, 2).join('; ') : 'None';
@@ -91,9 +84,7 @@ export function generateEvidenceMatrixMarkdown(
   }
 
   lines.push('\n## Action Items\n\n');
-  const needEvidence = matrix.filter((e) =>
-    e.evidenceFiles.some((f) => f.includes('TODO'))
-  );
+  const needEvidence = matrix.filter(e => e.evidenceFiles.some(f => f.includes('TODO')));
 
   if (needEvidence.length > 0) {
     lines.push('The following requirements need evidence collection:\n\n');
@@ -113,10 +104,7 @@ export function generateEvidenceMatrixMarkdown(
 /**
  * Save evidence matrix to file
  */
-export function saveEvidenceMatrix(
-  matrix: EvidenceMatrixEntry[],
-  outputPath: string
-): void {
+export function saveEvidenceMatrix(matrix: EvidenceMatrixEntry[], outputPath: string): void {
   const markdown = generateEvidenceMatrixMarkdown(matrix);
 
   const dir = path.dirname(outputPath);
@@ -131,10 +119,8 @@ export function saveEvidenceMatrix(
  * Print evidence matrix summary
  */
 export function printEvidenceMatrixSummary(matrix: EvidenceMatrixEntry[]): void {
-  const addressed = matrix.filter((e) => e.status === 'addressed').length;
-  const withEvidence = matrix.filter(
-    (e) => !e.evidenceFiles.some((f) => f.includes('TODO'))
-  ).length;
+  const addressed = matrix.filter(e => e.status === 'addressed').length;
+  const withEvidence = matrix.filter(e => !e.evidenceFiles.some(f => f.includes('TODO'))).length;
 
   console.log('Evidence Matrix:');
   console.log(`  Requirements: ${matrix.length}`);

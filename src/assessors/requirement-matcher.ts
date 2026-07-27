@@ -138,7 +138,9 @@ function assessRequirement(
     gaps.push('No evidence artifacts present');
     recommendations.push(`Create playbook/procedure for ${requirement.name}`);
     recommendations.push(`Document how ${requirement.description}`);
-    recommendations.push(`Collect evidence from AWS services: ${requirement.awsServices?.join(', ') || 'N/A'}`);
+    recommendations.push(
+      `Collect evidence from AWS services: ${requirement.awsServices?.join(', ') || 'N/A'}`
+    );
   } else if (status === 'partial') {
     if (!hasPlaybook && requirement.category === 'operations') {
       gaps.push('Missing operational playbook');
@@ -155,7 +157,12 @@ function assessRequirement(
   }
 
   // Estimate effort
-  const estimatedEffort = status === 'gap' ? requirement.estimatedHours || 8 : status === 'partial' ? Math.ceil((requirement.estimatedHours || 8) / 2) : 0;
+  const estimatedEffort =
+    status === 'gap'
+      ? requirement.estimatedHours || 8
+      : status === 'partial'
+        ? Math.ceil((requirement.estimatedHours || 8) / 2)
+        : 0;
 
   return {
     requirement,

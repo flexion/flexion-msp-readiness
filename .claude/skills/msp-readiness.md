@@ -1,46 +1,175 @@
 ---
 skill: msp-readiness
 description: Automated AWS MSP Program readiness assessment, evidence collection, and documentation generation
-triggers:
-  - "msp"
-  - "managed service provider"
-  - "compliance assessment"
-  - "aws msp program"
-globs:
-  - "docs/**/*.md"
-  - "cdk/**/*.ts"
-  - "*.yaml"
-  - "README.md"
 ---
 
 # MSP Readiness Assessment Skill
 
-This skill automates the preparation for AWS Managed Service Provider (MSP) Program requirements by analyzing your project's documentation and AWS infrastructure, collecting evidence, generating missing documentation, and creating a compliance dashboard.
+Automates AWS Managed Service Provider (MSP) Program preparation by analyzing documentation and AWS infrastructure, collecting evidence, generating missing documentation, and creating a compliance dashboard.
 
-## Usage
+## How to Invoke
 
-```bash
-# Full assessment and generation
-/msp-readiness run
+When the user asks about MSP readiness, compliance, or AWS MSP Program requirements, Claude Code will automatically invoke this skill. You can also explicitly invoke it.
 
-# Assessment only (no generation)
-/msp-readiness assess
+**User prompts that trigger this skill:**
+- "Check our MSP readiness"
+- "What do we need for AWS MSP certification?"
+- "Run an MSP compliance assessment"
+- "Collect evidence for MSP audit"
+- "Show me the compliance dashboard"
 
-# Generate artifacts for specific requirements
-/msp-readiness generate SECP-001 SECP-002
+## What This Skill Does
 
-# Generate all missing artifacts
-/msp-readiness generate --all
+This skill runs the `msp-readiness` CLI tool from the flexion-msp-readiness repository. It provides these capabilities:
 
-# Collect evidence from AWS
-/msp-readiness collect-evidence
+### Commands Available
 
-# Create/update dashboard
-/msp-readiness dashboard
+1. **assess** - Full assessment of documentation and AWS infrastructure
+2. **collect-evidence** - Gather compliance evidence from AWS services
+3. **generate** - Create missing playbooks and runbooks
+4. **dashboard** - Build interactive HTML dashboard
+5. **status** - Quick status summary
 
-# Show current status
-/msp-readiness status
+## Skill Implementation
+
+When invoked, Claude Code should:
+
+1. **Check Prerequisites**
+   ```bash
+   # Verify msp-readiness is installed
+   which msp-readiness || echo "Tool not found"
+   
+   # Check if config.yaml exists in current directory
+   test -f config.yaml || echo "No config.yaml found"
+   ```
+
+2. **Run Appropriate Command**
+
+   For assessment requests:
+   ```bash
+   cd /path/to/project
+   msp-readiness assess --config config.yaml
+   ```
+
+   For evidence collection:
+   ```bash
+   msp-readiness collect-evidence --config config.yaml
+   ```
+
+   For content generation:
+   ```bash
+   msp-readiness generate --config config.yaml
+   ```
+
+   For dashboard:
+   ```bash
+   msp-readiness dashboard --config config.yaml
+   ```
+
+3. **Parse and Present Results**
+   - Read the generated report files (assessment-report.md, assessment-report.json)
+   - Summarize key findings for the user
+   - Highlight critical gaps and estimated effort
+   - Suggest next steps
+
+## Example Usage Flow
+
+**User:** "Check our MSP readiness"
+
+**Claude Code Actions:**
+1. Check if config.yaml exists, if not help create it
+2. Run `msp-readiness assess`
+3. Parse assessment-report.md
+4. Present summary:
+   - Overall completion percentage
+   - Critical gaps (requirement IDs and effort)
+   - Recommendations for next steps
+5. Offer to run evidence collection or generate missing docs
+
+**User:** "Generate the missing documentation"
+
+**Claude Code Actions:**
+1. Run `msp-readiness generate`
+2. Show list of generated files
+3. Suggest reviewing and customizing the generated content
+4. Offer to re-run assessment to see updated status
+
+**User:** "Show me the dashboard"
+
+**Claude Code Actions:**
+1. Check if assessment-report.json exists
+2. If not, run `msp-readiness assess` first
+3. Run `msp-readiness dashboard`
+4. Note the dashboard.html location
+5. Optionally open in browser or display key metrics
+
+## Configuration
+
+The skill expects a `config.yaml` file in the project root. If it doesn't exist, help the user create one:
+
+```yaml
+project:
+  name: "Project Name"
+  organization: "Organization"
+  docs_path: "./docs"
+  infra_path: "./cdk"
+
+aws:
+  region: "us-east-1"
+  profile: "default"
+  stage: "prod"
+
+msp:
+  version: "2026-feb-aug"
+  ig_level: 1
+
+output:
+  evidence_path: "./evidence"
+  playbooks_path: "./docs/playbooks"
+  report_format: "both"
+  dashboard_path: "./dashboard.html"
+
+assessment:
+  skip_requirements: []
 ```
+
+## Tool Location
+
+The msp-readiness CLI is located at:
+- Repository: `~/repos/flexion-msp-readiness`
+- Binary: Should be globally available via `npm link` or at `~/repos/flexion-msp-readiness/bin/msp-readiness`
+
+If not installed globally:
+```bash
+cd ~/repos/flexion-msp-readiness && npm run dev -- assess --config /path/to/project/config.yaml
+```
+
+## Error Handling
+
+Common issues and solutions:
+
+- **Tool not found**: Run `cd ~/repos/flexion-msp-readiness && npm link`
+- **No config.yaml**: Help user create one from config.example.yaml
+- **AWS credentials**: Check `aws configure` or suggest `--skip-aws` flag
+- **No assessment file**: Run `assess` before `dashboard`
+
+## Output Files
+
+The tool generates these files (paths configurable in config.yaml):
+
+- `assessment-report.md` - Human-readable report
+- `assessment-report.json` - Machine-readable data
+- `evidence/*.json` - AWS service snapshots
+- `evidence/MANIFEST.md` - Evidence inventory
+- `docs/playbooks/*.md` - Generated playbooks/runbooks
+- `dashboard.html` - Interactive dashboard
+
+## Integration Notes
+
+- The skill is **read-only** for AWS (no modifications)
+- Requires AWS credentials configured (uses default credential chain)
+- Can run with `--skip-aws` for documentation-only assessment
+- Generates files in the project directory (git-committable)
 
 ## What This Skill Does
 
@@ -266,10 +395,10 @@ This skill works alongside:
 ## Development Status
 
 - [x] Phase 1: Foundation (types, requirements data)
-- [ ] Phase 2: Core assessment engine
-- [ ] Phase 3: Evidence collectors
-- [ ] Phase 4: Content generators
-- [ ] Phase 5: Dashboard builder
-- [ ] Phase 6: Skill integration
+- [x] Phase 2: Core assessment engine
+- [x] Phase 3: Evidence collectors
+- [x] Phase 4: Content generators
+- [x] Phase 5: Dashboard builder
+- [x] Phase 6: Skill integration
 
 See PLAN.md for detailed development roadmap.

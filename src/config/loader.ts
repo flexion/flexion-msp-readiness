@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';
 import { Config } from '../types';
+import { logger, createError, ErrorCodes } from '../util/logger';
 
 export class ConfigError extends Error {
   constructor(message: string) {
@@ -18,13 +19,16 @@ export class ConfigError extends Error {
  * Load configuration from file
  */
 export function loadConfig(configPath: string = 'config.yaml'): Config {
+  logger.debug('Loading configuration', { configPath });
+
   // Check if config file exists
   if (!fs.existsSync(configPath)) {
-    throw new ConfigError(
-      `Configuration file not found: ${configPath}\n` +
-        `Create one by copying config.example.yaml:\n` +
-        `  cp config.example.yaml config.yaml`
+    const error = createError(
+      ErrorCodes.CONFIG_NOT_FOUND,
+      `Configuration file not found: ${configPath}`
     );
+    logger.error('Configuration file not found', error);
+    throw new ConfigError(error.toString());
   }
 
   // Read and parse YAML
@@ -33,13 +37,18 @@ export function loadConfig(configPath: string = 'config.yaml'): Config {
     const fileContent = fs.readFileSync(configPath, 'utf-8');
     rawConfig = yaml.parse(fileContent);
   } catch (error) {
-    throw new ConfigError(
-      `Failed to parse configuration file: ${error instanceof Error ? error.message : String(error)}`
+    const wrappedError = createError(
+      ErrorCodes.CONFIG_INVALID,
+      `Failed to parse configuration file: ${error instanceof Error ? error.message : String(error)}`,
+      error as Error
     );
+    logger.error('Configuration parsing failed', wrappedError);
+    throw new ConfigError(wrappedError.toString());
   }
 
   // Validate and apply defaults
   const config = validateAndApplyDefaults(rawConfig, configPath);
+  logger.debug('Configuration loaded successfully', { projectName: config.project.name });
 
   return config;
 }

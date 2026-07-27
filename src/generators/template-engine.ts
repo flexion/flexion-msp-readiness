@@ -43,10 +43,7 @@ export function loadTemplate(templatePath: string): HandlebarsTemplateDelegate {
 /**
  * Render template with context
  */
-export function renderTemplate(
-  templatePath: string,
-  context: TemplateContext
-): string {
+export function renderTemplate(templatePath: string, context: TemplateContext): string {
   const template = loadTemplate(templatePath);
   return template(context);
 }
@@ -54,10 +51,7 @@ export function renderTemplate(
 /**
  * Render template string directly
  */
-export function renderTemplateString(
-  templateString: string,
-  context: TemplateContext
-): string {
+export function renderTemplateString(templateString: string, context: TemplateContext): string {
   const template = Handlebars.compile(templateString);
   return template(context);
 }
@@ -72,17 +66,14 @@ export function listTemplates(templatesDir: string): string[] {
 
   return fs
     .readdirSync(templatesDir)
-    .filter((file) => file.endsWith('.hbs') || file.endsWith('.md'))
-    .map((file) => path.join(templatesDir, file));
+    .filter(file => file.endsWith('.hbs') || file.endsWith('.md'))
+    .map(file => path.join(templatesDir, file));
 }
 
 /**
  * Save rendered template to file
  */
-export function saveRenderedTemplate(
-  content: string,
-  outputPath: string
-): void {
+export function saveRenderedTemplate(content: string, outputPath: string): void {
   const dir = path.dirname(outputPath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });

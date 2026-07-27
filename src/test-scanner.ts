@@ -14,8 +14,9 @@ async function main() {
   printScanSummary(result);
 
   console.log('Requirements found:');
-  const sortedReqs = Array.from(result.requirementMentions.entries())
-    .sort((a, b) => b[1].length - a[1].length);
+  const sortedReqs = Array.from(result.requirementMentions.entries()).sort(
+    (a, b) => b[1].length - a[1].length
+  );
 
   for (const [reqId, refs] of sortedReqs.slice(0, 10)) {
     const strongRefs = refs.filter(r => r.type === 'strong').length;

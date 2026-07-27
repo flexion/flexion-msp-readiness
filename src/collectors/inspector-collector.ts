@@ -21,7 +21,10 @@ export interface InspectorFinding {
   status: string;
 }
 
-export async function collectInspectorEvidence(region: string, profile: string): Promise<InspectorEvidence> {
+export async function collectInspectorEvidence(
+  region: string,
+  profile: string
+): Promise<InspectorEvidence> {
   const clientConfig = { region };
   const inspectorClient = new Inspector2Client(clientConfig);
   const timestamp = new Date();
@@ -67,7 +70,10 @@ export async function collectInspectorEvidence(region: string, profile: string):
   }
 }
 
-export function saveInspectorEvidence(evidence: InspectorEvidence, outputPath: string): EvidenceArtifact {
+export function saveInspectorEvidence(
+  evidence: InspectorEvidence,
+  outputPath: string
+): EvidenceArtifact {
   const fs = require('fs');
   const path = require('path');
   const dir = path.dirname(outputPath);

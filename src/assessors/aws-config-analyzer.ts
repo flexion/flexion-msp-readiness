@@ -18,6 +18,7 @@ import {
   GetTrailStatusCommand,
 } from '@aws-sdk/client-cloudtrail';
 import { AssessmentFinding } from '../types';
+import { logger, wrapAWSError } from '../util/logger';
 
 export interface AWSConfigAnalysis {
   region: string;
@@ -59,6 +60,8 @@ export async function analyzeAWSConfig(
   const timestamp = new Date();
   const findings: AssessmentFinding[] = [];
 
+  logger.debug('Starting AWS Config analysis', { region, profile });
+
   try {
     // Initialize AWS SDK clients
     const clientConfig = { region };
@@ -69,28 +72,16 @@ export async function analyzeAWSConfig(
     const configEnabled = await checkConfigEnabled(configClient, findings);
 
     // Get Config rules
-    const configRules = configEnabled
-      ? await getConfigRules(configClient, findings)
-      : [];
+    const configRules = configEnabled ? await getConfigRules(configClient, findings) : [];
 
     // Get conformance packs
-    const conformancePacks = configEnabled
-      ? await getConformancePacks(configClient, findings)
-      : [];
+    const conformancePacks = configEnabled ? await getConformancePacks(configClient, findings) : [];
 
     // Check CloudTrail status
-    const cloudTrailStatus = await checkCloudTrailStatus(
-      cloudTrailClient,
-      findings
-    );
+    const cloudTrailStatus = await checkCloudTrailStatus(cloudTrailClient, findings);
 
     // Analyze specific requirements
-    await analyzeSecurityRequirements(
-      configClient,
-      configRules,
-      cloudTrailStatus,
-      findings
-    );
+    await analyzeSecurityRequirements(configClient, configRules, cloudTrailStatus, findings);
 
     return {
       region,
@@ -104,6 +95,9 @@ export async function analyzeAWSConfig(
     };
   } catch (error) {
     // Handle AWS credential or permission errors gracefully
+    const wrappedError = wrapAWSError(error, 'Config');
+    logger.error('AWS Config analysis failed', wrappedError, { region });
+
     findings.push({
       type: 'aws-config',
       source: 'AWS SDK',
@@ -138,9 +132,7 @@ async function checkConfigEnabled(
   findings: AssessmentFinding[]
 ): Promise<boolean> {
   try {
-    const recorders = await client.send(
-      new DescribeConfigurationRecordersCommand({})
-    );
+    const recorders = await client.send(new DescribeConfigurationRecordersCommand({}));
 
     const channels = await client.send(new DescribeDeliveryChannelsCommand({}));
 
@@ -161,8 +153,7 @@ async function checkConfigEnabled(
         type: 'aws-config',
         source: 'AWS Config',
         summary: 'AWS Config is not enabled - required for SEC-003',
-        details:
-          'AWS Config is required to track resource inventory and compliance',
+        details: 'AWS Config is required to track resource inventory and compliance',
         supportive: false,
         timestamp: new Date(),
       });
@@ -215,8 +206,7 @@ async function getConfigRules(
         );
 
         const complianceType =
-          complianceResponse.ComplianceByConfigRules?.[0]?.Compliance
-            ?.ComplianceType ?? 'UNKNOWN';
+          complianceResponse.ComplianceByConfigRules?.[0]?.Compliance?.ComplianceType ?? 'UNKNOWN';
 
         rules.push({
           ruleName: rule.ConfigRuleName,
@@ -265,9 +255,7 @@ async function getConformancePacks(
   findings: AssessmentFinding[]
 ): Promise<ConformancePackInfo[]> {
   try {
-    const packsResponse = await client.send(
-      new DescribeConformancePacksCommand({})
-    );
+    const packsResponse = await client.send(new DescribeConformancePacksCommand({}));
 
     if (
       !packsResponse.ConformancePackDetails ||
@@ -289,8 +277,7 @@ async function getConformancePacks(
         );
 
         const complianceType =
-          complianceResponse.ConformancePackRuleComplianceList?.[0]
-            ?.ComplianceType ?? 'UNKNOWN';
+          complianceResponse.ConformancePackRuleComplianceList?.[0]?.ComplianceType ?? 'UNKNOWN';
 
         packs.push({
           name: pack.ConformancePackName,
@@ -333,17 +320,15 @@ async function checkCloudTrailStatus(
     const trailsResponse = await client.send(new DescribeTrailsCommand({}));
 
     const trails = trailsResponse.trailList ?? [];
-    const multiRegion = trails.some((t) => t.IsMultiRegionTrail);
-    const logFileValidation = trails.some((t) => t.LogFileValidationEnabled);
+    const multiRegion = trails.some(t => t.IsMultiRegionTrail);
+    const logFileValidation = trails.some(t => t.LogFileValidationEnabled);
 
     let activeTrails = 0;
     for (const trail of trails) {
       if (!trail.Name) continue;
 
       try {
-        const statusResponse = await client.send(
-          new GetTrailStatusCommand({ Name: trail.Name })
-        );
+        const statusResponse = await client.send(new GetTrailStatusCommand({ Name: trail.Name }));
         if (statusResponse.IsLogging) {
           activeTrails++;
         }
@@ -407,16 +392,14 @@ async function analyzeSecurityRequirements(
   findings: AssessmentFinding[]
 ): Promise<void> {
   // SECP-002: Public resource detection
-  const publicResourceRules = configRules.filter((r) =>
-    r.ruleName.toLowerCase().includes('public')
-  );
+  const publicResourceRules = configRules.filter(r => r.ruleName.toLowerCase().includes('public'));
 
   if (publicResourceRules.length > 0) {
     findings.push({
       type: 'aws-config',
       source: 'SECP-002 Analysis',
       summary: `${publicResourceRules.length} Config rule(s) for public resource detection`,
-      details: `Rules: ${publicResourceRules.map((r) => r.ruleName).join(', ')}`,
+      details: `Rules: ${publicResourceRules.map(r => r.ruleName).join(', ')}`,
       supportive: true,
       timestamp: new Date(),
     });

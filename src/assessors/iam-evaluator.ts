@@ -13,6 +13,7 @@ import {
   GetAccountPasswordPolicyCommand,
 } from '@aws-sdk/client-iam';
 import { AssessmentFinding } from '../types';
+import { logger, wrapAWSError } from '../util/logger';
 
 export interface IAMAnalysis {
   timestamp: Date;
@@ -57,12 +58,11 @@ export interface AccessKeyAnalysis {
 /**
  * Analyze IAM configuration
  */
-export async function analyzeIAM(
-  region: string,
-  profile: string
-): Promise<IAMAnalysis> {
+export async function analyzeIAM(region: string, profile: string): Promise<IAMAnalysis> {
   const timestamp = new Date();
   const findings: AssessmentFinding[] = [];
+
+  logger.debug('Starting IAM analysis', { region, profile });
 
   try {
     // Initialize IAM client (IAM is global, but we still need a region)
@@ -136,7 +136,7 @@ async function getAccountSummary(
 ): Promise<IAMAccountSummary> {
   try {
     const response = await client.send(new GetAccountSummaryCommand({}));
-    const summaryMap = response.SummaryMap as any ?? {};
+    const summaryMap = (response.SummaryMap as any) ?? {};
 
     const accountSummary: IAMAccountSummary = {
       users: summaryMap.Users ?? 0,
@@ -310,7 +310,12 @@ async function checkPasswordPolicy(
 
     return passwordPolicy;
   } catch (error) {
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'NoSuchEntityException') {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'name' in error &&
+      error.name === 'NoSuchEntityException'
+    ) {
       findings.push({
         type: 'iam',
         source: 'Password Policy',
@@ -492,8 +497,12 @@ export function printIAMSummary(analysis: IAMAnalysis): void {
     `  MFA coverage: ${analysis.mfaStatus.mfaPercentage}% (${analysis.mfaStatus.usersWithMFA}/${analysis.mfaStatus.totalUsers})`
   );
   console.log(`  Root MFA: ${analysis.mfaStatus.rootMFAEnabled ? 'Enabled' : 'Disabled'}`);
-  console.log(`  Password policy: ${analysis.passwordPolicy.exists ? 'Configured' : 'Not configured'}`);
-  console.log(`  Access keys: ${analysis.accessKeys.totalKeys} total, ${analysis.accessKeys.keysOlderThan90Days} >90 days`);
+  console.log(
+    `  Password policy: ${analysis.passwordPolicy.exists ? 'Configured' : 'Not configured'}`
+  );
+  console.log(
+    `  Access keys: ${analysis.accessKeys.totalKeys} total, ${analysis.accessKeys.keysOlderThan90Days} >90 days`
+  );
   console.log(`  Findings: ${analysis.findings.length}`);
   console.log('');
 }

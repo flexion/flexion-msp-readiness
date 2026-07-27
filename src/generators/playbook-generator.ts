@@ -73,8 +73,7 @@ export async function generatePlaybooks(
     try {
       // Determine template path
       const templateDir =
-        config.templates?.custom_templates_path ||
-        path.join(__dirname, '../../templates');
+        config.templates?.custom_templates_path || path.join(__dirname, '../../templates');
 
       const templateSubdir = spec.type === 'playbook' ? 'playbooks' : 'runbooks';
       const templatePath = path.join(templateDir, templateSubdir, spec.template);
@@ -122,14 +121,14 @@ export function identifyMissingPlaybooks(
   includeRunbooks: boolean = true
 ): PlaybookSpec[] {
   const missing: PlaybookSpec[] = [];
-  const existingLower = existingDocs.map((d) => d.toLowerCase());
+  const existingLower = existingDocs.map(d => d.toLowerCase());
 
   // Check playbooks
   if (includePlaybooks) {
     for (const spec of AVAILABLE_PLAYBOOKS) {
       const expectedFileName = spec.template.replace('.hbs', '');
-      const exists = existingLower.some((doc) =>
-        doc.includes(expectedFileName) || doc.includes(spec.name.toLowerCase())
+      const exists = existingLower.some(
+        doc => doc.includes(expectedFileName) || doc.includes(spec.name.toLowerCase())
       );
 
       if (!exists) {
@@ -142,8 +141,8 @@ export function identifyMissingPlaybooks(
   if (includeRunbooks) {
     for (const spec of AVAILABLE_RUNBOOKS) {
       const expectedFileName = spec.template.replace('.hbs', '');
-      const exists = existingLower.some((doc) =>
-        doc.includes(expectedFileName) || doc.includes(spec.name.toLowerCase())
+      const exists = existingLower.some(
+        doc => doc.includes(expectedFileName) || doc.includes(spec.name.toLowerCase())
       );
 
       if (!exists) {
@@ -162,8 +161,8 @@ export function printGenerationSummary(generated: GeneratedPlaybook[]): void {
   console.log('\nGeneration Summary:');
   console.log(`  Total generated: ${generated.length}`);
 
-  const playbooks = generated.filter((g) => g.type === 'playbook').length;
-  const runbooks = generated.filter((g) => g.type === 'runbook').length;
+  const playbooks = generated.filter(g => g.type === 'playbook').length;
+  const runbooks = generated.filter(g => g.type === 'runbook').length;
 
   console.log(`  Playbooks: ${playbooks}`);
   console.log(`  Runbooks: ${runbooks}`);

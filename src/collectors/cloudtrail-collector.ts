@@ -63,9 +63,7 @@ export async function collectCloudTrailEvidence(
 
   try {
     // Get all trails
-    const trailsResponse = await cloudTrailClient.send(
-      new DescribeTrailsCommand({})
-    );
+    const trailsResponse = await cloudTrailClient.send(new DescribeTrailsCommand({}));
 
     for (const trail of trailsResponse.trailList ?? []) {
       if (!trail.Name || !trail.TrailARN) continue;
@@ -88,7 +86,7 @@ export async function collectCloudTrailEvidence(
           new GetEventSelectorsCommand({ TrailName: trail.Name })
         );
         eventSelectors = (selectorsResponse.EventSelectors ?? []).map(
-          (s) => `${s.ReadWriteType} - ${s.IncludeManagementEvents ? 'Mgmt' : 'Data'}`
+          s => `${s.ReadWriteType} - ${s.IncludeManagementEvents ? 'Mgmt' : 'Data'}`
         );
       } catch {
         // Event selectors might not be accessible
@@ -106,14 +104,8 @@ export async function collectCloudTrailEvidence(
       });
 
       // Get S3 bucket info if not already collected
-      if (
-        trail.S3BucketName &&
-        !s3BucketInfo.find((b) => b.bucketName === trail.S3BucketName)
-      ) {
-        const bucketInfo = await collectS3BucketInfo(
-          s3Client,
-          trail.S3BucketName
-        );
+      if (trail.S3BucketName && !s3BucketInfo.find(b => b.bucketName === trail.S3BucketName)) {
+        const bucketInfo = await collectS3BucketInfo(s3Client, trail.S3BucketName);
         if (bucketInfo) {
           s3BucketInfo.push(bucketInfo);
         }
@@ -122,11 +114,10 @@ export async function collectCloudTrailEvidence(
 
     const summary = {
       totalTrails: trails.length,
-      activeTrails: trails.filter((t) => t.isLogging).length,
-      multiRegionTrails: trails.filter((t) => t.isMultiRegion).length,
-      logFileValidationEnabled: trails.filter((t) => t.logFileValidationEnabled)
-        .length,
-      s3BucketsEncrypted: s3BucketInfo.filter((b) => b.encryptionEnabled).length,
+      activeTrails: trails.filter(t => t.isLogging).length,
+      multiRegionTrails: trails.filter(t => t.isMultiRegion).length,
+      logFileValidationEnabled: trails.filter(t => t.logFileValidationEnabled).length,
+      s3BucketsEncrypted: s3BucketInfo.filter(b => b.encryptionEnabled).length,
     };
 
     return {
@@ -172,9 +163,7 @@ async function collectS3BucketInfo(
     // Check encryption
     let encryptionEnabled = false;
     try {
-      await s3Client.send(
-        new GetBucketEncryptionCommand({ Bucket: bucketName })
-      );
+      await s3Client.send(new GetBucketEncryptionCommand({ Bucket: bucketName }));
       encryptionEnabled = true;
     } catch {
       // Encryption might not be configured
@@ -225,11 +214,7 @@ export function saveCloudTrailEvidence(
   }
 
   // Save evidence as JSON
-  fs.writeFileSync(
-    outputPath,
-    JSON.stringify(evidence, null, 2),
-    'utf-8'
-  );
+  fs.writeFileSync(outputPath, JSON.stringify(evidence, null, 2), 'utf-8');
 
   return {
     type: 'aws-snapshot',

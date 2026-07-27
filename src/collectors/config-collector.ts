@@ -61,9 +61,7 @@ export async function collectConfigRulesEvidence(
 
   try {
     // Get all Config rules
-    const rulesResponse = await configClient.send(
-      new DescribeConfigRulesCommand({})
-    );
+    const rulesResponse = await configClient.send(new DescribeConfigRulesCommand({}));
 
     const configRules: ConfigRuleDetail[] = [];
     const complianceSummary: ComplianceSummary = {
@@ -88,8 +86,7 @@ export async function collectConfigRulesEvidence(
           })
         );
 
-        const compliance =
-          complianceResponse.ComplianceByConfigRules?.[0]?.Compliance;
+        const compliance = complianceResponse.ComplianceByConfigRules?.[0]?.Compliance;
         complianceType = compliance?.ComplianceType ?? 'UNKNOWN';
 
         // Get non-compliant resource count
@@ -101,8 +98,7 @@ export async function collectConfigRulesEvidence(
                 ComplianceTypes: ['NON_COMPLIANT'],
               })
             );
-            nonCompliantResources =
-              detailsResponse.EvaluationResults?.length ?? 0;
+            nonCompliantResources = detailsResponse.EvaluationResults?.length ?? 0;
           } catch {
             // Details might not be available
           }
@@ -134,8 +130,7 @@ export async function collectConfigRulesEvidence(
         complianceType,
         source: rule.Source?.Owner ?? 'UNKNOWN',
         scope: rule.Scope?.ComplianceResourceTypes,
-        nonCompliantResources:
-          nonCompliantResources > 0 ? nonCompliantResources : undefined,
+        nonCompliantResources: nonCompliantResources > 0 ? nonCompliantResources : undefined,
       });
     }
 
@@ -143,7 +138,7 @@ export async function collectConfigRulesEvidence(
     const conformancePacks = await getConformancePacks(configClient);
 
     // Identify public resource detection rules (SECP-002)
-    const publicResourceRules = configRules.filter((r) =>
+    const publicResourceRules = configRules.filter(r =>
       r.ruleName.toLowerCase().includes('public')
     );
 
@@ -175,13 +170,9 @@ export async function collectConfigRulesEvidence(
 /**
  * Get conformance packs
  */
-async function getConformancePacks(
-  client: ConfigServiceClient
-): Promise<ConformancePackDetail[]> {
+async function getConformancePacks(client: ConfigServiceClient): Promise<ConformancePackDetail[]> {
   try {
-    const packsResponse = await client.send(
-      new DescribeConformancePacksCommand({})
-    );
+    const packsResponse = await client.send(new DescribeConformancePacksCommand({}));
 
     const packs: ConformancePackDetail[] = [];
 
@@ -263,9 +254,7 @@ export function saveConfigRulesEvidence(
 /**
  * Print Config rules evidence summary
  */
-export function printConfigRulesEvidenceSummary(
-  evidence: ConfigRulesEvidence
-): void {
+export function printConfigRulesEvidenceSummary(evidence: ConfigRulesEvidence): void {
   console.log('Config Rules Evidence:');
   console.log(`  Total rules: ${evidence.complianceSummary.totalRules}`);
   console.log(`  Compliant: ${evidence.complianceSummary.compliant}`);

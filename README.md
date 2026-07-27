@@ -76,23 +76,53 @@ cp config.example.yaml config.yaml
 # Edit config.yaml with your project paths
 ```
 
-### Using the Claude Code Skill
+### Using as a Claude Code Skill
+
+The tool is designed to be invoked by Claude Code when you ask about MSP readiness:
 
 ```bash
-# From your project directory (e.g., fipco-infra)
-claude
+# In Claude Code, simply ask:
+"Check our MSP readiness"
+"What do we need for AWS MSP certification?"
+"Collect evidence for our MSP audit"
+"Show me the compliance dashboard"
 
-# Run the MSP readiness assessment
-/msp-readiness assess
+# Claude Code will automatically:
+# 1. Check if config.yaml exists (create from template if needed)
+# 2. Run the appropriate msp-readiness command
+# 3. Parse and summarize the results
+# 4. Suggest next steps
+```
 
-# Generate missing artifacts
-/msp-readiness generate --all
+The skill helper script makes it easy for Claude to invoke:
 
-# Create the dashboard
-/msp-readiness dashboard
+```bash
+# Claude Code will run commands like:
+~/repos/flexion-msp-readiness/bin/msp-skill assess
+~/repos/flexion-msp-readiness/bin/msp-skill collect-evidence
+~/repos/flexion-msp-readiness/bin/msp-skill generate
+~/repos/flexion-msp-readiness/bin/msp-skill dashboard
+~/repos/flexion-msp-readiness/bin/msp-skill full  # Complete workflow
+```
 
-# Full end-to-end run
-/msp-readiness run --stage test
+### Using Directly (CLI)
+
+You can also use the tool directly from the command line:
+
+```bash
+# Link for global access
+cd ~/repos/flexion-msp-readiness
+npm link
+
+# Now use from any project directory
+cd /path/to/your/project
+msp-readiness assess
+msp-readiness collect-evidence
+msp-readiness generate
+msp-readiness dashboard
+
+# Or use the skill helper
+~/repos/flexion-msp-readiness/bin/msp-skill full
 ```
 
 ## Features

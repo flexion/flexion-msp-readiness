@@ -2,7 +2,12 @@
  * Backup Evidence Collector - OPS-005, OPS-011
  */
 
-import { BackupClient, ListBackupPlansCommand, ListRecoveryPointsByBackupVaultCommand, ListBackupVaultsCommand } from '@aws-sdk/client-backup';
+import {
+  BackupClient,
+  ListBackupPlansCommand,
+  ListRecoveryPointsByBackupVaultCommand,
+  ListBackupVaultsCommand,
+} from '@aws-sdk/client-backup';
 import { EvidenceArtifact } from '../types';
 
 export interface BackupEvidence {
@@ -33,7 +38,10 @@ export interface RecoveryPointInfo {
   status: string;
 }
 
-export async function collectBackupEvidence(region: string, profile: string): Promise<BackupEvidence> {
+export async function collectBackupEvidence(
+  region: string,
+  profile: string
+): Promise<BackupEvidence> {
   const clientConfig = { region };
   const backupClient = new BackupClient(clientConfig);
   const timestamp = new Date();

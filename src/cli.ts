@@ -10,18 +10,54 @@ import ora from 'ora';
 import * as path from 'path';
 import { loadConfig, printConfigSummary, ConfigError } from './config/loader';
 import { scanDocumentation, printScanSummary } from './assessors/doc-scanner';
-import { matchRequirements, calculateSummary, AWSAnalysisResults } from './assessors/requirement-matcher';
+import {
+  matchRequirements,
+  calculateSummary,
+  AWSAnalysisResults,
+} from './assessors/requirement-matcher';
 import { analyzeAWSConfig, printAWSConfigSummary } from './assessors/aws-config-analyzer';
 import { analyzeIAM, printIAMSummary } from './assessors/iam-evaluator';
 import { analyzeSecurityHub, printSecurityHubSummary } from './assessors/security-hub-checker';
-import { collectCloudTrailEvidence, saveCloudTrailEvidence, printCloudTrailEvidenceSummary } from './collectors/cloudtrail-collector';
-import { collectConfigRulesEvidence, saveConfigRulesEvidence, printConfigRulesEvidenceSummary } from './collectors/config-collector';
-import { collectBackupEvidence, saveBackupEvidence, printBackupEvidenceSummary } from './collectors/backup-collector';
-import { collectInspectorEvidence, saveInspectorEvidence, printInspectorEvidenceSummary } from './collectors/inspector-collector';
-import { generateManifest, saveManifest, printManifestSummary } from './collectors/manifest-generator';
+import {
+  collectCloudTrailEvidence,
+  saveCloudTrailEvidence,
+  printCloudTrailEvidenceSummary,
+} from './collectors/cloudtrail-collector';
+import {
+  collectConfigRulesEvidence,
+  saveConfigRulesEvidence,
+  printConfigRulesEvidenceSummary,
+} from './collectors/config-collector';
+import {
+  collectBackupEvidence,
+  saveBackupEvidence,
+  printBackupEvidenceSummary,
+} from './collectors/backup-collector';
+import {
+  collectInspectorEvidence,
+  saveInspectorEvidence,
+  printInspectorEvidenceSummary,
+} from './collectors/inspector-collector';
+import {
+  generateManifest,
+  saveManifest,
+  printManifestSummary,
+} from './collectors/manifest-generator';
 import { EvidenceArtifact } from './types';
-import { generatePlaybooks, identifyMissingPlaybooks, AVAILABLE_PLAYBOOKS, AVAILABLE_RUNBOOKS, printGenerationSummary } from './generators/playbook-generator';
-import { buildEvidenceMatrix, saveEvidenceMatrix, printEvidenceMatrixSummary } from './generators/evidence-matrix';
+import {
+  generatePlaybooks,
+  identifyMissingPlaybooks,
+  AVAILABLE_PLAYBOOKS,
+  AVAILABLE_RUNBOOKS,
+  printGenerationSummary,
+} from './generators/playbook-generator';
+import {
+  buildEvidenceMatrix,
+  saveEvidenceMatrix,
+  printEvidenceMatrixSummary,
+} from './generators/evidence-matrix';
+import { aggregateDashboardData } from './dashboard/aggregator';
+import { buildDashboard } from './dashboard/builder';
 import {
   generateProjectAssessment,
   generateMarkdownReport,
@@ -33,7 +69,7 @@ const program = new Command();
 program
   .name('msp-readiness')
   .description('Automated AWS MSP Program readiness assessment and documentation generation')
-  .version('0.1.0');
+  .version('1.0.0');
 
 /**
  * Assess command - scan documentation and generate assessment report
@@ -45,7 +81,7 @@ program
   .option('-o, --output <path>', 'Output path for report', './assessment-report')
   .option('--format <format>', 'Report format: markdown, json, or both', 'both')
   .option('--skip-aws', 'Skip AWS infrastructure analysis')
-  .action(async (options) => {
+  .action(async options => {
     try {
       console.log(chalk.bold.blue('\n🔍 MSP Readiness Assessment\n'));
 
@@ -158,9 +194,7 @@ program
       spinner.text = 'Saving report...';
       spinner.start();
       const reportFormat = (options.format || config.output.report_format) as
-        | 'markdown'
-        | 'json'
-        | 'both';
+        'markdown' | 'json' | 'both';
       const savedFiles = await saveReport(assessment, options.output, reportFormat);
       spinner.succeed('Report saved');
 
@@ -187,7 +221,7 @@ program
   .command('collect-evidence')
   .description('Collect compliance evidence from AWS services')
   .option('-c, --config <path>', 'Path to config file', 'config.yaml')
-  .action(async (options) => {
+  .action(async options => {
     try {
       console.log(chalk.bold.blue('\n📦 Collecting MSP Evidence\n'));
 
@@ -203,26 +237,42 @@ program
       spinner.text = 'Collecting CloudTrail evidence...';
       spinner.start();
       try {
-        const cloudTrailEvidence = await collectCloudTrailEvidence(config.aws.region, config.aws.profile);
-        const artifact = saveCloudTrailEvidence(cloudTrailEvidence, `${evidencePath}/cloudtrail-status.json`);
+        const cloudTrailEvidence = await collectCloudTrailEvidence(
+          config.aws.region,
+          config.aws.profile
+        );
+        const artifact = saveCloudTrailEvidence(
+          cloudTrailEvidence,
+          `${evidencePath}/cloudtrail-status.json`
+        );
         artifacts.push(artifact);
         spinner.succeed('CloudTrail evidence collected');
         printCloudTrailEvidenceSummary(cloudTrailEvidence);
       } catch (error) {
-        spinner.warn(`CloudTrail collection failed: ${error instanceof Error ? error.message : String(error)}`);
+        spinner.warn(
+          `CloudTrail collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
 
       // Collect Config rules evidence
       spinner.text = 'Collecting Config rules evidence...';
       spinner.start();
       try {
-        const configEvidence = await collectConfigRulesEvidence(config.aws.region, config.aws.profile);
-        const artifact = saveConfigRulesEvidence(configEvidence, `${evidencePath}/config-snapshot.json`);
+        const configEvidence = await collectConfigRulesEvidence(
+          config.aws.region,
+          config.aws.profile
+        );
+        const artifact = saveConfigRulesEvidence(
+          configEvidence,
+          `${evidencePath}/config-snapshot.json`
+        );
         artifacts.push(artifact);
         spinner.succeed('Config rules evidence collected');
         printConfigRulesEvidenceSummary(configEvidence);
       } catch (error) {
-        spinner.warn(`Config collection failed: ${error instanceof Error ? error.message : String(error)}`);
+        spinner.warn(
+          `Config collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
 
       // Collect Backup evidence
@@ -235,20 +285,30 @@ program
         spinner.succeed('Backup evidence collected');
         printBackupEvidenceSummary(backupEvidence);
       } catch (error) {
-        spinner.warn(`Backup collection failed: ${error instanceof Error ? error.message : String(error)}`);
+        spinner.warn(
+          `Backup collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
 
       // Collect Inspector evidence
       spinner.text = 'Collecting Inspector evidence...';
       spinner.start();
       try {
-        const inspectorEvidence = await collectInspectorEvidence(config.aws.region, config.aws.profile);
-        const artifact = saveInspectorEvidence(inspectorEvidence, `${evidencePath}/inspector-findings.json`);
+        const inspectorEvidence = await collectInspectorEvidence(
+          config.aws.region,
+          config.aws.profile
+        );
+        const artifact = saveInspectorEvidence(
+          inspectorEvidence,
+          `${evidencePath}/inspector-findings.json`
+        );
         artifacts.push(artifact);
         spinner.succeed('Inspector evidence collected');
         printInspectorEvidenceSummary(inspectorEvidence);
       } catch (error) {
-        spinner.warn(`Inspector collection failed: ${error instanceof Error ? error.message : String(error)}`);
+        spinner.warn(
+          `Inspector collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
 
       // Generate manifest
@@ -262,7 +322,6 @@ program
       console.log(chalk.bold.green(`\n✅ Evidence collection complete!\n`));
       console.log(chalk.cyan(`  Evidence directory: ${evidencePath}`));
       console.log(chalk.cyan(`  Manifest: ${evidencePath}/MANIFEST.md\n`));
-
     } catch (error) {
       console.error(chalk.red('\n❌ Error collecting evidence:'));
       console.error(error);
@@ -280,7 +339,7 @@ program
   .option('--playbooks-only', 'Generate only playbooks')
   .option('--runbooks-only', 'Generate only runbooks')
   .option('--matrix-only', 'Generate only evidence matrix')
-  .action(async (options) => {
+  .action(async options => {
     try {
       console.log(chalk.bold.blue('\n📝 Generating MSP Documentation\n'));
 
@@ -294,7 +353,7 @@ program
       spinner.text = 'Scanning existing documentation...';
       spinner.start();
       const docScan = await scanDocumentation(config.project.docs_path);
-      const existingDocs = docScan.files.map((f) => f.relativePath);
+      const existingDocs = docScan.files.map(f => f.relativePath);
       spinner.succeed(`Found ${docScan.totalFiles} existing files`);
 
       // Generate playbooks/runbooks
@@ -332,9 +391,61 @@ program
 
       console.log(chalk.bold.green(`\n✅ Generation complete!\n`));
       console.log(chalk.cyan(`  Output directory: ${outputDir}\n`));
-
     } catch (error) {
       console.error(chalk.red('\n❌ Error generating documentation:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Dashboard command - generate interactive HTML dashboard
+ */
+program
+  .command('dashboard')
+  .description('Generate interactive HTML compliance dashboard')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('-i, --input <path>', 'Path to assessment JSON', './assessment-report.json')
+  .action(async options => {
+    try {
+      console.log(chalk.bold.blue('\n📊 Building MSP Dashboard\n'));
+
+      const spinner = ora('Loading configuration...').start();
+      const config = loadConfig(options.config);
+      spinner.succeed('Configuration loaded');
+
+      // Load assessment
+      spinner.text = 'Loading assessment data...';
+      spinner.start();
+
+      if (!require('fs').existsSync(options.input)) {
+        spinner.fail('Assessment file not found');
+        console.log(
+          chalk.yellow('\n  Run "msp-readiness assess" first to generate assessment data.\n')
+        );
+        process.exit(1);
+      }
+
+      const assessment = JSON.parse(require('fs').readFileSync(options.input, 'utf-8'));
+      spinner.succeed('Assessment loaded');
+
+      // Aggregate data
+      spinner.text = 'Aggregating dashboard data...';
+      spinner.start();
+      const dashboardData = aggregateDashboardData(assessment, config.output.evidence_path);
+      spinner.succeed('Data aggregated');
+
+      // Build dashboard
+      spinner.text = 'Building HTML dashboard...';
+      spinner.start();
+      await buildDashboard(dashboardData, config.output.dashboard_path);
+      spinner.succeed('Dashboard built');
+
+      console.log(chalk.bold.green('\n✅ Dashboard complete!\n'));
+      console.log(chalk.cyan(`  Dashboard: ${config.output.dashboard_path}`));
+      console.log(chalk.cyan(`  Open with: open ${config.output.dashboard_path}\n`));
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error building dashboard:'));
       console.error(error);
       process.exit(1);
     }
@@ -347,7 +458,7 @@ program
   .command('status')
   .description('Show current MSP readiness status')
   .option('-c, --config <path>', 'Path to config file', 'config.yaml')
-  .action(async (options) => {
+  .action(async options => {
     try {
       const config = loadConfig(options.config);
 

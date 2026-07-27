@@ -1,6 +1,6 @@
 {
   "name": "flexion-msp-readiness",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Automated AWS MSP Program readiness assessment and documentation generation",
   "main": "dist/index.js",
   "bin": {

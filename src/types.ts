@@ -15,8 +15,8 @@ export interface MSPRequirement {
   category: RequirementCategory;
   description: string;
   priority: RequirementPriority;
-  cisControls?: string[];  // Related CIS Controls (e.g., ["4", "5.1", "5.3"])
-  awsServices?: string[];  // AWS services involved
+  cisControls?: string[]; // Related CIS Controls (e.g., ["4", "5.1", "5.3"])
+  awsServices?: string[]; // AWS services involved
   evidenceRequired: string[];
   estimatedHours?: number;
 }
@@ -27,12 +27,12 @@ export interface MSPRequirement {
 export interface RequirementAssessment {
   requirement: MSPRequirement;
   status: RequirementStatus;
-  confidence: number;  // 0-1 score
+  confidence: number; // 0-1 score
   findings: AssessmentFinding[];
   evidence: EvidenceArtifact[];
   gaps: string[];
   recommendations: string[];
-  estimatedEffort?: number;  // hours
+  estimatedEffort?: number; // hours
 }
 
 /**
@@ -40,10 +40,10 @@ export interface RequirementAssessment {
  */
 export interface AssessmentFinding {
   type: 'documentation' | 'aws-config' | 'iam' | 'security-hub' | 'manual';
-  source: string;  // File path, AWS ARN, etc.
+  source: string; // File path, AWS ARN, etc.
   summary: string;
   details?: string;
-  supportive: boolean;  // true if supports compliance, false if gap
+  supportive: boolean; // true if supports compliance, false if gap
   timestamp: Date;
 }
 
@@ -56,7 +56,7 @@ export interface EvidenceArtifact {
   description: string;
   requirementIds: string[];
   collectedAt: Date;
-  expiresAt?: Date;  // For time-sensitive evidence
+  expiresAt?: Date; // For time-sensitive evidence
   metadata?: Record<string, unknown>;
 }
 
@@ -66,7 +66,7 @@ export interface EvidenceArtifact {
 export interface ProjectAssessment {
   projectName: string;
   assessmentDate: Date;
-  version: string;  // MSP checklist version
+  version: string; // MSP checklist version
   overallStatus: {
     addressed: number;
     partial: number;
@@ -118,12 +118,15 @@ export interface AWSSnapshot {
  */
 export interface DashboardData {
   assessment: ProjectAssessment;
-  byCategory: Record<RequirementCategory, {
-    total: number;
-    addressed: number;
-    partial: number;
-    gap: number;
-  }>;
+  byCategory: Record<
+    RequirementCategory,
+    {
+      total: number;
+      addressed: number;
+      partial: number;
+      gap: number;
+    }
+  >;
   criticalPath: {
     requirement: MSPRequirement;
     effort: number;

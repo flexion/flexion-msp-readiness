@@ -12,12 +12,13 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     id: 'OPSP-001',
     name: 'Incident Management',
     category: 'operations',
-    description: 'IT and Security incident management process with defined severity levels, response times, and escalation procedures',
+    description:
+      'IT and Security incident management process with defined severity levels, response times, and escalation procedures',
     priority: 'critical',
     cisControls: ['17'],
     awsServices: ['CloudWatch', 'SNS', 'EventBridge'],
     evidenceRequired: ['incident-response-playbook', 'incident-tickets', 'sla-documentation'],
-    estimatedHours: 12
+    estimatedHours: 12,
   },
   {
     id: 'OPSP-002',
@@ -28,7 +29,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['17'],
     awsServices: [],
     evidenceRequired: ['post-incident-reports', 'customer-communication-templates'],
-    estimatedHours: 6
+    estimatedHours: 6,
   },
   {
     id: 'OPSP-003',
@@ -39,7 +40,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['2', '4', '16'],
     awsServices: ['CodePipeline', 'CodeDeploy'],
     evidenceRequired: ['deployment-playbook', 'risk-assessment-checklist'],
-    estimatedHours: 8
+    estimatedHours: 8,
   },
   {
     id: 'OPSP-005',
@@ -50,7 +51,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['11'],
     awsServices: ['Backup', 'RDS', 'S3'],
     evidenceRequired: ['dr-test-reports', 'bc-test-schedule'],
-    estimatedHours: 16
+    estimatedHours: 16,
   },
 
   // Operations - Monitoring & Logging
@@ -63,7 +64,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['8', '13'],
     awsServices: ['CloudWatch', 'SNS', 'EventBridge'],
     evidenceRequired: ['cloudwatch-alarms', 'monitoring-dashboard', 'alert-config'],
-    estimatedHours: 0  // Already implemented
+    estimatedHours: 0, // Already implemented
   },
   {
     id: 'OPS-004',
@@ -74,7 +75,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['8'],
     awsServices: ['CloudTrail', 'CloudWatch Logs', 'S3'],
     evidenceRequired: ['cloudtrail-config', 'log-retention-policy', 'log-archives'],
-    estimatedHours: 4  // Need to extend retention
+    estimatedHours: 4, // Need to extend retention
   },
   {
     id: 'OPS-005',
@@ -85,7 +86,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['11'],
     awsServices: ['Backup', 'RDS', 'S3'],
     evidenceRequired: ['backup-config', 'recovery-procedures', 'backup-verification-logs'],
-    estimatedHours: 6  // Need to extend retention
+    estimatedHours: 6, // Need to extend retention
   },
   {
     id: 'OPS-006',
@@ -96,7 +97,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['2', '4'],
     awsServices: [],
     evidenceRequired: ['change-management-playbook', 'change-records'],
-    estimatedHours: 8
+    estimatedHours: 8,
   },
   {
     id: 'OPS-008',
@@ -107,7 +108,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['7'],
     awsServices: ['Inspector', 'Systems Manager'],
     evidenceRequired: ['patch-management-playbook', 'patch-records', 'vulnerability-reports'],
-    estimatedHours: 8
+    estimatedHours: 8,
   },
   {
     id: 'OPS-011',
@@ -118,7 +119,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['11', '12'],
     awsServices: ['Multi-region', 'RDS', 'S3', 'Route53'],
     evidenceRequired: ['dr-procedures', 'multi-region-config', 'rto-rpo-documentation'],
-    estimatedHours: 0  // Already implemented
+    estimatedHours: 0, // Already implemented
   },
 
   // Security - Policies & Procedures
@@ -131,7 +132,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['1', '2', '3', '4', '5', '6', '7', '8', '11', '12', '13', '17'],
     awsServices: [],
     evidenceRequired: ['security-playbook', 'cis-controls-mapping'],
-    estimatedHours: 0  // Already implemented
+    estimatedHours: 0, // Already implemented
   },
   {
     id: 'SEC-003',
@@ -142,7 +143,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['4', '5', '6', '8', '12', '13'],
     awsServices: ['Control Tower', 'Config', 'CloudTrail', 'GuardDuty', 'Security Hub'],
     evidenceRequired: ['config-rules', 'security-hub-findings', 'guardduty-config'],
-    estimatedHours: 0  // Control Tower deployed
+    estimatedHours: 0, // Control Tower deployed
   },
   {
     id: 'SEC-004',
@@ -153,7 +154,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['5', '6'],
     awsServices: ['IAM', 'IAM Identity Center', 'Cognito'],
     evidenceRequired: ['iam-policies', 'mfa-enforcement', 'access-review-logs'],
-    estimatedHours: 0  // Already implemented
+    estimatedHours: 0, // Already implemented
   },
   {
     id: 'SEC-007',
@@ -164,7 +165,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['7'],
     awsServices: ['Inspector', 'ECR'],
     evidenceRequired: ['inspector-config', 'scan-reports', 'scan-schedules'],
-    estimatedHours: 4  // Need daily scan config
+    estimatedHours: 4, // Need daily scan config
   },
   {
     id: 'SEC-008',
@@ -175,7 +176,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['7'],
     awsServices: ['Inspector', 'Systems Manager'],
     evidenceRequired: ['remediation-procedures', 'sla-documentation', 'remediation-records'],
-    estimatedHours: 6
+    estimatedHours: 6,
   },
   {
     id: 'SEC-009',
@@ -186,7 +187,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['3'],
     awsServices: ['KMS', 'ACM', 'RDS', 'S3'],
     evidenceRequired: ['encryption-config', 'kms-key-policies', 'tls-config'],
-    estimatedHours: 0  // Already implemented
+    estimatedHours: 0, // Already implemented
   },
   {
     id: 'SEC-010',
@@ -197,7 +198,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['17'],
     awsServices: ['Security Hub', 'GuardDuty', 'Detective'],
     evidenceRequired: ['security-incident-procedures', 'incident-tickets'],
-    estimatedHours: 4  // Need to expand existing playbook
+    estimatedHours: 4, // Need to expand existing playbook
   },
 
   // Security - Program Requirements
@@ -210,7 +211,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['6'],
     awsServices: ['Health', 'EventBridge', 'Lambda'],
     evidenceRequired: ['health-event-config', 'automated-response-lambda', 'detection-logs'],
-    estimatedHours: 12
+    estimatedHours: 12,
   },
   {
     id: 'SECP-002',
@@ -221,8 +222,8 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     cisControls: ['4'],
     awsServices: ['Config', 'Security Hub'],
     evidenceRequired: ['config-rules', 'public-resource-findings', 'remediation-procedure'],
-    estimatedHours: 10
-  }
+    estimatedHours: 10,
+  },
 ];
 
 /**
