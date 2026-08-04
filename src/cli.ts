@@ -151,9 +151,10 @@ program
         // Self-assessment: Assess workspace completeness
         console.log(chalk.cyan('Mode: Self-assessment (workspace)\n'));
 
-        const workspaceAssessment = assessWorkspace(
+        const workspaceAssessment = await assessWorkspace(
           config.output.playbooks_path,
-          config.output.evidence_path
+          config.output.evidence_path,
+          true // Enable evidence validation
         );
 
         printWorkspaceAssessment(workspaceAssessment);
@@ -675,9 +676,10 @@ program
         // Generate workspace text dashboard
         console.log(chalk.cyan('Mode: Workspace dashboard\n'));
 
-        const workspaceAssessment = assessWorkspace(
+        const workspaceAssessment = await assessWorkspace(
           config.output.playbooks_path,
-          config.output.evidence_path
+          config.output.evidence_path,
+          false // Skip validation for dashboard generation (faster)
         );
 
         // Create detailed text dashboard
@@ -747,9 +749,10 @@ program
       console.log(`CIS IG Level: ${chalk.bold(config.msp.ig_level)}`);
 
       // Assess workspace completeness
-      const assessment = assessWorkspace(
+      const assessment = await assessWorkspace(
         config.output.playbooks_path,
-        config.output.evidence_path
+        config.output.evidence_path,
+        true // Enable validation
       );
 
       printWorkspaceAssessment(assessment);
