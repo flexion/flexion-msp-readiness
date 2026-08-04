@@ -78,9 +78,7 @@ export async function collectIAMAnalyzerEvidence(
           nextToken: nextToken,
         };
 
-        const findingsResponse = await analyzerClient.send(
-          new ListFindingsCommand(findingsInput)
-        );
+        const findingsResponse = await analyzerClient.send(new ListFindingsCommand(findingsInput));
 
         for (const finding of findingsResponse.findings ?? []) {
           const resourceType = finding.resourceType ?? 'UNKNOWN';

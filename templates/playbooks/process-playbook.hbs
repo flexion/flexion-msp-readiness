@@ -1,0 +1,143 @@
+# {{title}} Playbook
+
+**Project**: {{projectName}}
+**Organization**: {{organization}}
+**Last Updated**: {{date}}
+
+## Overview
+
+{{description}}
+
+**Requirement Category**: {{category}}
+**Priority**: {{priority}}
+
+## Required Documentation
+
+This requirement involves creating and maintaining the following documentation:
+
+{{#each evidenceRequired}}
+- {{this}}
+{{/each}}
+
+## How to Complete This Requirement
+
+### Step 1: Review Template (if available)
+
+{{#if templatePath}}
+A template is available to help you complete this requirement:
+
+**Template location**: `{{templatePath}}`
+
+Review this template to understand the structure and required sections.
+{{else}}
+No pre-defined template is available. You will need to create documentation from scratch based on the requirements below.
+{{/if}}
+
+### Step 2: Gather Information
+
+Collect the following information needed to complete the documentation:
+
+{{#each informationNeeded}}
+- **{{name}}**: {{description}}
+{{/each}}
+
+### Step 3: Complete Documentation
+
+Create the required documentation using the following guidelines:
+
+**Document structure**:
+{{#each documentSections}}
+1. **{{name}}**: {{description}}
+{{/each}}
+
+**Key points to include**:
+{{#each keyPoints}}
+- {{this}}
+{{/each}}
+
+**Best practices**:
+{{#each bestPractices}}
+- {{this}}
+{{/each}}
+
+### Step 4: Review and Submit
+
+Before submitting your documentation:
+
+- [ ] All required sections are completed
+- [ ] Information is accurate and up-to-date
+- [ ] Document follows organizational standards
+- [ ] Contains specific details (not generic placeholders)
+- [ ] Reviewed by appropriate stakeholders
+- [ ] Saved to the correct location: `docs/msp/{{category}}/`
+
+## Validation Checklist
+
+Use this checklist to ensure your documentation meets MSP requirements:
+
+- [ ] **Existence**: Document exists at the expected location
+- [ ] **Completeness**: All required sections are present
+- [ ] **Freshness**: Updated within the last {{freshnessMonths}} months
+- [ ] **Specificity**: Contains project-specific details (not generic)
+- [ ] **Approval**: Reviewed and approved by management (if required)
+- [ ] **Accessibility**: Available to audit team when requested
+
+{{#if minimumLength}}
+- [ ] **Length**: Meets minimum length requirement ({{minimumLength}} words)
+{{/if}}
+
+## Evidence Required for MSP Assessment
+
+When submitting for MSP assessment, provide:
+
+{{#each evidenceRequired}}
+- **{{this}}**: Description of what to provide
+{{/each}}
+
+## Maintenance
+
+This documentation should be reviewed and updated:
+
+- **Frequency**: {{maintenanceFrequency}}
+- **Owner**: {{maintenanceOwner}}
+- **Triggers for update**:
+{{#each updateTriggers}}
+  - {{this}}
+{{/each}}
+
+## Related Requirements
+
+This requirement relates to the following other MSP requirements:
+
+{{#if relatedRequirements}}
+{{#each relatedRequirements}}
+- **{{id}}**: {{name}}
+{{/each}}
+{{else}}
+None identified
+{{/if}}
+
+## CIS Controls
+
+{{#if cisControls}}
+This requirement aligns with the following CIS Controls v8:
+{{#each cisControls}}
+- Control {{this}}
+{{/each}}
+{{else}}
+No specific CIS Controls mapped to this requirement.
+{{/if}}
+
+## Support and Resources
+
+- **MSP Program Guide**: [AWS Partner Network MSP Program](https://aws.amazon.com/partners/programs/msp/)
+- **Support Channel**: {{slackChannel}}
+- **Contact**: {{contact}}
+
+## Notes
+
+{{#if notes}}
+{{notes}}
+{{else}}
+Add any project-specific notes or considerations here.
+{{/if}}

@@ -5,13 +5,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { renderTemplate, TemplateContext, saveRenderedTemplate } from './template-engine';
-import { GeneratedPlaybook } from '../types';
+import { GeneratedPlaybook, PlaybookMode, AutomationType, MSPRequirement } from '../types';
 import { Config } from '../types';
-import {
-  addFrontmatter,
-  isUserModified,
-  DocumentMetadata,
-} from '../utils/frontmatter';
+import { addFrontmatter, isUserModified, DocumentMetadata } from '../utils/frontmatter';
+import { getRequirement } from '../data/msp-requirements';
 
 export interface PlaybookSpec {
   name: string;
@@ -167,6 +164,82 @@ export interface GenerateOptions {
 }
 
 /**
+ * Determine the playbook type based on requirement characteristics
+ */
+export function determinePlaybookMode(requirement: MSPRequirement): PlaybookMode {
+  const hasAWSServices = requirement.awsServices && requirement.awsServices.length > 0;
+  const hasProcessDocs = requirement.evidenceRequired.some(
+    e =>
+      e.includes('documentation') ||
+      e.includes('policy') ||
+      e.includes('procedure') ||
+      e.includes('checklist') ||
+      e.includes('process') ||
+      e.includes('charter') ||
+      e.includes('plan') ||
+      e.includes('overview')
+  );
+
+  if (hasAWSServices && hasProcessDocs) return 'mixed';
+  if (hasAWSServices) return 'technical';
+  return 'process';
+}
+
+/**
+ * Calculate automation percentage for a requirement
+ *
+ * This estimates what percentage of the requirement can be automated based on:
+ * - If no AWS services: 0% automation
+ * - If AWS services exist: percentage based on automated vs manual evidence
+ */
+export function calculateAutomationPercentage(requirement: MSPRequirement): number {
+  const hasAWSServices = requirement.awsServices && requirement.awsServices.length > 0;
+  if (!hasAWSServices) return 0;
+
+  const totalEvidence = requirement.evidenceRequired.length;
+  if (totalEvidence === 0) return 0;
+
+  // Count evidence that can be automated (those that are AWS-related)
+  const automatedEvidence = requirement.evidenceRequired.filter(
+    e =>
+      !e.includes('documentation') &&
+      !e.includes('policy') &&
+      !e.includes('procedure') &&
+      !e.includes('checklist') &&
+      !e.includes('process') &&
+      !e.includes('charter') &&
+      !e.includes('plan') &&
+      !e.includes('overview') &&
+      !e.includes('presentation') &&
+      !e.includes('contract') &&
+      !e.includes('agreement') &&
+      !e.includes('certification') &&
+      !e.includes('sow') &&
+      !e.includes('example')
+  ).length;
+
+  return Math.round((automatedEvidence / totalEvidence) * 100);
+}
+
+/**
+ * Determine automation type
+ */
+export function determineAutomationType(percentage: number): AutomationType {
+  if (percentage >= 80) return 'full';
+  if (percentage > 0) return 'partial';
+  return 'manual';
+}
+
+/**
+ * Get template path reference for a requirement
+ */
+export function getTemplateReference(requirementId: string): string | undefined {
+  // This would integrate with template loader from issue #49
+  // For now, return undefined
+  return undefined;
+}
+
+/**
  * Generate playbooks/runbooks
  */
 export async function generatePlaybooks(
@@ -217,7 +290,9 @@ export async function generatePlaybooks(
 
       // Check if file exists and is user-modified (unless --force)
       if (!options.force && fs.existsSync(outputPath) && isUserModified(outputPath)) {
-        console.log(`⚠ Skipped ${spec.type}: ${spec.name} (user modified, use --force to overwrite)`);
+        console.log(
+          `⚠ Skipped ${spec.type}: ${spec.name} (user modified, use --force to overwrite)`
+        );
         skipped.push(spec.name);
         continue;
       }
@@ -262,9 +337,7 @@ export async function generatePlaybooks(
       `\n📋 Dry run complete: Would generate ${generated.length} files, skip ${skipped.length} files`
     );
   } else if (skipped.length > 0) {
-    console.log(
-      `\n⚠️  Skipped ${skipped.length} user-modified file(s). Use --force to overwrite.`
-    );
+    console.log(`\n⚠️  Skipped ${skipped.length} user-modified file(s). Use --force to overwrite.`);
   }
 
   return generated;
@@ -313,6 +386,206 @@ export function identifyMissingPlaybooks(
 }
 
 /**
+ * Generate a playbook for a specific requirement
+ */
+export async function generatePlaybookForRequirement(
+  config: Config,
+  requirementId: string,
+  outputDir: string,
+  options: GenerateOptions = {}
+): Promise<GeneratedPlaybook | null> {
+  const requirement = getRequirement(requirementId);
+  if (!requirement) {
+    console.error(`Requirement ${requirementId} not found`);
+    return null;
+  }
+
+  // Determine playbook characteristics
+  const mode = determinePlaybookMode(requirement);
+  const automationPercentage = calculateAutomationPercentage(requirement);
+  const automationType = determineAutomationType(automationPercentage);
+  const templateReference = getTemplateReference(requirementId);
+
+  // Select appropriate template
+  let templateName: string;
+  if (mode === 'process') {
+    templateName = 'process-playbook.hbs';
+  } else if (mode === 'mixed') {
+    templateName = 'mixed-playbook.hbs';
+  } else {
+    // For technical playbooks, check if we have a specific template
+    const existingSpec = AVAILABLE_PLAYBOOKS.find(spec =>
+      spec.requirementIds.includes(requirementId)
+    );
+    if (existingSpec) {
+      templateName = existingSpec.template;
+    } else {
+      // Use a generic technical template (could be created later)
+      console.warn(`No specific template for ${requirementId}, using process template`);
+      templateName = 'process-playbook.hbs';
+    }
+  }
+
+  // Build template context
+  const context: TemplateContext & Record<string, unknown> = {
+    projectName: config.project.name,
+    organization: config.msp.organization.name,
+    region: config.aws.region,
+    stage: config.aws.stage,
+    contact: config.msp.organization.contact,
+    slackChannel: config.templates?.variables?.slackChannel || '#support',
+    date: new Date().toISOString().split('T')[0],
+
+    // Requirement-specific data
+    requirementId: requirement.id,
+    title: requirement.name,
+    description: requirement.description,
+    category: requirement.category,
+    priority: requirement.priority,
+    cisControls: requirement.cisControls || [],
+    awsServices: requirement.awsServices || [],
+    evidenceRequired: requirement.evidenceRequired,
+    estimatedHours: requirement.estimatedHours || 0,
+
+    // Playbook metadata
+    mode,
+    automationType,
+    automationPercentage,
+    templatePath: templateReference,
+
+    // Additional context for templates
+    informationNeeded: [
+      { name: 'Project Details', description: 'Specific project information and context' },
+      { name: 'Current State', description: 'Existing processes and documentation' },
+      { name: 'Stakeholders', description: 'Key contacts and responsible parties' },
+    ],
+    documentSections: [
+      { name: 'Overview', description: 'Purpose and scope of the documentation' },
+      { name: 'Procedures', description: 'Step-by-step processes and workflows' },
+      { name: 'Policies', description: 'Rules, standards, and guidelines' },
+      { name: 'Responsibilities', description: 'Roles and ownership' },
+    ],
+    keyPoints: [
+      'Be specific to your project and organization',
+      'Include measurable criteria where applicable',
+      'Reference related documentation and systems',
+      'Define clear ownership and accountability',
+    ],
+    bestPractices: [
+      'Keep documentation concise and actionable',
+      'Use templates and examples where available',
+      'Review and update regularly',
+      'Ensure accessibility to all relevant stakeholders',
+    ],
+    freshnessMonths: 6,
+    maintenanceFrequency: 'Quarterly',
+    maintenanceOwner: 'Operations Team',
+    updateTriggers: [
+      'Significant infrastructure changes',
+      'New team members or role changes',
+      'Audit findings or compliance requirements',
+      'Process improvements identified',
+    ],
+  };
+
+  // Determine template path
+  const templateDir =
+    config.templates?.custom_templates_path || path.join(__dirname, '../../templates');
+  const templatePath = path.join(templateDir, 'playbooks', templateName);
+
+  // Check if template exists
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`Template not found: ${templatePath}`);
+    return null;
+  }
+
+  // Render template
+  const content = renderTemplate(templatePath, context);
+
+  // Ensure output directory exists
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  // Generate filename from requirement name
+  const fileName = `${requirement.id.toLowerCase()}-${requirement.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')}.md`;
+  const outputPath = path.join(outputDir, fileName);
+
+  // Check if file exists and is user-modified
+  if (!options.force && fs.existsSync(outputPath) && isUserModified(outputPath)) {
+    console.log(
+      `⚠ Skipped playbook: ${requirement.name} (user modified, use --force to overwrite)`
+    );
+    return null;
+  }
+
+  // Dry run
+  if (options.dryRun) {
+    console.log(`✓ Would generate playbook: ${requirement.name} → ${fileName}`);
+    return null;
+  }
+
+  // Add frontmatter metadata
+  const metadata: DocumentMetadata = {
+    generated: new Date().toISOString(),
+    template_version: '1.0',
+    status: 'draft',
+    requirement_id: requirement.id,
+    playbook_mode: mode,
+    automation_type: automationType,
+    automation_percentage: automationPercentage,
+  };
+  const contentWithFrontmatter = addFrontmatter(content, metadata);
+
+  saveRenderedTemplate(contentWithFrontmatter, outputPath);
+
+  const generatedPlaybook: GeneratedPlaybook = {
+    title: requirement.name,
+    type: 'playbook',
+    path: outputPath,
+    requirementIds: [requirement.id],
+    cisControls: requirement.cisControls || [],
+    template: templateName,
+    variables: context,
+    generatedAt: new Date(),
+    mode,
+    automationType,
+    automationPercentage,
+  };
+
+  console.log(`✓ Generated playbook: ${requirement.name} → ${fileName}`);
+  return generatedPlaybook;
+}
+
+/**
+ * Generate playbooks for all requirements
+ */
+export async function generateAllRequirementPlaybooks(
+  config: Config,
+  outputDir: string,
+  options: GenerateOptions = {}
+): Promise<GeneratedPlaybook[]> {
+  const { MSP_REQUIREMENTS } = await import('../data/msp-requirements');
+  const generated: GeneratedPlaybook[] = [];
+
+  for (const requirement of MSP_REQUIREMENTS) {
+    const playbook = await generatePlaybookForRequirement(
+      config,
+      requirement.id,
+      outputDir,
+      options
+    );
+    if (playbook) {
+      generated.push(playbook);
+    }
+  }
+
+  return generated;
+}
+
+/**
  * Print generation summary
  */
 export function printGenerationSummary(generated: GeneratedPlaybook[]): void {
@@ -324,5 +597,18 @@ export function printGenerationSummary(generated: GeneratedPlaybook[]): void {
 
   console.log(`  Playbooks: ${playbooks}`);
   console.log(`  Runbooks: ${runbooks}`);
+
+  // Summary by mode
+  const technical = generated.filter(g => g.mode === 'technical').length;
+  const process = generated.filter(g => g.mode === 'process').length;
+  const mixed = generated.filter(g => g.mode === 'mixed').length;
+
+  if (technical || process || mixed) {
+    console.log('\n  By Mode:');
+    if (technical) console.log(`    Technical: ${technical}`);
+    if (process) console.log(`    Process: ${process}`);
+    if (mixed) console.log(`    Mixed: ${mixed}`);
+  }
+
   console.log('');
 }

@@ -76,13 +76,13 @@ export async function collectSecurityHubEvidence(
 
     // Get enabled standards
     const standardsResponse = await securityHubClient.send(new GetEnabledStandardsCommand({}));
-    const enabledStandards: StandardInfo[] = (
-      standardsResponse.StandardsSubscriptions ?? []
-    ).map(standard => ({
-      name: standard.StandardsArn?.split('/').pop() ?? '',
-      arn: standard.StandardsArn ?? '',
-      enabled: standard.StandardsStatus === 'READY',
-    }));
+    const enabledStandards: StandardInfo[] = (standardsResponse.StandardsSubscriptions ?? []).map(
+      standard => ({
+        name: standard.StandardsArn?.split('/').pop() ?? '',
+        arn: standard.StandardsArn ?? '',
+        enabled: standard.StandardsStatus === 'READY',
+      })
+    );
 
     // Get findings with pagination
     const findings: FindingInfo[] = [];
@@ -113,9 +113,7 @@ export async function collectSecurityHubEvidence(
         NextToken: nextToken,
       };
 
-      const findingsResponse = await securityHubClient.send(
-        new GetFindingsCommand(findingsInput)
-      );
+      const findingsResponse = await securityHubClient.send(new GetFindingsCommand(findingsInput));
 
       for (const finding of findingsResponse.Findings ?? []) {
         const severity = finding.Severity?.Label?.toLowerCase() ?? 'informational';

@@ -129,9 +129,7 @@ export async function collectIAMEvidence(region: string, profile: string): Promi
       // Get user details
       let passwordLastUsed: string | undefined;
       try {
-        const userResponse = await iamClient.send(
-          new GetUserCommand({ UserName: user.UserName })
-        );
+        const userResponse = await iamClient.send(new GetUserCommand({ UserName: user.UserName }));
         passwordLastUsed = userResponse.User?.PasswordLastUsed?.toISOString();
       } catch {
         // User might not have a password
@@ -249,7 +247,9 @@ export async function collectIAMEvidence(region: string, profile: string): Promi
         }
       }
     } catch (error) {
-      console.error('Failed to collect Health events (might need us-east-1 or Business support plan)');
+      console.error(
+        'Failed to collect Health events (might need us-east-1 or Business support plan)'
+      );
     }
 
     const totalAccessKeys = users.reduce((sum, u) => sum + u.accessKeys.length, 0);

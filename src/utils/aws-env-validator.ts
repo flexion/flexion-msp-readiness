@@ -39,8 +39,8 @@ export function validateAWSEnvironment(expectedProfile?: string): AWSEnvValidati
   if (hasStaticCredentials && hasProfileSet) {
     warnings.push(
       'Multiple credential sources detected: Both AWS_PROFILE and static credentials ' +
-      '(AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY) are set. ' +
-      'AWS SDK may behave unpredictably. Recommend unsetting static credentials.'
+        '(AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY) are set. ' +
+        'AWS SDK may behave unpredictably. Recommend unsetting static credentials.'
     );
   }
 
@@ -48,15 +48,13 @@ export function validateAWSEnvironment(expectedProfile?: string): AWSEnvValidati
   if (expectedProfile && awsProfile && awsProfile !== expectedProfile) {
     errors.push(
       `AWS_PROFILE mismatch: Expected "${expectedProfile}" but found "${awsProfile}". ` +
-      `Set with: export AWS_PROFILE=${expectedProfile}`
+        `Set with: export AWS_PROFILE=${expectedProfile}`
     );
   }
 
   // Check if no credentials are configured
   if (!hasStaticCredentials && !hasProfileSet) {
-    errors.push(
-      'No AWS credentials configured. Set AWS_PROFILE or run "aws sso login".'
-    );
+    errors.push('No AWS credentials configured. Set AWS_PROFILE or run "aws sso login".');
   }
 
   // Generate recommendation

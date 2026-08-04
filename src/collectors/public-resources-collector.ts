@@ -148,9 +148,7 @@ export async function collectPublicResourcesEvidence(
         // Check bucket ACL
         let hasPublicAcl = false;
         try {
-          const aclResponse = await s3Client.send(
-            new GetBucketAclCommand({ Bucket: bucket.Name })
-          );
+          const aclResponse = await s3Client.send(new GetBucketAclCommand({ Bucket: bucket.Name }));
           hasPublicAcl = (aclResponse.Grants ?? []).some(
             grant =>
               grant.Grantee?.URI?.includes('AllUsers') ||
@@ -222,7 +220,9 @@ export async function collectPublicResourcesEvidence(
             publicIpAddress: instance.PublicIpAddress,
             publicDnsName: instance.PublicDnsName,
             state: instance.State?.Name ?? 'unknown',
-            securityGroups: (instance.SecurityGroups ?? []).map((sg: any) => sg.GroupId ?? 'unknown'),
+            securityGroups: (instance.SecurityGroups ?? []).map(
+              (sg: any) => sg.GroupId ?? 'unknown'
+            ),
           });
         }
       }
@@ -356,7 +356,9 @@ export function savePublicResourcesEvidence(
 export function printPublicResourcesEvidenceSummary(evidence: PublicResourcesEvidence): void {
   console.log('Public Resources Evidence:');
   console.log(`  Public S3 buckets: ${evidence.summary.publicS3Buckets}`);
-  console.log(`  Security groups with public access: ${evidence.summary.securityGroupsWithPublicAccess}`);
+  console.log(
+    `  Security groups with public access: ${evidence.summary.securityGroupsWithPublicAccess}`
+  );
   console.log(`  Public EC2 instances: ${evidence.summary.publicEC2Instances}`);
   console.log(`  Public RDS instances: ${evidence.summary.publicRDSInstances}`);
   console.log(`  Internet-facing load balancers: ${evidence.summary.internetFacingLoadBalancers}`);

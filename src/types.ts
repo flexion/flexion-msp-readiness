@@ -109,6 +109,9 @@ export interface ValidationResult {
   checks: ValidationCheck[];
   summary: string;
   validatedAt: Date;
+  score?: number; // 0-100 overall quality score
+  issues?: ValidationIssue[];
+  recommendations?: string[];
 }
 
 /**
@@ -121,6 +124,91 @@ export interface ValidationCheck {
   actual: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
   message?: string;
+  rule?: string; // Rule ID that triggered this check
+  location?: string; // File path or AWS ARN
+}
+
+/**
+ * Validation issue
+ */
+export interface ValidationIssue {
+  type: 'missing' | 'incomplete' | 'stale' | 'invalid' | 'threshold-not-met' | 'permission-error';
+  severity: 'error' | 'warning';
+  message: string;
+  recommendation: string;
+  affectedRequirements: string[];
+  location?: string; // File path or AWS resource identifier
+}
+
+/**
+ * Validation rule definition
+ */
+export interface ValidationRule {
+  id: string;
+  name: string;
+  category: 'document' | 'aws' | 'cross-requirement';
+  severity: 'error' | 'warning' | 'info';
+  check: (context: ValidationContext) => Promise<ValidationCheck>;
+}
+
+/**
+ * Validation context
+ */
+export interface ValidationContext {
+  requirement: MSPRequirement;
+  evidence: EvidenceArtifact[];
+  allRequirements?: RequirementAssessment[];
+  config?: Config;
+}
+
+/**
+ * Document validation result
+ */
+export interface DocumentValidationResult {
+  valid: boolean;
+  score: number; // 0-100
+  checks: ValidationCheck[];
+  issues: ValidationIssue[];
+  filePath: string;
+  metadata?: {
+    exists: boolean;
+    size?: number;
+    lastModified?: Date;
+    lineCount?: number;
+    hasRequiredSections?: boolean;
+    hasFrontmatter?: boolean;
+  };
+}
+
+/**
+ * Cross-validation result
+ */
+export interface CrossValidationResult {
+  valid: boolean;
+  conflicts: ValidationIssue[];
+  missingReferences: ValidationIssue[];
+  versionMismatches: ValidationIssue[];
+  summary: string;
+}
+
+/**
+ * Validation report
+ */
+export interface ValidationReport {
+  timestamp: Date;
+  overallScore: number; // 0-100
+  totalChecks: number;
+  passedChecks: number;
+  failedChecks: number;
+  byRequirement: Map<string, ValidationResult>;
+  bySeverity: {
+    critical: ValidationIssue[];
+    high: ValidationIssue[];
+    medium: ValidationIssue[];
+    low: ValidationIssue[];
+  };
+  recommendations: string[];
+  summary: string;
 }
 
 /**
@@ -159,6 +247,16 @@ export interface ProjectAssessment {
 }
 
 /**
+ * Playbook mode type
+ */
+export type PlaybookMode = 'technical' | 'process' | 'mixed';
+
+/**
+ * Automation type for playbooks
+ */
+export type AutomationType = 'full' | 'partial' | 'manual';
+
+/**
  * Generated playbook metadata
  */
 export interface GeneratedPlaybook {
@@ -170,6 +268,9 @@ export interface GeneratedPlaybook {
   template: string;
   variables: Record<string, unknown>;
   generatedAt: Date;
+  mode?: PlaybookMode;
+  automationType?: AutomationType;
+  automationPercentage?: number;
 }
 
 /**

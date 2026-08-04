@@ -92,6 +92,8 @@ import {
 import { EvidenceArtifact } from './types';
 import {
   generatePlaybooks,
+  generatePlaybookForRequirement,
+  generateAllRequirementPlaybooks,
   identifyMissingPlaybooks,
   AVAILABLE_PLAYBOOKS,
   AVAILABLE_RUNBOOKS,
@@ -109,6 +111,10 @@ import {
   generateMarkdownReport,
   saveReport,
 } from './assessors/report-generator';
+import { executeGenerateTemplates } from './commands/generate-templates';
+import { executeValidate } from './commands/validate';
+import { executeGaps } from './commands/gaps';
+import { executeExport } from './commands/export';
 
 const program = new Command();
 
@@ -128,6 +134,10 @@ program
   .option('--format <format>', 'Report format: markdown, json, or both', 'both')
   .option('--skip-aws', 'Skip AWS infrastructure analysis')
   .option('--self', 'Assess workspace (this repo) instead of external project')
+  .option('--category <category>', 'Assess specific category only')
+  .option('--automated-only', 'Only run automated checks (skip manual docs)')
+  .option('--manual-only', 'Only check manual documentation')
+  .option('--show-automation', 'Show automation coverage for each requirement')
   .action(async options => {
     try {
       console.log(chalk.bold.blue('\n🔍 MSP Readiness Assessment\n'));
@@ -149,7 +159,8 @@ program
       }
 
       // Check if using self-assessment mode
-      const assessmentMode = options.self || config.assessment.mode === 'self' ? 'self' : 'external';
+      const assessmentMode =
+        options.self || config.assessment.mode === 'self' ? 'self' : 'external';
 
       if (assessmentMode === 'self') {
         // Self-assessment: Assess workspace completeness
@@ -212,8 +223,12 @@ program
           printAWSEnvValidation(envValidation, false);
 
           if (!envValidation.isValid) {
-            console.error(chalk.red('\n⚠️  Cannot proceed with AWS analysis due to environment errors.\n'));
-            console.error(chalk.yellow('Tip: Use --skip-aws to run assessment without AWS analysis.\n'));
+            console.error(
+              chalk.red('\n⚠️  Cannot proceed with AWS analysis due to environment errors.\n')
+            );
+            console.error(
+              chalk.yellow('Tip: Use --skip-aws to run assessment without AWS analysis.\n')
+            );
             process.exit(1);
           }
 
@@ -340,7 +355,9 @@ program
       printAWSEnvValidation(envValidation, false);
 
       if (!envValidation.isValid) {
-        console.error(chalk.red('\n⚠️  Cannot proceed with evidence collection due to environment errors.\n'));
+        console.error(
+          chalk.red('\n⚠️  Cannot proceed with evidence collection due to environment errors.\n')
+        );
         process.exit(1);
       }
 
@@ -589,6 +606,8 @@ program
   .command('generate')
   .description('Generate missing playbooks, runbooks, and evidence matrix')
   .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('-r, --requirement <id>', 'Generate playbook for specific requirement ID (e.g., BUS-001)')
+  .option('--all', 'Generate playbooks for all 46 requirements')
   .option('--playbooks-only', 'Generate only playbooks')
   .option('--runbooks-only', 'Generate only runbooks')
   .option('--matrix-only', 'Generate only evidence matrix')
@@ -603,6 +622,53 @@ program
       spinner.succeed('Configuration loaded');
 
       const outputDir = config.output.playbooks_path;
+
+      // Generate specific requirement playbook
+      if (options.requirement) {
+        spinner.text = `Generating playbook for ${options.requirement}...`;
+        spinner.start();
+
+        const generateOptions = {
+          force: options.force,
+          dryRun: options.dryRun,
+        };
+
+        const playbook = await generatePlaybookForRequirement(
+          config,
+          options.requirement,
+          outputDir,
+          generateOptions
+        );
+
+        if (playbook) {
+          spinner.succeed(`Generated playbook for ${options.requirement}`);
+          console.log(chalk.cyan(`\n  Type: ${playbook.mode}`));
+          console.log(chalk.cyan(`  Automation: ${playbook.automationType} (${playbook.automationPercentage}%)`));
+          console.log(chalk.cyan(`  Output: ${playbook.path}\n`));
+        } else {
+          spinner.fail(`Failed to generate playbook for ${options.requirement}`);
+        }
+        return;
+      }
+
+      // Generate all requirement playbooks
+      if (options.all) {
+        spinner.text = 'Generating playbooks for all 46 requirements...';
+        spinner.start();
+
+        const generateOptions = {
+          force: options.force,
+          dryRun: options.dryRun,
+        };
+
+        const generated = await generateAllRequirementPlaybooks(config, outputDir, generateOptions);
+        spinner.succeed(`Generated ${generated.length} playbook(s)`);
+        printGenerationSummary(generated);
+
+        console.log(chalk.bold.green(`\n✅ Generation complete!\n`));
+        console.log(chalk.cyan(`  Output directory: ${outputDir}\n`));
+        return;
+      }
 
       // Scan existing docs
       spinner.text = 'Scanning existing documentation...';
@@ -973,6 +1039,97 @@ program
         process.exit(1);
       }
       throw error;
+    }
+  });
+
+/**
+ * Generate-templates command - generate document templates for non-technical requirements
+ */
+program
+  .command('generate-templates')
+  .description('Generate document templates for non-technical requirements')
+  .option('-r, --requirement <id>', 'Generate template for specific requirement')
+  .option(
+    '-c, --category <category>',
+    'Generate templates for category (business, people, governance)'
+  )
+  .option('-o, --output <path>', 'Output directory', './docs/msp')
+  .option('--all', 'Generate all templates')
+  .option('--force', 'Overwrite existing files')
+  .action(async options => {
+    try {
+      await executeGenerateTemplates(options);
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error generating templates:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Validate command - validate evidence quality and completeness
+ */
+program
+  .command('validate')
+  .description('Validate evidence quality and completeness')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('-r, --requirement <id>', 'Validate specific requirement')
+  .option('--category <category>', 'Validate category')
+  .option('--all', 'Validate all evidence', true)
+  .option('--strict', 'Fail on warnings (not just errors)')
+  .option('-f, --format <type>', 'Output format (text|json|html)', 'text')
+  .option('-o, --output <path>', 'Save report to file')
+  .action(async options => {
+    try {
+      await executeValidate(options);
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error validating evidence:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Gaps command - analyze compliance gaps
+ */
+program
+  .command('gaps')
+  .description('Analyze compliance gaps')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('--by-priority', 'Sort by priority')
+  .option('--by-effort', 'Sort by estimated effort')
+  .option('--by-automation', 'Sort by automation potential')
+  .option('--category <category>', 'Show gaps for category')
+  .option('--automated-only', 'Only show automatable gaps')
+  .option('-f, --format <type>', 'Output format (text|json|csv)', 'text')
+  .action(async options => {
+    try {
+      await executeGaps(options);
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error analyzing gaps:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Export command - export MSP compliance package
+ */
+program
+  .command('export')
+  .description('Export MSP compliance package')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('-f, --format <type>', 'Export format (html|pdf|zip)', 'zip')
+  .option('-o, --output <path>', 'Output location', './msp-compliance-package')
+  .option('--include-evidence', 'Include evidence files', true)
+  .option('--include-playbooks', 'Include playbooks', true)
+  .action(async options => {
+    try {
+      await executeExport(options);
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error exporting package:'));
+      console.error(error);
+      process.exit(1);
     }
   });
 

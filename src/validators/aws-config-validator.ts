@@ -11,10 +11,7 @@ export class AWSConfigValidator extends BaseValidator {
     return ['SEC-003'];
   }
 
-  async validate(
-    requirement: MSPRequirement,
-    evidencePaths: string[]
-  ): Promise<ValidationResult> {
+  async validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult> {
     const checks: ValidationCheck[] = [];
 
     try {
@@ -45,9 +42,10 @@ export class AWSConfigValidator extends BaseValidator {
       );
 
       // Check compliance status
-      const compliantPercentage = evidence.summary?.totalRules > 0
-        ? (evidence.summary.compliantRules / evidence.summary.totalRules) * 100
-        : 0;
+      const compliantPercentage =
+        evidence.summary?.totalRules > 0
+          ? (evidence.summary.compliantRules / evidence.summary.totalRules) * 100
+          : 0;
 
       checks.push(
         this.createCheck(

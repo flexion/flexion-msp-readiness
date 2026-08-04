@@ -97,7 +97,11 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     priority: 'critical',
     cisControls: ['5', '6'],
     awsServices: ['IAM'],
-    evidenceRequired: ['offboarding-checklists', 'access-revocation-records', 'security-certifications'],
+    evidenceRequired: [
+      'offboarding-checklists',
+      'access-revocation-records',
+      'security-certifications',
+    ],
     estimatedHours: 4,
   },
 
@@ -125,7 +129,11 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     priority: 'high',
     cisControls: [],
     awsServices: [],
-    evidenceRequired: ['customer-feedback-process', 'satisfaction-reports', 'feedback-resolution-process'],
+    evidenceRequired: [
+      'customer-feedback-process',
+      'satisfaction-reports',
+      'feedback-resolution-process',
+    ],
     estimatedHours: 8,
   },
   {
@@ -137,7 +145,11 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     priority: 'critical',
     cisControls: ['3'],
     awsServices: [],
-    evidenceRequired: ['customer-contract-template', 'offboarding-procedures', 'data-transfer-process'],
+    evidenceRequired: [
+      'customer-contract-template',
+      'offboarding-procedures',
+      'data-transfer-process',
+    ],
     estimatedHours: 8,
   },
   {
@@ -168,8 +180,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     id: 'GOV-006',
     name: 'Sustainability Best Practices',
     category: 'governance',
-    description:
-      'AWS Partner optimizes workload placement and architecture for energy efficiency',
+    description: 'AWS Partner optimizes workload placement and architecture for energy efficiency',
     priority: 'medium',
     cisControls: [],
     awsServices: [],
@@ -260,8 +271,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     id: 'SEC-002',
     name: 'Security Awareness Training',
     category: 'security',
-    description:
-      'MSP Practice employees complete annual security awareness training',
+    description: 'MSP Practice employees complete annual security awareness training',
     priority: 'high',
     cisControls: ['14'],
     awsServices: [],
@@ -313,15 +323,18 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     priority: 'critical',
     cisControls: ['6'],
     awsServices: ['IAM', 'STS'],
-    evidenceRequired: ['iam-role-configuration', 'temporary-credentials-demo', 'least-privilege-documentation'],
+    evidenceRequired: [
+      'iam-role-configuration',
+      'temporary-credentials-demo',
+      'least-privilege-documentation',
+    ],
     estimatedHours: 8,
   },
   {
     id: 'SEC-007',
     name: 'Multi-Factor Authentication',
     category: 'security',
-    description:
-      'All human access to AWS accounts requires MFA',
+    description: 'All human access to AWS accounts requires MFA',
     priority: 'critical',
     cisControls: ['6'],
     awsServices: ['IAM', 'IAM Identity Center'],
@@ -349,7 +362,11 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     priority: 'critical',
     cisControls: ['8'],
     awsServices: ['CloudTrail', 'CloudWatch Logs', 'S3'],
-    evidenceRequired: ['logging-requirements-agreement', 'log-capture-configuration', 'retention-controls'],
+    evidenceRequired: [
+      'logging-requirements-agreement',
+      'log-capture-configuration',
+      'retention-controls',
+    ],
     estimatedHours: 0, // Already implemented
   },
   {
@@ -401,7 +418,11 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     priority: 'high',
     cisControls: [],
     awsServices: ['Support'],
-    evidenceRequired: ['customer-support-recommendations', 'opt-out-risk-documentation', 'account-support-list'],
+    evidenceRequired: [
+      'customer-support-recommendations',
+      'opt-out-risk-documentation',
+      'account-support-list',
+    ],
     estimatedHours: 4,
   },
   {
@@ -413,7 +434,11 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     priority: 'critical',
     cisControls: [],
     awsServices: [],
-    evidenceRequired: ['service-desk-documentation', 'customer-agreement', 'after-hours-procedures'],
+    evidenceRequired: [
+      'service-desk-documentation',
+      'customer-agreement',
+      'after-hours-procedures',
+    ],
     estimatedHours: 16,
   },
   {
@@ -456,8 +481,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     id: 'OPS-008',
     name: 'Patch Management',
     category: 'operations',
-    description:
-      'Automated patching process for OS, applications, and security/compliance patches',
+    description: 'Automated patching process for OS, applications, and security/compliance patches',
     priority: 'high',
     cisControls: ['7'],
     awsServices: ['Systems Manager', 'Inspector'],
@@ -492,8 +516,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     id: 'OPS-011',
     name: 'Operational Runbooks',
     category: 'operations',
-    description:
-      'Runbooks for responding to specific workload/infrastructure/security alerts',
+    description: 'Runbooks for responding to specific workload/infrastructure/security alerts',
     priority: 'high',
     cisControls: ['17'],
     awsServices: [],
@@ -576,8 +599,7 @@ export const MSP_REQUIREMENTS: MSPRequirement[] = [
     id: 'OPS-018',
     name: 'Artificial Intelligence',
     category: 'operations',
-    description:
-      'Use of Generative AI for internal operations or customer projects (Recommended)',
+    description: 'Use of Generative AI for internal operations or customer projects (Recommended)',
     priority: 'medium',
     cisControls: [],
     awsServices: ['Bedrock', 'SageMaker'],
@@ -625,11 +647,17 @@ export function getRequirementsByAutomation(): {
   manualOnly: MSPRequirement[];
 } {
   const fullyAutomatable = MSP_REQUIREMENTS.filter(
-    req => req.awsServices && req.awsServices.length > 0 && req.category === 'security' || req.category === 'operations'
+    req =>
+      (req.awsServices && req.awsServices.length > 0 && req.category === 'security') ||
+      req.category === 'operations'
   );
 
   const manualOnly = MSP_REQUIREMENTS.filter(
-    req => req.category === 'business' || req.category === 'people' || req.category === 'governance' || req.category === 'platform'
+    req =>
+      req.category === 'business' ||
+      req.category === 'people' ||
+      req.category === 'governance' ||
+      req.category === 'platform'
   );
 
   const semiAutomatable = MSP_REQUIREMENTS.filter(

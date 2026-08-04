@@ -4,10 +4,7 @@
  */
 
 import { RDSClient, DescribeDBInstancesCommand } from '@aws-sdk/client-rds';
-import {
-  AutoScalingClient,
-  DescribeAutoScalingGroupsCommand,
-} from '@aws-sdk/client-auto-scaling';
+import { AutoScalingClient, DescribeAutoScalingGroupsCommand } from '@aws-sdk/client-auto-scaling';
 import {
   Route53Client,
   ListHealthChecksCommand,
@@ -130,7 +127,9 @@ export async function collectAvailabilityEvidence(
       if (!hc.Id) continue;
 
       try {
-        const hcDetails = await route53Client.send(new GetHealthCheckCommand({ HealthCheckId: hc.Id }));
+        const hcDetails = await route53Client.send(
+          new GetHealthCheckCommand({ HealthCheckId: hc.Id })
+        );
 
         const config = hcDetails.HealthCheck?.HealthCheckConfig;
         healthChecks.push({
