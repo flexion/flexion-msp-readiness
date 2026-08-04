@@ -99,6 +99,7 @@ import {
   AVAILABLE_RUNBOOKS,
   printGenerationSummary,
 } from './generators/playbook-generator';
+import { DocumentCompleter } from './generators/document-completer.js';
 import {
   buildEvidenceMatrix,
   saveEvidenceMatrix,
@@ -169,7 +170,8 @@ program
         const workspaceAssessment = await assessWorkspace(
           config.output.playbooks_path,
           config.output.evidence_path,
-          true // Enable evidence validation
+          true, // Enable evidence validation
+          config.project.docs_path // Check docs/msp for auto-completed documents
         );
 
         printWorkspaceAssessment(workspaceAssessment);
@@ -341,6 +343,53 @@ program
         } catch (error) {
           spinner.warn('Playbook generation skipped');
           console.log(chalk.yellow(`     Run 'msp-readiness generate --all' to generate playbooks\n`));
+        }
+      }
+
+      // Auto-complete documentation if configured
+      if (config.assessment.auto_generate_docs) {
+        spinner.text = 'Auto-completing documentation...';
+        spinner.start();
+        try {
+          const completer = new DocumentCompleter(config);
+          const context = await completer.extractProjectContext();
+
+          console.log(
+            chalk.cyan(`\n  🔍 Scanned project: ${context.awsServices.length} AWS services, ${context.cdkStacks.length} CDK stacks\n`)
+          );
+
+          // Import MSP requirements
+          const { MSP_REQUIREMENTS } = await import('./data/msp-requirements.js');
+          const docsPath = config.project.docs_path;
+
+          let completedCount = 0;
+          for (const req of MSP_REQUIREMENTS) {
+            const content = await completer.generateCompletedDocument(req, context);
+            if (content) {
+              // Determine save path based on category
+              const categoryPath = path.join(docsPath, req.category);
+              const filename = `${req.id.toLowerCase()}-${req.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md`;
+              const fullPath = path.join(categoryPath, filename);
+
+              // Ensure directory exists
+              const fs = await import('fs/promises');
+              await fs.mkdir(categoryPath, { recursive: true });
+
+              // Write completed document
+              await fs.writeFile(fullPath, content, 'utf-8');
+              completedCount++;
+            }
+          }
+
+          spinner.succeed(`Auto-completed ${completedCount} document(s)`);
+          console.log(chalk.cyan(`  📝 Documents: ${docsPath}/\n`));
+        } catch (error) {
+          spinner.warn('Document auto-completion skipped');
+          console.log(
+            chalk.yellow(
+              `     ${error instanceof Error ? error.message : 'Unknown error'}\n`
+            )
+          );
         }
       }
 

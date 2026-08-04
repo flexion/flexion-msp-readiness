@@ -122,6 +122,9 @@ function assessRequirement(
     });
   }
 
+  // Check if there's a completed document for this requirement
+  const hasCompletedDoc = checkForCompletedDocument(requirement, docScan);
+
   // Determine status and confidence
   const { status, confidence } = determineStatus(
     requirement,
@@ -129,7 +132,8 @@ function assessRequirement(
     weakMentions.length,
     hasPlaybook,
     hasEvidence,
-    hasAssessment
+    hasAssessment,
+    hasCompletedDoc
   );
 
   // Generate gaps and recommendations based on status
@@ -185,8 +189,14 @@ function determineStatus(
   weakMentions: number,
   hasPlaybook: boolean,
   hasEvidence: boolean,
-  hasAssessment: boolean
+  hasAssessment: boolean,
+  hasCompletedDoc: boolean = false
 ): { status: RequirementStatus; confidence: number } {
+  // If there's a completed document, consider it fully addressed
+  if (hasCompletedDoc) {
+    return { status: 'addressed', confidence: 0.9 };
+  }
+
   // Calculate documentation score (0-1)
   let docScore = 0;
 
@@ -268,6 +278,29 @@ function checkForAssessmentEntry(requirement: MSPRequirement, docScan: DocScanRe
     if (file.content.includes(requirement.id)) {
       return true;
     }
+  }
+
+  return false;
+}
+
+/**
+ * Check if a completed document exists for this requirement
+ * Looks for frontmatter with requirement_id and status: completed or approved
+ */
+function checkForCompletedDocument(requirement: MSPRequirement, docScan: DocScanResult): boolean {
+  for (const file of docScan.files) {
+    // Check frontmatter if available
+    if (!file.frontmatter) continue;
+
+    // Check if this document is for our requirement
+    const reqId = file.frontmatter.requirement_id;
+    if (reqId !== requirement.id) continue;
+
+    // Check status
+    const status = file.frontmatter.status;
+    if (!status) continue;
+
+    return status === 'completed' || status === 'approved' || status === 'complete';
   }
 
   return false;

@@ -42,12 +42,13 @@ export interface WorkspaceAssessment {
 export async function assessWorkspace(
   playbooksDir: string = './playbooks',
   evidenceDir: string = './evidence',
-  validateEvidence: boolean = true
+  validateEvidence: boolean = true,
+  docsPath?: string
 ): Promise<WorkspaceAssessment> {
   const requirements: WorkspaceRequirementStatus[] = [];
 
   for (const req of MSP_REQUIREMENTS) {
-    const status = await assessRequirement(req, playbooksDir, evidenceDir, validateEvidence);
+    const status = await assessRequirement(req, playbooksDir, evidenceDir, validateEvidence, docsPath);
     requirements.push(status);
   }
 
@@ -63,10 +64,11 @@ async function assessRequirement(
   requirement: MSPRequirement,
   playbooksDir: string,
   evidenceDir: string,
-  validateEvidence: boolean
+  validateEvidence: boolean,
+  docsPath?: string
 ): Promise<WorkspaceRequirementStatus> {
   // Check for playbook
-  const { hasPlaybook, playbookPath, playbookStatus } = checkPlaybook(requirement, playbooksDir);
+  const { hasPlaybook, playbookPath, playbookStatus } = checkPlaybook(requirement, playbooksDir, docsPath);
 
   // Check for evidence
   const { hasEvidence, evidencePaths } = checkEvidence(requirement, evidenceDir);
@@ -129,13 +131,32 @@ async function assessRequirement(
  */
 function checkPlaybook(
   requirement: MSPRequirement,
-  playbooksDir: string
+  playbooksDir: string,
+  docsPath?: string
 ): {
   hasPlaybook: boolean;
   playbookPath?: string;
   playbookStatus?: 'draft' | 'in-progress' | 'approved' | 'complete';
 } {
-  // Map requirement IDs to playbook filenames
+  // First, check for auto-generated documentation in docs/msp/category/ structure
+  if (docsPath) {
+    const categoryPath = path.join(docsPath, requirement.category);
+    const slug = `${requirement.id.toLowerCase()}-${requirement.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md`;
+    const docPath = path.join(categoryPath, slug);
+
+    if (fs.existsSync(docPath)) {
+      const status = (getDocumentStatus(docPath) || undefined) as
+        'draft' | 'in-progress' | 'approved' | 'complete' | undefined;
+
+      return {
+        hasPlaybook: true,
+        playbookPath: docPath,
+        playbookStatus: status || 'approved', // Auto-completed docs default to approved
+      };
+    }
+  }
+
+  // Fall back to checking playbooks directory with legacy map
   const playbookMap: Record<string, string> = {
     'OPSP-001': 'incident-response.md',
     'SEC-010': 'incident-response.md',
