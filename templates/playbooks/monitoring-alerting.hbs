@@ -1,0 +1,253 @@
+# Monitoring and Alerting Playbook
+
+**Project**: {{projectName}}
+**Organization**: {{organization}}
+**Last Updated**: {{date}}
+
+## Purpose
+
+This playbook defines the monitoring and alerting strategy for {{projectName}} to ensure proactive detection of performance issues, security threats, and service degradation.
+
+## Scope
+
+This playbook covers:
+- Infrastructure monitoring (CPU, memory, disk, network)
+- Application monitoring (errors, latency, throughput)
+- Security monitoring (GuardDuty, Security Hub findings)
+- Cost monitoring and anomaly detection
+- Log-based alerting
+
+## Monitoring Architecture
+
+### CloudWatch Metrics
+
+**EC2 Instances**:
+- CPU Utilization > 80% for 5 minutes
+- Memory Utilization > 85% for 5 minutes
+- Disk Space < 15% free
+- Status Check Failed
+
+**RDS Databases**:
+- CPU Utilization > 75% for 10 minutes
+- FreeStorageSpace < 10GB
+- DatabaseConnections > 80% of max
+- ReadLatency/WriteLatency > 100ms
+
+**Lambda Functions**:
+- Error rate > 5%
+- Duration > 80% of timeout
+- Throttles > 0
+- ConcurrentExecutions approaching limit
+
+**API Gateway**:
+- 4XXError rate > 10%
+- 5XXError rate > 1%
+- Latency p99 > 3000ms
+- IntegrationLatency spikes
+
+### CloudWatch Alarms
+
+| Alarm | Threshold | Actions |
+|-------|-----------|---------|
+| **High CPU** | >80% for 5 min | SNS → {{slackChannel}} |
+| **High Memory** | >85% for 5 min | SNS → {{slackChannel}} |
+| **Low Disk Space** | <15% free | SNS → {{slackChannel}} + PagerDuty |
+| **RDS Connection Pool** | >80% used | SNS → {{slackChannel}} |
+| **Lambda Errors** | Error rate >5% | SNS → {{slackChannel}} |
+| **API Errors** | 5XX rate >1% | SNS → {{slackChannel}} + PagerDuty |
+
+### Security Monitoring
+
+**GuardDuty Findings**:
+- HIGH/CRITICAL findings → Immediate alert to security team
+- MEDIUM findings → Daily digest
+- LOW findings → Weekly summary
+
+**Security Hub**:
+- CRITICAL security standard violations → Immediate alert
+- Failed compliance checks → Daily digest
+
+**Config Rules**:
+- Non-compliant resources → Daily summary
+- Critical rules (public S3, security groups) → Immediate alert
+
+### Log-Based Alerts
+
+**CloudWatch Logs Metric Filters**:
+```
+ERROR pattern in application logs → Alert after 10 occurrences in 5 minutes
+FATAL pattern → Immediate alert
+"Access Denied" → Alert after 20 occurrences in 10 minutes
+"Timeout" in API logs → Alert after 50 occurrences in 5 minutes
+```
+
+## Alert Routing
+
+### Severity Levels
+
+| Severity | Response Time | Notification Channel |
+|----------|---------------|---------------------|
+| **CRITICAL** | Immediate | PagerDuty + {{slackChannel}} + Email |
+| **HIGH** | 15 minutes | {{slackChannel}} + Email |
+| **MEDIUM** | 1 hour | {{slackChannel}} |
+| **LOW** | Daily digest | Email summary |
+
+### On-Call Rotation
+
+- Primary on-call engineer: PagerDuty rotation
+- Secondary escalation: Team lead
+- Executive escalation: After 2 hours (CRITICAL only)
+
+## Monitoring Dashboard
+
+**CloudWatch Dashboard**: `{{projectName}}-{{stage}}-dashboard`
+
+**Widgets**:
+1. **System Health**:
+   - EC2 CPU/Memory across all instances
+   - RDS performance metrics
+   - Lambda concurrent executions
+
+2. **Application Performance**:
+   - API Gateway latency (p50, p95, p99)
+   - Error rates (4XX, 5XX)
+   - Request volume
+
+3. **Security Posture**:
+   - GuardDuty findings (last 24h)
+   - Security Hub critical findings
+   - Failed Config rules
+
+4. **Cost**:
+   - Daily spend by service
+   - Month-to-date vs. budget
+   - Anomaly detection alerts
+
+## Procedures
+
+### 1. Creating New Alarms
+
+**When**: Adding new resources or monitoring requirements
+
+**Steps**:
+1. Define metric and threshold based on baseline
+2. Create CloudWatch alarm via CDK/Terraform
+3. Configure SNS topic for notifications
+4. Test alarm by triggering condition in dev/test
+5. Document in this playbook
+6. Add to monitoring dashboard
+
+**Example (CDK)**:
+```typescript
+const alarm = new cloudwatch.Alarm(this, 'HighCPU', {
+  metric: instance.metricCPUUtilization(),
+  threshold: 80,
+  evaluationPeriods: 2,
+  datapointsToAlarm: 2,
+  treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+});
+
+alarm.addAlarmAction(new cwActions.SnsAction(alertTopic));
+```
+
+### 2. Responding to Alerts
+
+**HIGH/CRITICAL Alerts**:
+1. Acknowledge alert in {{slackChannel}}
+2. Check CloudWatch dashboard for context
+3. Review recent deployments/changes
+4. Follow incident response playbook if service impacted
+5. Document root cause and resolution
+6. Tune alarm threshold if false positive
+
+**Pattern of False Positives**:
+- After 3 false positives in 7 days → Review and adjust threshold
+- Document decision in change log
+
+### 3. Adding Log-Based Monitoring
+
+**When**: Detecting specific error patterns in logs
+
+**Steps**:
+1. Identify log pattern to monitor
+2. Create metric filter on log group:
+```bash
+aws logs put-metric-filter \
+  --log-group-name /aws/lambda/{{projectName}}-function \
+  --filter-name ErrorCount \
+  --filter-pattern "ERROR" \
+  --metric-transformations \
+    metricName=ErrorCount,metricNamespace={{projectName}},metricValue=1
+```
+3. Create alarm on the metric
+4. Test by generating matching log entries
+5. Document pattern and purpose
+
+### 4. Monitoring Review
+
+**Weekly** (15 minutes):
+- Review all triggered alarms
+- Identify patterns or recurring issues
+- Adjust thresholds if needed
+- Check for gaps in coverage
+
+**Monthly** (1 hour):
+- Review monitoring coverage for new resources
+- Update dashboard widgets
+- Validate alerting channels working
+- Review and prune unused alarms
+
+## Alert Tuning Guidelines
+
+### Reducing Noise
+
+**Goal**: <5 false positive alerts per week
+
+**Strategies**:
+- Use composite alarms to reduce flapping
+- Set appropriate evaluation periods and datapoints
+- Exclude known maintenance windows
+- Use anomaly detection for dynamic thresholds
+
+**Example - Composite Alarm**:
+```typescript
+const compositeAlarm = new cloudwatch.CompositeAlarm(this, 'ServiceDegraded', {
+  compositeAlarmName: 'service-degraded',
+  alarmRule: cloudwatch.AlarmRule.anyOf(
+    cloudwatch.AlarmRule.fromAlarm(highCpuAlarm, cloudwatch.AlarmState.ALARM),
+    cloudwatch.AlarmRule.fromAlarm(highErrorRateAlarm, cloudwatch.AlarmState.ALARM),
+  ),
+});
+```
+
+### Effective Thresholds
+
+- **CPU/Memory**: Based on 95th percentile baseline + 20% buffer
+- **Error Rates**: >2x normal baseline rate
+- **Latency**: p99 >2x p50, or absolute threshold (e.g., 3s for API)
+- **Security**: Zero tolerance for CRITICAL findings
+
+## Compliance Mapping
+
+| MSP Requirement | Evidence |
+|----------------|----------|
+| **OPS-003** | CloudWatch alarms configuration, SNS topics, dashboard |
+| **CIS Control 8** | Log monitoring filters, Security Hub integration |
+| **CIS Control 13** | Network monitoring, GuardDuty findings |
+
+## Related Documents
+
+- Incident Response Playbook
+- Security Policies Playbook
+- CloudWatch Dashboard: https://console.aws.amazon.com/cloudwatch/home?region={{region}}#dashboards:name={{projectName}}-{{stage}}
+- Alert Runbook: Common alert scenarios and resolution steps
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| {{date}} | Initial playbook generated | MSP Readiness Tool |
+
+---
+
+**🤖 Generated by MSP Readiness Automation**
