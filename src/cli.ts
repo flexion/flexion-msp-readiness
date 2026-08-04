@@ -45,6 +45,42 @@ import {
   printInspectorEvidenceSummary,
 } from './collectors/inspector-collector';
 import {
+  collectCloudWatchEvidence,
+  saveCloudWatchEvidence,
+  printCloudWatchEvidenceSummary,
+} from './collectors/cloudwatch-collector';
+import {
+  collectSSMEvidence,
+  saveSSMEvidence,
+  printSSMEvidenceSummary,
+} from './collectors/ssm-collector';
+import {
+  collectIAMEvidence,
+  saveIAMEvidence,
+  printIAMEvidenceSummary,
+} from './collectors/iam-collector';
+import {
+  collectPublicResourcesEvidence,
+  savePublicResourcesEvidence,
+  printPublicResourcesEvidenceSummary,
+} from './collectors/public-resources-collector';
+import {
+  collectEncryptionEvidence,
+  saveEncryptionEvidence,
+  printEncryptionEvidenceSummary,
+} from './collectors/encryption-collector';
+import {
+  collectAvailabilityEvidence,
+  saveAvailabilityEvidence,
+  printAvailabilityEvidenceSummary,
+} from './collectors/availability-collector';
+import {
+  collectProcessTemplatesEvidence,
+  generateGitHistorySummary,
+  saveProcessTemplatesEvidence,
+  printProcessTemplatesEvidenceSummary,
+} from './collectors/process-templates-collector';
+import {
   generateManifest,
   saveManifest,
   printManifestSummary,
@@ -381,6 +417,145 @@ program
       } catch (error) {
         spinner.warn(
           `Inspector collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+
+      // Collect CloudWatch evidence (OPS-003)
+      spinner.text = 'Collecting CloudWatch evidence...';
+      spinner.start();
+      try {
+        const cloudwatchEvidence = await collectCloudWatchEvidence(
+          config.aws.region,
+          config.aws.profile
+        );
+        const artifact = saveCloudWatchEvidence(
+          cloudwatchEvidence,
+          `${evidencePath}/cloudwatch-monitoring.json`
+        );
+        artifacts.push(artifact);
+        spinner.succeed('CloudWatch evidence collected');
+        printCloudWatchEvidenceSummary(cloudwatchEvidence);
+      } catch (error) {
+        spinner.warn(
+          `CloudWatch collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+
+      // Collect SSM evidence (OPS-008)
+      spinner.text = 'Collecting Systems Manager evidence...';
+      spinner.start();
+      try {
+        const ssmEvidence = await collectSSMEvidence(config.aws.region, config.aws.profile);
+        const artifact = saveSSMEvidence(ssmEvidence, `${evidencePath}/ssm-patch-compliance.json`);
+        artifacts.push(artifact);
+        spinner.succeed('Systems Manager evidence collected');
+        printSSMEvidenceSummary(ssmEvidence);
+      } catch (error) {
+        spinner.warn(
+          `SSM collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+
+      // Collect IAM evidence (SEC-004, SECP-001)
+      spinner.text = 'Collecting IAM evidence...';
+      spinner.start();
+      try {
+        const iamEvidence = await collectIAMEvidence(config.aws.region, config.aws.profile);
+        const artifact = saveIAMEvidence(iamEvidence, `${evidencePath}/iam-users-roles.json`);
+        artifacts.push(artifact);
+        spinner.succeed('IAM evidence collected');
+        printIAMEvidenceSummary(iamEvidence);
+      } catch (error) {
+        spinner.warn(
+          `IAM collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+
+      // Collect public resources evidence (SECP-002)
+      spinner.text = 'Collecting public resources evidence...';
+      spinner.start();
+      try {
+        const publicResourcesEvidence = await collectPublicResourcesEvidence(
+          config.aws.region,
+          config.aws.profile
+        );
+        const artifact = savePublicResourcesEvidence(
+          publicResourcesEvidence,
+          `${evidencePath}/public-resources.json`
+        );
+        artifacts.push(artifact);
+        spinner.succeed('Public resources evidence collected');
+        printPublicResourcesEvidenceSummary(publicResourcesEvidence);
+      } catch (error) {
+        spinner.warn(
+          `Public resources collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+
+      // Collect encryption evidence (SEC-009)
+      spinner.text = 'Collecting encryption evidence...';
+      spinner.start();
+      try {
+        const encryptionEvidence = await collectEncryptionEvidence(
+          config.aws.region,
+          config.aws.profile
+        );
+        const artifact = saveEncryptionEvidence(
+          encryptionEvidence,
+          `${evidencePath}/encryption-status.json`
+        );
+        artifacts.push(artifact);
+        spinner.succeed('Encryption evidence collected');
+        printEncryptionEvidenceSummary(encryptionEvidence);
+      } catch (error) {
+        spinner.warn(
+          `Encryption collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+
+      // Collect availability evidence (OPS-011)
+      spinner.text = 'Collecting availability management evidence...';
+      spinner.start();
+      try {
+        const availabilityEvidence = await collectAvailabilityEvidence(
+          config.aws.region,
+          config.aws.profile
+        );
+        const artifact = saveAvailabilityEvidence(
+          availabilityEvidence,
+          `${evidencePath}/availability-config.json`
+        );
+        artifacts.push(artifact);
+        spinner.succeed('Availability management evidence collected');
+        printAvailabilityEvidenceSummary(availabilityEvidence);
+      } catch (error) {
+        spinner.warn(
+          `Availability collection failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+
+      // Collect process templates evidence (OPSP-001, OPSP-002, OPSP-003, OPSP-005, OPS-006, SEC-001)
+      spinner.text = 'Collecting process templates evidence...';
+      spinner.start();
+      try {
+        const processTemplatesEvidence = await collectProcessTemplatesEvidence(
+          process.cwd(),
+          config.output.playbooks_path
+        );
+        const artifact = saveProcessTemplatesEvidence(
+          processTemplatesEvidence,
+          `${evidencePath}/process-templates.json`
+        );
+        artifacts.push(artifact);
+
+        // Generate Git history summary for change management
+        generateGitHistorySummary(process.cwd(), `${evidencePath}/git-history.json`);
+
+        spinner.succeed('Process templates evidence collected');
+        printProcessTemplatesEvidenceSummary(processTemplatesEvidence);
+      } catch (error) {
+        spinner.warn(
+          `Process templates collection failed: ${error instanceof Error ? error.message : String(error)}`
         );
       }
 

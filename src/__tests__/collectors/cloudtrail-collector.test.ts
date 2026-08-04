@@ -21,17 +21,31 @@ describe('cloudtrail-collector', () => {
   describe('saveCloudTrailEvidence', () => {
     it('should save evidence to JSON file', () => {
       const mockEvidence = {
-        region: 'us-east-1',
         trails: [
           {
             name: 'test-trail',
+            arn: 'arn:aws:cloudtrail:us-east-1:123456789012:trail/test-trail',
             s3BucketName: 'test-bucket',
             isMultiRegion: true,
             logFileValidationEnabled: true,
             isLogging: true,
+            includeGlobalEvents: true,
           },
         ],
-        timestamp: new Date().toISOString(),
+        s3BucketInfo: [
+          {
+            bucketName: 'test-bucket',
+            versioningEnabled: true,
+            encryptionEnabled: true,
+          },
+        ],
+        summary: {
+          totalTrails: 1,
+          activeTrails: 1,
+          multiRegionTrails: 1,
+          logFileValidationEnabled: 1,
+          s3BucketsEncrypted: 1,
+        },
       };
 
       const artifact = saveCloudTrailEvidence(mockEvidence, testFilePath);
@@ -42,25 +56,30 @@ describe('cloudtrail-collector', () => {
       // Check artifact metadata
       expect(artifact.type).toBe('aws-snapshot');
       expect(artifact.path).toBe(testFilePath);
-      expect(artifact.requirementIds).toContain('SEC-004');
+      expect(artifact.requirementIds).toContain('OPS-004');
 
       // Check file content
       const content = JSON.parse(fs.readFileSync(testFilePath, 'utf-8'));
-      expect(content.region).toBe('us-east-1');
       expect(content.trails.length).toBe(1);
     });
 
     it('should include correct requirement IDs', () => {
       const mockEvidence = {
-        region: 'us-east-1',
         trails: [],
-        timestamp: new Date().toISOString(),
+        s3BucketInfo: [],
+        summary: {
+          totalTrails: 0,
+          activeTrails: 0,
+          multiRegionTrails: 0,
+          logFileValidationEnabled: 0,
+          s3BucketsEncrypted: 0,
+        },
       };
 
       const artifact = saveCloudTrailEvidence(mockEvidence, testFilePath);
 
-      // CloudTrail evidence relates to SEC-004 and SECP-002
-      expect(artifact.requirementIds).toContain('SEC-004');
+      // CloudTrail evidence relates to OPS-004 and SEC-003
+      expect(artifact.requirementIds).toContain('OPS-004');
     });
   });
 });

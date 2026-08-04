@@ -238,7 +238,7 @@ export function saveSSMEvidence(evidence: SSMEvidence, outputPath: string): Evid
     type: 'aws-snapshot',
     path: outputPath,
     description: 'Systems Manager managed instances and patch compliance data',
-    requirementIds: ['OPS-003', 'OPS-005', 'SECP-002'],
+    requirementIds: ['OPS-003', 'OPS-005', 'OPS-008', 'SECP-002'],
     collectedAt: new Date(),
     metadata: evidence.summary as unknown as Record<string, unknown>,
   };
