@@ -64,6 +64,12 @@ import {
   generateMarkdownReport,
   saveReport,
 } from './assessors/report-generator';
+import {
+  checkAWSPermissions,
+  printPermissionSummary,
+  printIAMPolicySnippet,
+  ensureRequiredPermissions,
+} from './utils/permission-checker';
 
 const program = new Command();
 
@@ -82,6 +88,7 @@ program
   .option('-o, --output <path>', 'Output path for report', './assessment-report')
   .option('--format <format>', 'Report format: markdown, json, or both', 'both')
   .option('--skip-aws', 'Skip AWS infrastructure analysis')
+  .option('--skip-permission-check', 'Skip AWS permission validation')
   .action(async options => {
     try {
       console.log(chalk.bold.blue('\n🔍 MSP Readiness Assessment\n'));
@@ -115,6 +122,32 @@ program
       const cdkParse = await parseCDKInfrastructure(config.project.infra_path);
       spinner.succeed(`CDK infrastructure parsed (${cdkParse.totalFiles} files)`);
       printCDKSummary(cdkParse);
+
+      // Check AWS permissions (optional)
+      if (!options.skipAws && !options.skipPermissionCheck) {
+        spinner.text = 'Checking AWS permissions...';
+        spinner.start();
+        try {
+          const permissionSummary = await checkAWSPermissions(
+            config.aws.region,
+            config.aws.profile
+          );
+          spinner.stop();
+          printPermissionSummary(permissionSummary);
+
+          if (permissionSummary.accessDenied > 0) {
+            printIAMPolicySnippet(permissionSummary);
+            console.log(chalk.yellow('⚠️  Some AWS permissions are missing.'));
+            console.log(
+              chalk.gray('   Assessment will continue but some features may be limited.\n')
+            );
+          }
+        } catch (error) {
+          spinner.warn('Permission check failed');
+          console.log(chalk.yellow(`  ${error instanceof Error ? error.message : String(error)}`));
+          console.log(chalk.gray('  Continuing with AWS analysis...\n'));
+        }
+      }
 
       // Analyze AWS infrastructure (optional)
       let awsAnalysis: AWSAnalysisResults | undefined;
@@ -229,6 +262,7 @@ program
   .command('collect-evidence')
   .description('Collect compliance evidence from AWS services')
   .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('--skip-permission-check', 'Skip AWS permission validation')
   .action(async options => {
     try {
       console.log(chalk.bold.blue('\n📦 Collecting MSP Evidence\n'));
@@ -237,6 +271,32 @@ program
       const config = loadConfig(options.config);
       spinner.succeed('Configuration loaded');
       printConfigSummary(config);
+
+      // Check AWS permissions (optional)
+      if (!options.skipPermissionCheck) {
+        spinner.text = 'Checking AWS permissions...';
+        spinner.start();
+        try {
+          const permissionSummary = await checkAWSPermissions(
+            config.aws.region,
+            config.aws.profile
+          );
+          spinner.stop();
+          printPermissionSummary(permissionSummary);
+
+          if (permissionSummary.accessDenied > 0) {
+            printIAMPolicySnippet(permissionSummary);
+            console.log(chalk.yellow('⚠️  Some AWS permissions are missing.'));
+            console.log(
+              chalk.gray('   Evidence collection will continue but some collectors may fail.\n')
+            );
+          }
+        } catch (error) {
+          spinner.warn('Permission check failed');
+          console.log(chalk.yellow(`  ${error instanceof Error ? error.message : String(error)}`));
+          console.log(chalk.gray('  Continuing with evidence collection...\n'));
+        }
+      }
 
       const artifacts: EvidenceArtifact[] = [];
       const evidencePath = config.output.evidence_path;
@@ -454,6 +514,50 @@ program
       console.log(chalk.cyan(`  Open with: open ${config.output.dashboard_path}\n`));
     } catch (error) {
       console.error(chalk.red('\n❌ Error building dashboard:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Check-permissions command - validate AWS permissions
+ */
+program
+  .command('check-permissions')
+  .description('Check AWS permissions required for MSP assessment')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('--generate-policy', 'Generate IAM policy for missing permissions')
+  .action(async options => {
+    try {
+      console.log(chalk.bold.blue('\n🔐 AWS Permission Check\n'));
+
+      const spinner = ora('Loading configuration...').start();
+      const config = loadConfig(options.config);
+      spinner.succeed('Configuration loaded');
+
+      console.log(`Region: ${chalk.bold(config.aws.region)}`);
+      console.log(`Profile: ${chalk.bold(config.aws.profile || 'default')}\n`);
+
+      // Run permission checks
+      const permissionSummary = await checkAWSPermissions(config.aws.region, config.aws.profile);
+
+      // Print results
+      printPermissionSummary(permissionSummary);
+
+      // Generate IAM policy if requested or if there are missing permissions
+      if (options.generatePolicy || permissionSummary.accessDenied > 0) {
+        printIAMPolicySnippet(permissionSummary);
+      }
+
+      // Exit with appropriate code
+      if (permissionSummary.accessDenied > 0) {
+        console.log(chalk.yellow('⚠️  Some required permissions are missing.\n'));
+        process.exit(1);
+      } else {
+        console.log(chalk.green('✅ All required permissions are available!\n'));
+      }
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error checking permissions:'));
       console.error(error);
       process.exit(1);
     }

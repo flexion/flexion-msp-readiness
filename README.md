@@ -233,6 +233,111 @@ assessment:
   custom_priorities: {}  # Optional: override priority levels
 ```
 
+## AWS Permissions
+
+### Required Permissions
+
+The MSP readiness tool requires read-only AWS permissions to assess your infrastructure and collect evidence. All permissions are non-destructive.
+
+#### Permission Check Command
+
+Before running an assessment, you can validate your AWS permissions:
+
+```bash
+# Check all required permissions
+msp-readiness check-permissions
+
+# Generate IAM policy for missing permissions
+msp-readiness check-permissions --generate-policy
+```
+
+The tool will automatically check permissions before running `assess` or `collect-evidence` commands. You can skip this check with `--skip-permission-check`.
+
+#### Required IAM Permissions
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudtrail:DescribeTrails",
+        "cloudtrail:GetTrailStatus",
+        "config:DescribeConfigRules",
+        "config:DescribeComplianceByConfigRule",
+        "securityhub:GetFindings",
+        "securityhub:DescribeHub",
+        "backup:ListBackupVaults",
+        "backup:ListBackupPlans",
+        "inspector2:ListFindings",
+        "iam:GetAccountPasswordPolicy",
+        "iam:ListUsers",
+        "iam:ListMFADevices",
+        "cloudwatch:DescribeAlarms",
+        "cloudwatch:ListMetrics"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+#### Permission Categories
+
+| Category | Services | Purpose |
+|----------|----------|---------|
+| **Security Monitoring** | Security Hub, Inspector | Collect security findings and vulnerabilities |
+| **Compliance** | Config, CloudTrail | Verify configuration compliance and audit logging |
+| **Backup & Recovery** | Backup | Validate backup plans and recovery points |
+| **Identity & Access** | IAM | Check password policies and MFA usage |
+| **Monitoring** | CloudWatch | Verify alarm configurations |
+
+#### Service-Specific Notes
+
+- **IAM**: Permissions are global (us-east-1), but work across all regions
+- **Security Hub**: Must be enabled in the target region
+- **Inspector**: Must be activated for the AWS account
+- **Config**: Must have a configuration recorder set up
+
+#### Handling Missing Permissions
+
+If you don't have all permissions:
+
+1. **Run permission check first**:
+   ```bash
+   msp-readiness check-permissions --generate-policy
+   ```
+
+2. **Request IAM policy from your AWS admin**:
+   - Copy the generated policy JSON
+   - Attach to your IAM user/role
+
+3. **Skip permission check (not recommended)**:
+   ```bash
+   msp-readiness assess --skip-permission-check
+   ```
+
+4. **Skip AWS analysis entirely**:
+   ```bash
+   msp-readiness assess --skip-aws
+   ```
+
+The tool gracefully handles missing permissions by:
+- Distinguishing between "access denied" and "service disabled"
+- Continuing with available data
+- Clearly reporting what was skipped
+- Generating partial assessments
+
+#### Error Types
+
+| Error Type | Meaning | Solution |
+|------------|---------|----------|
+| **AccessDeniedException** | IAM policy missing permission | Add permission to IAM policy |
+| **InvalidClientTokenId** | Invalid AWS credentials | Check `aws configure` |
+| **ResourceNotFoundException** | Service not enabled (e.g., Security Hub) | Enable service or skip with `--skip-aws` |
+| **SubscriptionRequiredException** | Service requires subscription (e.g., Inspector) | Subscribe to service or document as N/A |
+
 ## Project Structure
 
 ```
