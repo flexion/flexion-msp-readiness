@@ -2,10 +2,18 @@
  * Workspace Report Generator
  *
  * Generate assessment reports for workspace completeness
+ *
+ * NOTE: This is the legacy report generator. For enhanced reports with category
+ * grouping, automation indicators, and multiple formats, use workspace-report-generator-enhanced.ts
  */
 
 import * as fs from 'fs';
 import { WorkspaceAssessment } from './workspace-assessor';
+import {
+  generateEnhancedWorkspaceReport,
+  saveEnhancedReport,
+  ReportGenerationOptions,
+} from './workspace-report-generator-enhanced';
 
 /**
  * Generate markdown report for workspace assessment
@@ -218,4 +226,29 @@ export function saveWorkspaceReport(
   }
 
   return result;
+}
+
+/**
+ * Generate enhanced workspace report with category grouping and automation indicators
+ *
+ * This is a convenience wrapper for the enhanced report generator
+ */
+export function generateEnhancedReport(
+  assessment: WorkspaceAssessment,
+  projectName: string,
+  options?: Partial<ReportGenerationOptions>
+): string {
+  return generateEnhancedWorkspaceReport(assessment, projectName, options);
+}
+
+/**
+ * Save enhanced workspace report with multiple format options
+ */
+export function saveEnhancedWorkspaceReport(
+  assessment: WorkspaceAssessment,
+  projectName: string,
+  outputPath: string,
+  options?: Partial<ReportGenerationOptions>
+): { path: string; format: string } {
+  return saveEnhancedReport(assessment, projectName, outputPath, options);
 }

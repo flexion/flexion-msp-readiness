@@ -640,6 +640,38 @@ export function getRequirementsByAutomation(): {
 }
 
 /**
+ * Get automation type for a requirement
+ */
+export function getAutomationType(requirement: MSPRequirement): 'full' | 'partial' | 'manual' {
+  // Explicit automation type if set
+  if (requirement.automationType) {
+    return requirement.automationType;
+  }
+
+  // Full automation: Has AWS services and is security/operations with evidence collection possible
+  if (
+    requirement.awsServices &&
+    requirement.awsServices.length > 0 &&
+    (requirement.category === 'security' || requirement.category === 'operations')
+  ) {
+    return 'full';
+  }
+
+  // Manual: Business, people, governance, or platform categories
+  if (
+    requirement.category === 'business' ||
+    requirement.category === 'people' ||
+    requirement.category === 'governance' ||
+    requirement.category === 'platform'
+  ) {
+    return 'manual';
+  }
+
+  // Everything else is partial
+  return 'partial';
+}
+
+/**
  * Summary statistics
  */
 export const MSP_REQUIREMENTS_SUMMARY = {
@@ -656,5 +688,10 @@ export const MSP_REQUIREMENTS_SUMMARY = {
     critical: MSP_REQUIREMENTS.filter(r => r.priority === 'critical').length,
     high: MSP_REQUIREMENTS.filter(r => r.priority === 'high').length,
     medium: MSP_REQUIREMENTS.filter(r => r.priority === 'medium').length,
+  },
+  byAutomation: {
+    full: MSP_REQUIREMENTS.filter(r => getAutomationType(r) === 'full').length,
+    partial: MSP_REQUIREMENTS.filter(r => getAutomationType(r) === 'partial').length,
+    manual: MSP_REQUIREMENTS.filter(r => getAutomationType(r) === 'manual').length,
   },
 };
