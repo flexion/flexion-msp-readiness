@@ -11,10 +11,7 @@ export class IAMValidator extends BaseValidator {
     return ['SEC-004', 'SECP-001'];
   }
 
-  async validate(
-    requirement: MSPRequirement,
-    evidencePaths: string[]
-  ): Promise<ValidationResult> {
+  async validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult> {
     const checks: ValidationCheck[] = [];
 
     try {
@@ -38,9 +35,7 @@ export class IAMValidator extends BaseValidator {
             '100% of users',
             `${mfaPercentage.toFixed(0)}% of users`,
             'critical',
-            mfaPercentage < 100
-              ? `${totalUsers - usersWithMFA} user(s) without MFA`
-              : undefined
+            mfaPercentage < 100 ? `${totalUsers - usersWithMFA} user(s) without MFA` : undefined
           )
         );
 
@@ -99,9 +94,7 @@ export class IAMValidator extends BaseValidator {
             'no exposed keys',
             `${evidence.summary?.exposedKeys || 0} exposed key(s)`,
             'critical',
-            evidence.summary?.exposedKeys > 0
-              ? 'Immediately rotate exposed access keys'
-              : undefined
+            evidence.summary?.exposedKeys > 0 ? 'Immediately rotate exposed access keys' : undefined
           )
         );
 

@@ -145,7 +145,8 @@ program
       }
 
       // Check if using self-assessment mode
-      const assessmentMode = options.self || config.assessment.mode === 'self' ? 'self' : 'external';
+      const assessmentMode =
+        options.self || config.assessment.mode === 'self' ? 'self' : 'external';
 
       if (assessmentMode === 'self') {
         // Self-assessment: Assess workspace completeness
@@ -208,8 +209,12 @@ program
           printAWSEnvValidation(envValidation, false);
 
           if (!envValidation.isValid) {
-            console.error(chalk.red('\n⚠️  Cannot proceed with AWS analysis due to environment errors.\n'));
-            console.error(chalk.yellow('Tip: Use --skip-aws to run assessment without AWS analysis.\n'));
+            console.error(
+              chalk.red('\n⚠️  Cannot proceed with AWS analysis due to environment errors.\n')
+            );
+            console.error(
+              chalk.yellow('Tip: Use --skip-aws to run assessment without AWS analysis.\n')
+            );
             process.exit(1);
           }
 
@@ -336,7 +341,9 @@ program
       printAWSEnvValidation(envValidation, false);
 
       if (!envValidation.isValid) {
-        console.error(chalk.red('\n⚠️  Cannot proceed with evidence collection due to environment errors.\n'));
+        console.error(
+          chalk.red('\n⚠️  Cannot proceed with evidence collection due to environment errors.\n')
+        );
         process.exit(1);
       }
 

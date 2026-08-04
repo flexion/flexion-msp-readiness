@@ -4,7 +4,8 @@
 
 export type RequirementStatus = 'addressed' | 'partial' | 'gap' | 'not-applicable' | 'not-started';
 export type RequirementPriority = 'critical' | 'high' | 'medium' | 'low';
-export type RequirementCategory = 'business' | 'people' | 'governance' | 'platform' | 'security' | 'operations';
+export type RequirementCategory =
+  'business' | 'people' | 'governance' | 'platform' | 'security' | 'operations';
 
 /**
  * MSP Program requirement definition

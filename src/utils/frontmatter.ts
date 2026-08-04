@@ -192,10 +192,7 @@ export function getDocumentStatus(filePath: string): DocumentMetadata['status'] 
 /**
  * Update document status
  */
-export function updateDocumentStatus(
-  filePath: string,
-  status: DocumentMetadata['status']
-): void {
+export function updateDocumentStatus(filePath: string, status: DocumentMetadata['status']): void {
   if (!fs.existsSync(filePath)) {
     return;
   }

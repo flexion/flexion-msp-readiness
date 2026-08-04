@@ -27,7 +27,9 @@ export function generateWorkspaceDashboard(
   // Overall Status
   lines.push('## Overall Status');
   lines.push('');
-  lines.push(`**Completion**: ${summary.completionPercentage}% (${summary.complete}/${summary.total})`);
+  lines.push(
+    `**Completion**: ${summary.completionPercentage}% (${summary.complete}/${summary.total})`
+  );
   lines.push('');
   lines.push('| Status | Count | Percentage |');
   lines.push('|--------|-------|------------|');
@@ -80,10 +82,10 @@ export function generateWorkspaceDashboard(
     lines.push('| ID | Name | Completion | Playbook | Evidence |');
     lines.push('|----|------|------------|----------|----------|');
     for (const req of inProgress) {
-      const playbookStatus = req.hasPlaybook
-        ? `✓ ${req.playbookStatus || 'draft'}`
+      const playbookStatus = req.hasPlaybook ? `✓ ${req.playbookStatus || 'draft'}` : '✗ Missing';
+      const evidenceStatus = req.hasEvidence
+        ? `✓ ${req.evidencePaths.length} file(s)`
         : '✗ Missing';
-      const evidenceStatus = req.hasEvidence ? `✓ ${req.evidencePaths.length} file(s)` : '✗ Missing';
       lines.push(
         `| ${req.requirement.id} | ${req.requirement.name} | ${req.completionPercentage}% | ${playbookStatus} | ${evidenceStatus} |`
       );
@@ -99,7 +101,9 @@ export function generateWorkspaceDashboard(
     lines.push('| ID | Name | Priority |');
     lines.push('|----|------|----------|');
     for (const req of notStarted) {
-      lines.push(`| ${req.requirement.id} | ${req.requirement.name} | ${req.requirement.priority} |`);
+      lines.push(
+        `| ${req.requirement.id} | ${req.requirement.name} | ${req.requirement.priority} |`
+      );
     }
     lines.push('');
   }
