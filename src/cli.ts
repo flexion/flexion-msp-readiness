@@ -10,6 +10,7 @@ import ora from 'ora';
 import * as path from 'path';
 import { loadConfig, printConfigSummary, ConfigError } from './config/loader';
 import { scanDocumentation, printScanSummary } from './assessors/doc-scanner';
+import { parseCDKInfrastructure, printCDKSummary } from './assessors/cdk-parser';
 import {
   matchRequirements,
   calculateSummary,
@@ -107,6 +108,13 @@ program
       const docScan = await scanDocumentation(config.project.docs_path);
       spinner.succeed(`Documentation scanned (${docScan.totalFiles} files)`);
       printScanSummary(docScan);
+
+      // Parse CDK infrastructure code
+      spinner.text = 'Parsing CDK infrastructure...';
+      spinner.start();
+      const cdkParse = await parseCDKInfrastructure(config.project.infra_path);
+      spinner.succeed(`CDK infrastructure parsed (${cdkParse.totalFiles} files)`);
+      printCDKSummary(cdkParse);
 
       // Analyze AWS infrastructure (optional)
       let awsAnalysis: AWSAnalysisResults | undefined;

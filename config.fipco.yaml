@@ -1,0 +1,175 @@
+# MSP Readiness Assessment Configuration
+# Template for new project - copy to config.yaml and customize
+
+project:
+  # Project identifier
+  name: "FIPCO"
+
+  # Path to MSP documentation (playbooks, runbooks, policies)
+  # Can be relative or absolute path
+  docs_path: "/Users/tim/repos/fipco-infra/docs/managed-service-provider"
+
+  # Path to infrastructure code (CDK, Terraform, CloudFormation, etc.)
+  infra_path: "/Users/tim/repos/fipco-infra/cdk"
+
+  # Optional: Repository URL for reference
+  repo_url: "https://github.com/flexion/fipco-infra"
+
+aws:
+  # AWS CLI profile to use for API calls
+  profile: "AWSAdministratorAccess-688672519222"
+
+  # Primary AWS region for assessment
+  region: "us-east-1"
+
+  # Deployment stage/environment to assess (dev, test, prod)
+  stage: "dev"
+
+  # Optional: Additional regions to assess (for multi-region deployments)
+  additional_regions: []
+  #   - "us-west-2"
+  #   - "eu-west-1"
+
+msp:
+  # MSP Program version/period
+  version: "Feb2026-Aug2026"
+
+  # Implementation Group level (1, 2, or 3)
+  # IG1: Basic cyber hygiene
+  # IG2: Helps enterprises manage security for infrastructure/data
+  # IG3: Advanced security program for sensitive/critical data
+  ig_level: 1
+
+  # Organization details
+  organization:
+    name: "Flexion Org"
+    contact: "msp-team@example.com"
+
+output:
+  # Directory for collected evidence artifacts
+  evidence_path: "./evidence"
+
+  # Directory for generated playbooks and runbooks
+  playbooks_path: "./playbooks"
+
+  # Path for generated compliance dashboard
+  dashboard_path: "./dashboard.html"
+
+  # Output format for reports (json, markdown, or both)
+  report_format: "both"
+
+assessment:
+  # Skip specific requirements (e.g., if not applicable)
+  skip_requirements: []
+  #   - "OPSP-005"  # Skip if you don't offer 24/7 support
+
+  # Custom priority levels for requirements (low, medium, high, critical)
+  custom_priorities: {}
+  #   "SECP-001": "critical"
+  #   "OPS-003": "high"
+
+  # Include recommended (not required) MSP practices
+  include_recommended: true
+
+  # Automatically collect evidence from AWS services
+  auto_collect_evidence: true
+
+  # Automatically generate missing documentation
+  auto_generate_docs: true
+
+  # Minimum severity threshold for findings (low, medium, high, critical)
+  min_severity: "medium"
+
+  # Include draft/incomplete documentation in assessment
+  include_drafts: true
+
+  # Maximum age for evidence artifacts (days)
+  evidence_max_age_days: 90
+
+generation:
+  # Overwrite existing documentation files
+  overwrite_existing: false
+
+  # Include examples and code snippets in generated docs
+  include_examples: true
+
+  # Template style for generated documentation
+  template_style: "detailed"  # detailed, minimal, or custom
+
+dashboard:
+  # Include AWS resource details in dashboard
+  include_resources: true
+
+  # Show implementation effort estimates
+  show_effort_estimates: true
+
+  # Group requirements by category, CIS control, or severity
+  group_by: "category"  # category, cis_control, or severity
+
+  # Open dashboard in browser after generation
+  auto_open: true
+
+# Service-specific configuration
+services:
+  # AWS Config
+  config:
+    enabled: true
+    check_conformance_packs: true
+
+  # AWS Security Hub
+  security_hub:
+    enabled: true
+    standards:
+      - "aws-foundational-security-best-practices"
+      - "cis-aws-foundations-benchmark"
+
+  # AWS CloudTrail
+  cloudtrail:
+    enabled: true
+    check_organization_trail: true
+
+  # AWS Inspector
+  inspector:
+    enabled: true
+    scan_types:
+      - "NETWORK_REACHABILITY"
+      - "PACKAGE_VULNERABILITY"
+
+  # AWS Backup
+  backup:
+    enabled: true
+    check_backup_plans: true
+    check_recovery_points: true
+
+  # IAM
+  iam:
+    enabled: true
+    check_mfa: true
+    check_password_policy: true
+    check_access_analyzer: true
+
+  # CloudWatch
+  cloudwatch:
+    enabled: true
+    check_log_retention: true
+    check_alarms: true
+
+# Optional: Notification settings
+# notifications:
+#   slack:
+#     webhook_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+#     channel: "#msp-readiness"
+#   email:
+#     recipients:
+#       - "team@example.com"
+#     smtp_host: "smtp.example.com"
+#     smtp_port: 587
+#     smtp_user: "alerts@example.com"
+
+# Optional: Custom thresholds and policies
+# thresholds:
+#   security_hub_critical_findings: 0
+#   security_hub_high_findings: 5
+#   config_noncompliant_rules: 2
+#   iam_users_without_mfa: 0
+#   backup_missing_resources: 0

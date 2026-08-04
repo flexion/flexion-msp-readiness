@@ -38,9 +38,11 @@ export async function scanDocumentation(docsPath: string): Promise<DocScanResult
   const files: DocumentFile[] = [];
   const requirementMentions = new Map<string, DocumentReference[]>();
 
-  // Recursively find all markdown files
+  // Recursively find all markdown files and evidence files
   const markdownFiles = findMarkdownFiles(docsPath);
+  const evidenceFiles = findEvidenceFiles(docsPath);
 
+  // Process markdown files
   for (const filePath of markdownFiles) {
     const content = fs.readFileSync(filePath, 'utf-8');
     const relativePath = path.relative(docsPath, filePath);
@@ -63,6 +65,20 @@ export async function scanDocumentation(docsPath: string): Promise<DocScanResult
 
     // Extract requirement references
     extractRequirementReferences(docFile, requirementMentions);
+  }
+
+  // Process evidence files (JSON, CSV, TXT in evidence/ subdirectories)
+  for (const filePath of evidenceFiles) {
+    const relativePath = path.relative(docsPath, filePath);
+
+    const docFile: DocumentFile = {
+      path: filePath,
+      relativePath,
+      content: '', // Don't load large JSON files into memory
+      type: 'evidence',
+    };
+
+    files.push(docFile);
   }
 
   // Categorize files
@@ -111,6 +127,43 @@ function findMarkdownFiles(dirPath: string): string[] {
         traverse(fullPath);
       } else if (entry.isFile() && entry.name.endsWith('.md')) {
         files.push(fullPath);
+      }
+    }
+  }
+
+  traverse(dirPath);
+  return files;
+}
+
+/**
+ * Recursively find evidence files (JSON, CSV, TXT) in evidence directories
+ */
+function findEvidenceFiles(dirPath: string): string[] {
+  const files: string[] = [];
+  const evidenceExtensions = ['.json', '.csv', '.txt', '.log'];
+
+  function traverse(currentPath: string) {
+    // Only look in 'evidence' subdirectories
+    const entries = fs.readdirSync(currentPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(currentPath, entry.name);
+
+      if (entry.isDirectory()) {
+        // Skip common directories
+        if (['node_modules', '.git', 'dist', 'build'].includes(entry.name)) {
+          continue;
+        }
+        // Recurse into all directories (especially 'evidence' subdirs)
+        traverse(fullPath);
+      } else if (entry.isFile()) {
+        // Only include files in 'evidence' directories
+        if (currentPath.includes('evidence')) {
+          const ext = path.extname(entry.name).toLowerCase();
+          if (evidenceExtensions.includes(ext)) {
+            files.push(fullPath);
+          }
+        }
       }
     }
   }
