@@ -326,6 +326,24 @@ program
         console.log(chalk.cyan(`  📊 JSON:     ${savedFiles.jsonPath}`));
       }
 
+      // Auto-generate playbooks if configured
+      if (config.assessment.auto_generate_docs) {
+        spinner.text = 'Generating playbooks...';
+        spinner.start();
+        try {
+          const playbooksPath = config.output.playbooks_path;
+          const generated = await generateAllRequirementPlaybooks(
+            config,
+            playbooksPath
+          );
+          spinner.succeed(`Generated ${generated.length} playbook(s)`);
+          console.log(chalk.cyan(`  📖 Playbooks: ${playbooksPath}/\n`));
+        } catch (error) {
+          spinner.warn('Playbook generation skipped');
+          console.log(chalk.yellow(`     Run 'msp-readiness generate --all' to generate playbooks\n`));
+        }
+      }
+
       console.log(chalk.bold.green('\n✅ Assessment complete!\n'));
     } catch (error) {
       console.error(chalk.red('\n❌ Error during assessment:'));

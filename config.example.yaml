@@ -69,7 +69,9 @@ assessment:
   # Automatically collect evidence (requires AWS access)
   auto_collect_evidence: true
 
-  # Generate missing documentation
+  # Automatically generate playbooks during assessment (RECOMMENDED)
+  # When enabled, 'assess' command will generate all 46 playbooks automatically
+  # Playbooks provide step-by-step guidance for each requirement
   auto_generate_docs: true
 
 templates:
