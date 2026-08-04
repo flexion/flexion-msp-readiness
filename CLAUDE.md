@@ -28,6 +28,92 @@ gh pr create
 
 ---
 
+## 🎯 North Star: The MSP Readiness Skill
+
+**CRITICAL**: This entire project exists to build the **msp-readiness Claude Code skill**.
+
+### The End Goal
+
+A user runs this from their project directory:
+```bash
+/msp-readiness assess
+```
+
+And gets:
+- ✅ Complete assessment of their MSP readiness
+- ✅ Generated playbooks for all 19 requirements
+- ✅ Generated runbooks with specific procedures
+- ✅ Evidence collected from their AWS account
+- ✅ Interactive dashboard showing compliance status
+- ✅ Clear remediation guidance for gaps
+
+**No manual work. Fully automated. Production-ready documentation.**
+
+### Reflection Questions for Every Issue
+
+When working on ANY issue, always ask:
+
+1. **How does this improve the msp-readiness skill?**
+   - Does it make the skill more automatic?
+   - Does it improve the quality of generated artifacts?
+   - Does it reduce manual work for users?
+   - Does it make results more accurate?
+
+2. **What else could improve the skill?**
+   - What manual steps still exist?
+   - What requires human judgment that could be automated?
+   - What edge cases aren't handled?
+   - What would make this more valuable to users?
+
+3. **Should this create new issues?**
+   - If you identify improvements, create issues
+   - Document them for future prioritization
+   - Link to the current work
+
+### Example: Improving the Skill
+
+**Working on Issue #5** (Fix Build Process):
+- ❓ How does this improve the skill? → Makes deployment easier, reduces setup friction
+- ❓ What else? → Could automate the entire build/release process
+- ✅ New issue: "Automate release process with GitHub Actions"
+
+**Working on Issue #2** (Complete Playbooks):
+- ❓ How does this improve the skill? → Provides complete documentation for all requirements
+- ❓ What else? → Could customize playbooks based on project specifics (tech stack, team size)
+- ✅ New issue: "Add playbook customization based on project context"
+
+### The Skill's Value Proposition
+
+**Current State** (manual MSP prep):
+- Takes 150+ hours of manual work
+- Error-prone documentation
+- Inconsistent coverage
+- Hard to maintain
+
+**Target State** (with msp-readiness skill):
+- Run one command: `/msp-readiness run`
+- Get complete MSP package in minutes
+- Consistent, high-quality documentation
+- Automatic updates as infrastructure changes
+
+### Measuring Success
+
+The skill is successful when:
+- ✅ Zero manual playbook writing
+- ✅ Zero manual evidence collection
+- ✅ Automatic detection of compliance gaps
+- ✅ Clear, actionable remediation guidance
+- ✅ Real-time compliance dashboard
+- ✅ Supports continuous compliance monitoring
+
+### Keep This in Mind
+
+Every commit should move us closer to that automated, one-command MSP readiness experience.
+
+If your work doesn't improve the skill, ask why you're doing it.
+
+---
+
 ## Project Overview
 
 This is the **Flexion MSP Readiness Automation** project - a Claude Code skill and toolkit for automating AWS Managed Service Provider (MSP) Program readiness assessment.

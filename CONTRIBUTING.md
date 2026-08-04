@@ -61,9 +61,78 @@ git checkout -b feature/issue-<number>-short-description
 - `feature/issue-2-complete-playbooks`
 - `fix/issue-42-aws-credential-error`
 
-### 4. Work on the Issue
+### 4. Reflect: How Does This Improve the Skill?
 
-Make your changes following the guidelines below.
+**BEFORE you start coding**, answer these questions:
+
+#### Question 1: How does this improve the msp-readiness skill?
+
+Think about the end user experience:
+- Does this make the skill more automatic?
+- Does it improve generated artifact quality?
+- Does it reduce manual work?
+- Does it make results more accurate?
+
+**Example (Issue #5 - Fix Build Process)**:
+> This improves the skill by making deployment easier. Users won't need manual steps after building, reducing setup friction for new projects.
+
+#### Question 2: What else could improve the skill?
+
+Look beyond the immediate issue:
+- What manual steps still exist?
+- What requires human judgment that could be automated?
+- What edge cases aren't handled?
+- What would make this more valuable?
+
+**Example (Issue #5)**:
+> Could also automate the entire release process with GitHub Actions. Users could get new versions automatically without any build steps.
+
+#### Question 3: Should this create new issues?
+
+If you identified improvements:
+- Create GitHub issues for them
+- Link them to your current work
+- Add to backlog for prioritization
+
+**Example**:
+```bash
+gh issue create \
+  --title "Automate release process with GitHub Actions" \
+  --body "Identified while working on #5.
+
+Currently users must manually build and copy templates. 
+We could automate this with GitHub Actions to:
+- Build on every commit
+- Run tests automatically  
+- Publish releases to npm
+- Auto-deploy skill updates
+
+This would eliminate all manual deployment steps.
+
+Related to: #5"
+```
+
+#### Document Your Reflection
+
+Add your answers to the PR description:
+
+```markdown
+## Skill Improvement Reflection
+
+**How this improves the skill:**
+[Your answer]
+
+**Additional improvements identified:**
+- [Improvement 1]
+- [Improvement 2]
+
+**New issues created:**
+- #XX: [Title]
+```
+
+### 5. Work on the Issue
+
+Make your changes following the guidelines below, keeping the skill improvement in mind.
 
 ### 5. Test Your Changes
 
@@ -117,11 +186,24 @@ Brief description of changes
 - Change 2
 - Change 3
 
+## Skill Improvement Reflection
+
+**How this improves the msp-readiness skill:**
+[Explain how this moves us closer to fully automated MSP readiness]
+
+**Additional improvements identified:**
+- [Improvement 1, if any]
+- [Improvement 2, if any]
+
+**New issues created:**
+- #XX: [Title, if any]
+
 ## Testing
 - [x] Unit tests pass
 - [x] Integration tests pass
 - [x] Manually tested against fipco-infra
 - [x] All acceptance criteria met
+- [x] Verified improvement to skill experience
 
 ## Issue
 Closes #<issue-number>
@@ -167,6 +249,14 @@ git branch -d feature/issue-<number>-description
 ## Definition of Done
 
 An issue is considered "done" when:
+
+### Skill Improvement Reflection Complete
+
+- [ ] Answered: "How does this improve the msp-readiness skill?"
+- [ ] Answered: "What else could improve the skill?"
+- [ ] Created new issues for identified improvements (if any)
+- [ ] Added reflection to PR description
+- [ ] Verified the skill experience is improved
 
 ### Code Complete
 
