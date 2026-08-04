@@ -23,6 +23,7 @@ import { validateAWSEnvironment, printAWSEnvValidation } from './utils/aws-env-v
 import { assessWorkspace, printWorkspaceAssessment } from './assessors/workspace-assessor';
 import { updateDocumentStatus } from './utils/frontmatter';
 import { generateWorkspaceDashboard } from './dashboard/workspace-dashboard';
+import { saveWorkspaceReport } from './assessors/workspace-report-generator';
 import {
   collectCloudTrailEvidence,
   saveCloudTrailEvidence,
@@ -121,7 +122,25 @@ program
 
         printWorkspaceAssessment(workspaceAssessment);
 
-        // Exit early - self assessment is simpler
+        // Save workspace report
+        const reportFormat = (options.format || config.output.report_format) as
+          'markdown' | 'json' | 'both';
+        const savedFiles = saveWorkspaceReport(
+          workspaceAssessment,
+          config.project.name,
+          config.msp.version,
+          options.output,
+          reportFormat
+        );
+
+        console.log(chalk.bold('\n📄 Reports generated:\n'));
+        if (savedFiles.markdownPath) {
+          console.log(chalk.cyan(`  📝 Markdown: ${savedFiles.markdownPath}`));
+        }
+        if (savedFiles.jsonPath) {
+          console.log(chalk.cyan(`  📊 JSON:     ${savedFiles.jsonPath}`));
+        }
+
         console.log(chalk.gray('\nFor full AWS analysis, run without --self flag.\n'));
         return;
       }
