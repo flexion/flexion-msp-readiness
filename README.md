@@ -22,6 +22,29 @@ Manual MSP readiness preparation is time-consuming and error-prone:
 
 This tool automates 80% of the preparation work, allowing teams to focus on gaps and decision-making.
 
+## ⚠️ Important: Current Limitations
+
+**Completeness Model** (Issue #37):  
+The current version assesses the **target project** (e.g., `fipco-infra`) for completeness, but generates artifacts **in this repo** (`./playbooks`, `./evidence`). This means:
+
+- ✅ Tool generates playbooks and collects evidence
+- ❌ Assessment shows 0% until you manually copy artifacts to target project
+- ❌ Regenerating can overwrite your customizations
+
+**Planned Fix (Issue #37)**:  
+Redesign so this repo IS your MSP workspace:
+- Self-assessment mode (`--self` flag)
+- Overwrite protection with frontmatter metadata
+- Status tracking (draft → in-progress → approved → complete)
+- Clear completeness: playbook + evidence + addressed = complete
+
+For now, workflow is:
+1. Generate playbooks: `msp-readiness generate`
+2. Review and customize in `./playbooks`
+3. Copy to your project: `cp ./playbooks/* /path/to/project/docs/msp/`
+4. Commit to project repo
+5. Re-assess: `msp-readiness assess` (now shows completion)
+
 ## Architecture
 
 ```
