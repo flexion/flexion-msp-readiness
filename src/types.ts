@@ -190,4 +190,96 @@ export interface Config {
     custom_templates_path?: string;
     variables: Record<string, string>;
   };
+  monitoring?: {
+    enabled: boolean;
+    schedule: string; // Cron expression
+    baseline_path?: string; // Path to baseline assessment
+    store_history: boolean; // Store historical assessments
+    history_path?: string; // Where to store history
+  };
+  notifications?: {
+    slack?: {
+      webhook_url: string;
+      channel?: string;
+      alert_on: {
+        compliance_drop: number; // Percentage drop to trigger alert
+        new_gaps: boolean; // Alert on new gaps
+        critical_findings: boolean; // Alert on new critical findings
+      };
+    };
+    email?: {
+      smtp_host: string;
+      smtp_port: number;
+      smtp_secure: boolean;
+      smtp_user: string;
+      smtp_password: string;
+      from: string;
+      to: string[];
+      alert_on: {
+        compliance_drop: number;
+        new_gaps: boolean;
+        critical_findings: boolean;
+      };
+    };
+    cloudwatch?: {
+      enabled: boolean;
+      namespace: string; // CloudWatch namespace
+      dimensions?: Record<string, string>;
+    };
+  };
+}
+
+/**
+ * Drift detection result
+ */
+export interface DriftDetectionResult {
+  timestamp: Date;
+  baselineDate: Date;
+  currentAssessment: ProjectAssessment;
+  baselineAssessment: ProjectAssessment;
+  drifts: Drift[];
+  summary: DriftSummary;
+}
+
+/**
+ * Individual drift item
+ */
+export interface Drift {
+  requirementId: string;
+  requirementName: string;
+  type: 'status_change' | 'new_gap' | 'new_finding' | 'compliance_drop' | 'compliance_improve';
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  previousValue?: string;
+  currentValue?: string;
+  description: string;
+  impact: string;
+}
+
+/**
+ * Drift summary
+ */
+export interface DriftSummary {
+  totalDrifts: number;
+  byCriticality: Record<string, number>;
+  byType: Record<string, number>;
+  complianceChange: number; // Percentage change
+  newGaps: number;
+  resolvedGaps: number;
+  newCriticalFindings: number;
+}
+
+/**
+ * Historical assessment record
+ */
+export interface AssessmentHistory {
+  timestamp: Date;
+  assessmentPath: string;
+  summary: {
+    addressed: number;
+    partial: number;
+    gap: number;
+    notApplicable: number;
+    totalEffort: number;
+    complianceScore: number; // Percentage
+  };
 }

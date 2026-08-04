@@ -64,6 +64,14 @@ import {
   generateMarkdownReport,
   saveReport,
 } from './assessors/report-generator';
+import {
+  detectDrift,
+  loadBaseline,
+  saveBaseline,
+  printDriftSummary,
+} from './monitoring/drift-detector';
+import { runScheduledAssessment, loadHistory, getComplianceTrend } from './monitoring/scheduler';
+import { publishAssessmentMetrics } from './monitoring/cloudwatch-publisher';
 
 const program = new Command();
 
@@ -485,6 +493,256 @@ program
       throw error;
     }
   });
+
+/**
+ * Drift command - detect compliance drift
+ */
+program
+  .command('drift')
+  .description('Detect compliance drift against baseline')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('-b, --baseline <path>', 'Path to baseline assessment')
+  .option('-i, --input <path>', 'Path to current assessment JSON', './assessment-report.json')
+  .option('--save-baseline', 'Save current assessment as new baseline')
+  .option('--skip-notifications', 'Skip sending notifications')
+  .action(async options => {
+    try {
+      console.log(chalk.bold.blue('\n🔍 MSP Drift Detection\n'));
+
+      const spinner = ora('Loading configuration...').start();
+      const config = loadConfig(options.config);
+      spinner.succeed('Configuration loaded');
+
+      // Load current assessment
+      spinner.text = 'Loading current assessment...';
+      spinner.start();
+      if (!require('fs').existsSync(options.input)) {
+        spinner.fail('Current assessment not found');
+        console.log(chalk.yellow('\n  Run "msp-readiness assess" first.\n'));
+        process.exit(1);
+      }
+
+      const currentAssessment = JSON.parse(require('fs').readFileSync(options.input, 'utf-8'));
+      spinner.succeed('Current assessment loaded');
+
+      // Save as baseline if requested
+      if (options.saveBaseline) {
+        const baselinePath =
+          options.baseline || config.monitoring?.baseline_path || './baseline-assessment.json';
+        spinner.text = 'Saving baseline...';
+        spinner.start();
+        saveBaseline(currentAssessment, baselinePath);
+        spinner.succeed(`Baseline saved: ${baselinePath}`);
+        console.log(chalk.bold.green('\n✅ Baseline updated!\n'));
+        return;
+      }
+
+      // Load baseline
+      const baselinePath =
+        options.baseline || config.monitoring?.baseline_path || './baseline-assessment.json';
+
+      spinner.text = 'Loading baseline...';
+      spinner.start();
+      if (!require('fs').existsSync(baselinePath)) {
+        spinner.fail('Baseline not found');
+        console.log(chalk.yellow('\n  No baseline found. Create one with --save-baseline\n'));
+        process.exit(1);
+      }
+
+      const baseline = loadBaseline(baselinePath);
+      spinner.succeed('Baseline loaded');
+
+      // Detect drift
+      spinner.text = 'Detecting drift...';
+      spinner.start();
+      const driftResult = detectDrift(currentAssessment, baseline);
+      spinner.succeed(`Drift detection complete (${driftResult.summary.totalDrifts} drifts)`);
+
+      // Print summary
+      printDriftSummary(driftResult);
+
+      // Show critical drifts
+      const criticalDrifts = driftResult.drifts.filter(
+        d => d.severity === 'critical' || d.severity === 'high'
+      );
+
+      if (criticalDrifts.length > 0) {
+        console.log(
+          chalk.bold.red(`\n🚨 Critical/High Severity Drifts (${criticalDrifts.length}):\n`)
+        );
+        for (const drift of criticalDrifts.slice(0, 10)) {
+          const icon = drift.severity === 'critical' ? '🔴' : '🟠';
+          console.log(`${icon} ${chalk.bold(drift.requirementId)}: ${drift.description}`);
+          console.log(`   ${chalk.gray(drift.impact)}`);
+        }
+        if (criticalDrifts.length > 10) {
+          console.log(chalk.gray(`\n   ... and ${criticalDrifts.length - 10} more\n`));
+        }
+      } else {
+        console.log(chalk.green('\n✅ No critical drifts detected\n'));
+      }
+
+      // Send notifications
+      if (!options.skipNotifications && config.notifications) {
+        spinner.text = 'Sending notifications...';
+        spinner.start();
+        const { sendDriftNotifications } = await import('./monitoring/notifier');
+        await sendDriftNotifications(driftResult, config);
+        spinner.succeed('Notifications sent');
+      }
+
+      console.log(chalk.bold.green('\n✅ Drift detection complete!\n'));
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error during drift detection:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Monitor command - run scheduled assessment with drift detection
+ */
+program
+  .command('monitor')
+  .description('Run scheduled assessment with drift detection and alerts')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('--skip-aws', 'Skip AWS infrastructure analysis')
+  .action(async options => {
+    try {
+      console.log(chalk.bold.blue('\n🔄 MSP Monitoring\n'));
+
+      const spinner = ora('Loading configuration...').start();
+      const config = loadConfig(options.config);
+      spinner.succeed('Configuration loaded');
+
+      if (!config.monitoring?.enabled) {
+        console.log(chalk.yellow('\n  Monitoring is not enabled in config.\n'));
+        console.log(chalk.gray('  Set monitoring.enabled: true in config.yaml\n'));
+        process.exit(0);
+      }
+
+      // Run assessment (same logic as assess command but streamlined)
+      spinner.text = 'Running assessment...';
+      spinner.start();
+
+      const docScan = await scanDocumentation(config.project.docs_path);
+      const cdkParse = await parseCDKInfrastructure(config.project.infra_path);
+
+      let awsAnalysis: AWSAnalysisResults | undefined;
+      if (!options.skipAws) {
+        try {
+          const [configAnalysis, iamAnalysis, securityHubAnalysis] = await Promise.all([
+            analyzeAWSConfig(config.aws.region, config.aws.profile),
+            analyzeIAM(config.aws.region, config.aws.profile),
+            analyzeSecurityHub(config.aws.region, config.aws.profile),
+          ]);
+          awsAnalysis = { configAnalysis, iamAnalysis, securityHubAnalysis };
+        } catch (error) {
+          spinner.warn('AWS analysis failed - continuing with documentation only');
+        }
+      }
+
+      const requirementAssessments = matchRequirements(
+        docScan,
+        config.assessment.skip_requirements,
+        awsAnalysis
+      );
+
+      const assessment = generateProjectAssessment(
+        config.project.name,
+        requirementAssessments,
+        config.msp.version
+      );
+
+      spinner.succeed('Assessment complete');
+
+      // Run scheduled assessment logic (drift detection, notifications, etc.)
+      await runScheduledAssessment(assessment, config);
+
+      console.log(chalk.bold.green('\n✅ Monitoring cycle complete!\n'));
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error during monitoring:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * History command - show compliance history
+ */
+program
+  .command('history')
+  .description('Show compliance history and trends')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('-n, --limit <number>', 'Number of recent assessments to show', '10')
+  .action(async options => {
+    try {
+      const config = loadConfig(options.config);
+
+      console.log(chalk.bold.blue('\n📈 Compliance History\n'));
+
+      const limit = parseInt(options.limit, 10);
+      const history = getComplianceTrend(config, limit);
+
+      if (history.length === 0) {
+        console.log(chalk.yellow('  No historical data found.\n'));
+        console.log(chalk.gray('  Run "msp-readiness monitor" to start collecting history.\n'));
+        return;
+      }
+
+      console.log(`Showing last ${history.length} assessments:\n`);
+
+      for (const entry of history.slice(-limit).reverse()) {
+        const date = entry.timestamp.toISOString().split('T')[0];
+        const score = entry.summary.complianceScore.toFixed(1);
+        const bar = generateProgressBar(entry.summary.complianceScore);
+
+        console.log(`${chalk.gray(date)} ${bar} ${chalk.bold(score + '%')}`);
+        console.log(
+          chalk.gray(
+            `  Addressed: ${entry.summary.addressed}, Partial: ${entry.summary.partial}, Gaps: ${entry.summary.gap}`
+          )
+        );
+      }
+
+      // Calculate trend
+      if (history.length >= 2) {
+        const latest = history[history.length - 1];
+        const previous = history[history.length - 2];
+        const change = latest.summary.complianceScore - previous.summary.complianceScore;
+
+        console.log(chalk.bold('\n📊 Trend:\n'));
+        if (change > 0) {
+          console.log(chalk.green(`  ↑ Improved by ${change.toFixed(1)}% since last assessment`));
+        } else if (change < 0) {
+          console.log(
+            chalk.red(`  ↓ Dropped by ${Math.abs(change).toFixed(1)}% since last assessment`)
+          );
+        } else {
+          console.log(chalk.gray('  → No change since last assessment'));
+        }
+      }
+
+      console.log();
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error loading history:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Generate progress bar for compliance score
+ */
+function generateProgressBar(score: number, width = 20): string {
+  const filled = Math.round((score / 100) * width);
+  const empty = width - filled;
+  const bar = '█'.repeat(filled) + '░'.repeat(empty);
+
+  if (score >= 80) return chalk.green(bar);
+  if (score >= 60) return chalk.yellow(bar);
+  return chalk.red(bar);
+}
 
 // Parse command line arguments
 program.parse(process.argv);

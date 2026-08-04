@@ -218,7 +218,8 @@ function analyzeResourceSecurity(resource: CDKResource): CDKSecurityFinding[] {
         severity: 'high',
         title: 'S3 bucket not encrypted',
         description: `S3 bucket in ${resource.file}:${resource.line} does not have encryption enabled`,
-        remediation: 'Enable S3 bucket encryption using encryption: s3.BucketEncryption.S3_MANAGED or KMS',
+        remediation:
+          'Enable S3 bucket encryption using encryption: s3.BucketEncryption.S3_MANAGED or KMS',
         mspRequirements: ['SEC-009'],
       });
     }
@@ -238,7 +239,8 @@ function analyzeResourceSecurity(resource: CDKResource): CDKSecurityFinding[] {
         severity: 'critical',
         title: 'S3 bucket allows public access',
         description: `S3 bucket in ${resource.file}:${resource.line} allows public access`,
-        remediation: 'Remove publicReadAccess: true and use blockPublicAccess: BlockPublicAccess.BLOCK_ALL',
+        remediation:
+          'Remove publicReadAccess: true and use blockPublicAccess: BlockPublicAccess.BLOCK_ALL',
         mspRequirements: ['SECP-002', 'SEC-009'],
       });
     }
@@ -274,7 +276,8 @@ function analyzeResourceSecurity(resource: CDKResource): CDKSecurityFinding[] {
       severity: 'info',
       title: 'Security Group detected',
       description: `Security Group in ${resource.file}:${resource.line} - manual review recommended`,
-      remediation: 'Verify ingress rules do not allow 0.0.0.0/0 access except for legitimate use cases',
+      remediation:
+        'Verify ingress rules do not allow 0.0.0.0/0 access except for legitimate use cases',
       mspRequirements: ['SEC-003', 'SECP-002'],
     });
   }

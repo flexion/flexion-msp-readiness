@@ -83,3 +83,60 @@ templates:
     sla_response_high: "1 hour"
     support_email: "support@example.com"
     support_slack: "#your-support-channel"
+
+monitoring:
+  # Enable scheduled assessments
+  enabled: false
+
+  # Cron schedule (e.g., "0 9 * * *" = daily at 9 AM)
+  schedule: "0 9 * * *"
+
+  # Path to baseline assessment (optional)
+  baseline_path: null
+
+  # Store historical assessments
+  store_history: true
+
+  # Where to store history
+  history_path: "./history"
+
+notifications:
+  # Slack notifications
+  slack:
+    # Slack webhook URL
+    webhook_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+
+    # Channel to post to (optional, defaults to webhook default)
+    channel: "#msp-alerts"
+
+    # Alert thresholds
+    alert_on:
+      compliance_drop: 5  # Alert if compliance drops by 5%
+      new_gaps: true      # Alert on new gaps
+      critical_findings: true  # Alert on new critical findings
+
+  # Email notifications
+  email:
+    smtp_host: "smtp.example.com"
+    smtp_port: 587
+    smtp_secure: false
+    smtp_user: "alerts@example.com"
+    smtp_password: "your-smtp-password"
+    from: "MSP Readiness <alerts@example.com>"
+    to:
+      - "team@example.com"
+      - "manager@example.com"
+
+    # Alert thresholds
+    alert_on:
+      compliance_drop: 5
+      new_gaps: true
+      critical_findings: true
+
+  # CloudWatch metrics
+  cloudwatch:
+    enabled: false
+    namespace: "MSP/Readiness"
+    dimensions:
+      Environment: "production"
+      Project: "your-project"

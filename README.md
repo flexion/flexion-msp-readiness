@@ -48,11 +48,17 @@ This tool automates 80% of the preparation work, allowing teams to focus on gaps
              │   ├── Evidence Matrix Builder
              │   └── Self-Assessment Filler
              │
-             └── Dashboard (visualize status)
-                 ├── Requirement Coverage Map
-                 ├── Evidence Completeness
-                 ├── Gap Analysis View
-                 └── Effort Estimates
+             ├── Dashboard (visualize status)
+             │   ├── Requirement Coverage Map
+             │   ├── Evidence Completeness
+             │   ├── Gap Analysis View
+             │   └── Effort Estimates
+             │
+             └── Monitoring (continuous compliance)
+                 ├── Scheduled Assessments
+                 ├── Drift Detection
+                 ├── Slack/Email Notifications
+                 └── CloudWatch Metrics
 ```
 
 ## Quick Start
@@ -199,6 +205,59 @@ Interactive HTML dashboard showing:
 ├───────────────────────────────────────────────────────┤
 │  Evidence Status:                                     │
 │  📊 12 evidence files collected                       │
+```
+
+### 5. Automated Drift Detection & Monitoring
+
+**NEW**: Continuous compliance monitoring with automated alerts:
+
+- **Scheduled Assessments**: Run assessments on a cron schedule (e.g., daily at 9 AM)
+- **Drift Detection**: Compare current state against baseline to detect compliance changes
+- **Smart Notifications**: Slack/email alerts when compliance drops or new gaps appear
+- **CloudWatch Metrics**: Publish compliance metrics to AWS CloudWatch for dashboards
+- **Historical Tracking**: Store assessment history to track compliance trends over time
+- **Alert Deduplication**: Prevent notification spam from repeated issues
+
+**Quick Start:**
+
+```bash
+# Create baseline
+msp-readiness assess
+msp-readiness drift --save-baseline
+
+# Detect drift
+msp-readiness drift
+
+# Run monitoring cycle
+msp-readiness monitor
+
+# View compliance history
+msp-readiness history
+
+# Start continuous monitoring daemon
+node dist/monitoring/daemon.js config.yaml
+```
+
+**Configuration:**
+
+```yaml
+monitoring:
+  enabled: true
+  schedule: "0 9 * * *"  # Daily at 9 AM
+
+notifications:
+  slack:
+    webhook_url: "https://hooks.slack.com/..."
+    alert_on:
+      compliance_drop: 5  # Alert if drops by 5%
+      new_gaps: true
+  
+  cloudwatch:
+    enabled: true
+    namespace: "MSP/Readiness"
+```
+
+See [Monitoring README](src/monitoring/README.md) for full documentation
 │  📝 8 playbooks/runbooks generated                    │
 │  ⏱️  Last updated: 2026-07-27 14:23 UTC              │
 └───────────────────────────────────────────────────────┘
