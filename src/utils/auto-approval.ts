@@ -106,9 +106,7 @@ export function autoApprovePlaybook(
     metadata.status = newStatus;
     metadata.validation_passed = false;
     metadata.last_validated = validationResult.validatedAt.toISOString();
-    metadata.validation_failures = validationResult.checks
-      .filter(c => !c.passed)
-      .map(c => c.name);
+    metadata.validation_failures = validationResult.checks.filter(c => !c.passed).map(c => c.name);
     metadata.remediation_required = true;
 
     // Clear approval metadata if previously approved

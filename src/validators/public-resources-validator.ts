@@ -11,10 +11,7 @@ export class PublicResourcesValidator extends BaseValidator {
     return ['SECP-002'];
   }
 
-  async validate(
-    requirement: MSPRequirement,
-    evidencePaths: string[]
-  ): Promise<ValidationResult> {
+  async validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult> {
     const checks: ValidationCheck[] = [];
 
     try {
@@ -42,9 +39,9 @@ export class PublicResourcesValidator extends BaseValidator {
       // Check for overly permissive security groups
       const allowedPublicPorts = [80, 443]; // HTTP/HTTPS are acceptable
       const riskySecurityGroups = (evidence.securityGroups || []).filter((sg: any) =>
-        sg.publicRules?.some((rule: any) =>
-          !allowedPublicPorts.includes(rule.fromPort) &&
-          !allowedPublicPorts.includes(rule.toPort)
+        sg.publicRules?.some(
+          (rule: any) =>
+            !allowedPublicPorts.includes(rule.fromPort) && !allowedPublicPorts.includes(rule.toPort)
         )
       ).length;
 

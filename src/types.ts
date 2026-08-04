@@ -4,7 +4,9 @@
 
 export type RequirementStatus = 'addressed' | 'partial' | 'gap' | 'not-applicable' | 'not-started';
 export type RequirementPriority = 'critical' | 'high' | 'medium' | 'low';
-export type RequirementCategory = 'business' | 'people' | 'governance' | 'platform' | 'security' | 'operations';
+export type RequirementCategory =
+  'business' | 'people' | 'governance' | 'platform' | 'security' | 'operations';
+export type AutomationType = 'full' | 'partial' | 'manual';
 
 /**
  * MSP Program requirement definition
@@ -22,6 +24,17 @@ export interface MSPRequirement {
 }
 
 /**
+ * Document quality score for manual/non-technical requirements
+ */
+export interface DocumentQualityScore {
+  score: number; // 0-100
+  hasRequiredSections: boolean;
+  isFresh: boolean; // Updated within expected timeframe
+  meetsLengthRequirement: boolean;
+  issues: string[];
+}
+
+/**
  * Assessment result for a single requirement
  */
 export interface RequirementAssessment {
@@ -33,6 +46,11 @@ export interface RequirementAssessment {
   gaps: string[];
   recommendations: string[];
   estimatedEffort?: number; // hours
+  automationType: AutomationType; // Type of automation available
+  automationCoverage: number; // 0-100%
+  manualStepsRequired: string[]; // Guidance for missing evidence
+  templateAvailable: boolean; // Whether a template exists
+  documentQuality?: DocumentQualityScore; // Quality score for documents
 }
 
 /**
@@ -104,9 +122,21 @@ export interface EvidenceArtifact {
 export interface ValidationResult {
   requirementId: string;
   passed: boolean;
+  valid?: boolean; // Alias for backward compatibility
+  score?: number; // Optional quality score 0-100
   checks: ValidationCheck[];
+  issues?: ValidationIssue[]; // Structured issues for document quality
   summary: string;
   validatedAt: Date;
+}
+
+/**
+ * Validation issue for document quality
+ */
+export interface ValidationIssue {
+  type: 'missing-sections' | 'stale' | 'incomplete' | 'formatting' | 'other';
+  message: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
 }
 
 /**

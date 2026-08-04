@@ -173,6 +173,10 @@ function assessRequirement(
     gaps,
     recommendations,
     estimatedEffort,
+    automationType: 'manual', // Default for requirement matcher
+    automationCoverage: 0,
+    manualStepsRequired: [],
+    templateAvailable: false,
   };
 }
 
@@ -294,6 +298,10 @@ function createNotApplicableAssessment(requirement: MSPRequirement): Requirement
     gaps: [],
     recommendations: [],
     estimatedEffort: 0,
+    automationType: 'manual',
+    automationCoverage: 0,
+    manualStepsRequired: [],
+    templateAvailable: false,
   };
 }
 

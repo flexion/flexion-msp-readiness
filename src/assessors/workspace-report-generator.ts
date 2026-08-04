@@ -30,7 +30,9 @@ export function generateWorkspaceReport(
   // Summary
   lines.push('## Summary');
   lines.push('');
-  lines.push(`Overall completion: ${summary.completionPercentage}% (${summary.complete}/${summary.total} requirements fully complete).`);
+  lines.push(
+    `Overall completion: ${summary.completionPercentage}% (${summary.complete}/${summary.total} requirements fully complete).`
+  );
   lines.push(`${summary.inProgress} requirements in progress, ${summary.notStarted} not started.`);
   lines.push('');
 
@@ -53,6 +55,7 @@ export function generateWorkspaceReport(
       lines.push(`**Status**: complete (${req.completionPercentage}%)`);
       lines.push(`**Priority**: ${req.requirement.priority}`);
       lines.push(`**Category**: ${req.requirement.category}`);
+      lines.push(`**Automation**: ${req.automationType} (${req.automationCoverage}% coverage)`);
       lines.push('');
       lines.push(`**Description**: ${req.requirement.description}`);
       lines.push('');
@@ -61,6 +64,9 @@ export function generateWorkspaceReport(
       lines.push(`- ✓ Evidence: ${req.evidencePaths.length} file(s)`);
       for (const path of req.evidencePaths) {
         lines.push(`  - ${path}`);
+      }
+      if (req.documentQuality) {
+        lines.push(`- ✓ Document Quality: ${req.documentQuality.score}/100`);
       }
       lines.push('');
       lines.push('---');
@@ -79,6 +85,7 @@ export function generateWorkspaceReport(
       lines.push(`**Status**: in-progress (${req.completionPercentage}%)`);
       lines.push(`**Priority**: ${req.requirement.priority}`);
       lines.push(`**Category**: ${req.requirement.category}`);
+      lines.push(`**Automation**: ${req.automationType} (${req.automationCoverage}% coverage)`);
       lines.push('');
       lines.push(`**Description**: ${req.requirement.description}`);
       lines.push('');
@@ -87,6 +94,9 @@ export function generateWorkspaceReport(
         lines.push(`- ✓ Playbook: ${req.playbookPath} (status: ${req.playbookStatus})`);
       } else {
         lines.push(`- ✗ Playbook: Not generated`);
+        if (req.templateAvailable) {
+          lines.push('  - Template available for generation');
+        }
       }
       if (req.hasEvidence) {
         lines.push(`- ✓ Evidence: ${req.evidencePaths.length} file(s)`);
@@ -96,6 +106,12 @@ export function generateWorkspaceReport(
       } else {
         lines.push(`- ✗ Evidence: Missing`);
       }
+      if (req.documentQuality) {
+        lines.push(`- 📄 Document Quality: ${req.documentQuality.score}/100`);
+        if (req.documentQuality.issues.length > 0) {
+          lines.push(`  - Issues: ${req.documentQuality.issues.join(', ')}`);
+        }
+      }
       lines.push('');
       lines.push('**Next Steps**:');
       if (!req.hasPlaybook) {
@@ -103,6 +119,12 @@ export function generateWorkspaceReport(
       }
       if (!req.hasEvidence) {
         lines.push('- Collect evidence: `msp-readiness collect-evidence`');
+      }
+      if (req.manualStepsRequired.length > 0) {
+        lines.push('- **Manual steps required**:');
+        for (const step of req.manualStepsRequired) {
+          lines.push(`  - ${step}`);
+        }
       }
       if (req.hasPlaybook && req.hasEvidence && req.playbookStatus !== 'approved') {
         lines.push(`- Approve playbook: \`msp-readiness approve ${req.requirement.id}\``);
@@ -123,12 +145,29 @@ export function generateWorkspaceReport(
       lines.push('');
       lines.push(`**Priority**: ${req.requirement.priority}`);
       lines.push(`**Category**: ${req.requirement.category}`);
+      lines.push(`**Automation**: ${req.automationType} (${req.automationCoverage}% coverage)`);
       lines.push('');
       lines.push(`**Description**: ${req.requirement.description}`);
       lines.push('');
       lines.push('**Next Steps**:');
-      lines.push('- Generate playbook: `msp-readiness generate`');
-      lines.push('- Collect evidence: `msp-readiness collect-evidence`');
+      if (req.automationType === 'full') {
+        lines.push('- Automated evidence collection available: `msp-readiness collect-evidence`');
+      } else if (req.automationType === 'manual') {
+        lines.push('- Manual documentation required');
+        if (req.templateAvailable) {
+          lines.push('- Template available: `msp-readiness generate`');
+        }
+      } else {
+        lines.push('- Mixed: automated + manual steps required');
+        lines.push('- Generate playbook: `msp-readiness generate`');
+        lines.push('- Collect evidence: `msp-readiness collect-evidence`');
+      }
+      if (req.manualStepsRequired.length > 0 && req.manualStepsRequired.length <= 3) {
+        lines.push('- **Manual steps**:');
+        for (const step of req.manualStepsRequired) {
+          lines.push(`  - ${step}`);
+        }
+      }
       lines.push('');
       lines.push('---');
       lines.push('');
@@ -148,11 +187,15 @@ export function generateWorkspaceReport(
     lines.push(`1. **Generate ${needPlaybooks} missing playbook(s)**: \`msp-readiness generate\``);
   }
   if (needEvidence > 0) {
-    lines.push(`2. **Collect evidence for ${needEvidence} requirement(s)**: \`msp-readiness collect-evidence\``);
+    lines.push(
+      `2. **Collect evidence for ${needEvidence} requirement(s)**: \`msp-readiness collect-evidence\``
+    );
   }
   if (needApproval > 0) {
     const ids = requirements
-      .filter(r => r.hasPlaybook && r.hasEvidence && (!r.playbookStatus || r.playbookStatus === 'draft'))
+      .filter(
+        r => r.hasPlaybook && r.hasEvidence && (!r.playbookStatus || r.playbookStatus === 'draft')
+      )
       .map(r => r.requirement.id)
       .join(',');
     lines.push(`3. **Approve ${needApproval} playbook(s)**: \`msp-readiness approve ${ids}\``);
@@ -210,6 +253,12 @@ export function saveWorkspaceReport(
         playbookStatus: r.playbookStatus,
         hasEvidence: r.hasEvidence,
         evidencePaths: r.evidencePaths,
+        automationType: r.automationType,
+        automationCoverage: r.automationCoverage,
+        manualStepsRequired: r.manualStepsRequired,
+        templateAvailable: r.templateAvailable,
+        documentQuality: r.documentQuality,
+        validated: r.validated,
       })),
     };
     const jsonPath = `${outputPath}.json`;

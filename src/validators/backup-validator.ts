@@ -11,10 +11,7 @@ export class BackupValidator extends BaseValidator {
     return ['OPS-005'];
   }
 
-  async validate(
-    requirement: MSPRequirement,
-    evidencePaths: string[]
-  ): Promise<ValidationResult> {
+  async validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult> {
     const checks: ValidationCheck[] = [];
 
     try {
@@ -67,8 +64,8 @@ export class BackupValidator extends BaseValidator {
 
       // Check individual backup plans for retention
       for (const plan of evidence.backupPlans || []) {
-        const hasRetention = plan.rules?.some((rule: any) =>
-          (rule.lifecycle?.deleteAfterDays || 0) >= 90
+        const hasRetention = plan.rules?.some(
+          (rule: any) => (rule.lifecycle?.deleteAfterDays || 0) >= 90
         );
 
         if (!hasRetention) {
