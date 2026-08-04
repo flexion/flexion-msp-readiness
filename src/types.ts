@@ -252,11 +252,6 @@ export interface ProjectAssessment {
 export type PlaybookMode = 'technical' | 'process' | 'mixed';
 
 /**
- * Automation type for playbooks
- */
-export type AutomationType = 'full' | 'partial' | 'manual';
-
-/**
  * Generated playbook metadata
  */
 export interface GeneratedPlaybook {
