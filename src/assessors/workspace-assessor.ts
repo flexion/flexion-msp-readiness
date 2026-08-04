@@ -210,9 +210,8 @@ function calculateSummary(
   const inProgress = requirements.filter(r => r.overallStatus === 'in-progress').length;
   const notStarted = requirements.filter(r => r.overallStatus === 'not-started').length;
 
-  const completionPercentage = Math.round(
-    (requirements.reduce((sum, r) => sum + r.completionPercentage, 0) / total)
-  );
+  // Calculate completion as percentage of requirements that are 100% complete
+  const completionPercentage = Math.round((complete / total) * 100);
 
   return {
     total,
