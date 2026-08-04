@@ -1,5 +1,6 @@
 /**
  * Evidence Manifest Generator
+ * Generates a comprehensive manifest of all collected evidence
  */
 
 import * as fs from 'fs';
