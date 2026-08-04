@@ -12,9 +12,12 @@ export function aggregateDashboardData(
 ): DashboardData {
   // By category statistics
   const byCategory: DashboardData['byCategory'] = {
+    business: { total: 0, addressed: 0, partial: 0, gap: 0 },
+    people: { total: 0, addressed: 0, partial: 0, gap: 0 },
+    governance: { total: 0, addressed: 0, partial: 0, gap: 0 },
+    platform: { total: 0, addressed: 0, partial: 0, gap: 0 },
     security: { total: 0, addressed: 0, partial: 0, gap: 0 },
     operations: { total: 0, addressed: 0, partial: 0, gap: 0 },
-    support: { total: 0, addressed: 0, partial: 0, gap: 0 },
   };
 
   for (const reqAssessment of assessment.requirementAssessments) {

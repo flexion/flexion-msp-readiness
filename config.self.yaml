@@ -1,0 +1,41 @@
+# MSP Readiness Self-Assessment Configuration
+# Assesses the msp-readiness workspace itself
+
+project:
+  name: "MSP Readiness Workspace"
+  docs_path: "./playbooks"  # Self-assessment of this workspace
+  infra_path: "./src"
+  repo_url: "https://github.com/flexion/flexion-msp-readiness"
+
+aws:
+  profile: "default"
+  region: "us-east-1"
+  stage: "test"
+
+msp:
+  version: "Feb2026-Aug2026"
+  ig_level: 1
+  organization:
+    name: "Flexion"
+    contact: "devops@flexion.us"
+
+output:
+  evidence_path: "./evidence"
+  playbooks_path: "./playbooks"
+  dashboard_path: "./dashboard.html"
+  report_format: "both"
+
+assessment:
+  skip_requirements: []
+  include_recommended: true
+  auto_collect_evidence: false  # Don't auto-collect for self-assessment
+  auto_generate_docs: false
+
+templates:
+  custom_templates_path: null
+  variables:
+    company_name: "Flexion"
+    sla_response_critical: "15 minutes"
+    sla_response_high: "1 hour"
+    support_email: "devops@flexion.us"
+    support_slack: "#devops"

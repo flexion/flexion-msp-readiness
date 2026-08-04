@@ -29,15 +29,54 @@ export async function buildDashboard(
 
   const categories = [
     {
+      name: 'Business',
+      total: dashboardData.byCategory.business.total,
+      addressed: dashboardData.byCategory.business.addressed,
+      partial: dashboardData.byCategory.business.partial,
+      gap: dashboardData.byCategory.business.gap,
+      percent: dashboardData.byCategory.business.total > 0
+        ? Math.round((dashboardData.byCategory.business.addressed / dashboardData.byCategory.business.total) * 100)
+        : 0,
+    },
+    {
+      name: 'People',
+      total: dashboardData.byCategory.people.total,
+      addressed: dashboardData.byCategory.people.addressed,
+      partial: dashboardData.byCategory.people.partial,
+      gap: dashboardData.byCategory.people.gap,
+      percent: dashboardData.byCategory.people.total > 0
+        ? Math.round((dashboardData.byCategory.people.addressed / dashboardData.byCategory.people.total) * 100)
+        : 0,
+    },
+    {
+      name: 'Governance',
+      total: dashboardData.byCategory.governance.total,
+      addressed: dashboardData.byCategory.governance.addressed,
+      partial: dashboardData.byCategory.governance.partial,
+      gap: dashboardData.byCategory.governance.gap,
+      percent: dashboardData.byCategory.governance.total > 0
+        ? Math.round((dashboardData.byCategory.governance.addressed / dashboardData.byCategory.governance.total) * 100)
+        : 0,
+    },
+    {
+      name: 'Platform',
+      total: dashboardData.byCategory.platform.total,
+      addressed: dashboardData.byCategory.platform.addressed,
+      partial: dashboardData.byCategory.platform.partial,
+      gap: dashboardData.byCategory.platform.gap,
+      percent: dashboardData.byCategory.platform.total > 0
+        ? Math.round((dashboardData.byCategory.platform.addressed / dashboardData.byCategory.platform.total) * 100)
+        : 0,
+    },
+    {
       name: 'Security',
       total: dashboardData.byCategory.security.total,
       addressed: dashboardData.byCategory.security.addressed,
       partial: dashboardData.byCategory.security.partial,
       gap: dashboardData.byCategory.security.gap,
-      percent: Math.round(
-        (dashboardData.byCategory.security.addressed / dashboardData.byCategory.security.total) *
-          100
-      ),
+      percent: dashboardData.byCategory.security.total > 0
+        ? Math.round((dashboardData.byCategory.security.addressed / dashboardData.byCategory.security.total) * 100)
+        : 0,
     },
     {
       name: 'Operations',
@@ -45,26 +84,9 @@ export async function buildDashboard(
       addressed: dashboardData.byCategory.operations.addressed,
       partial: dashboardData.byCategory.operations.partial,
       gap: dashboardData.byCategory.operations.gap,
-      percent: Math.round(
-        (dashboardData.byCategory.operations.addressed /
-          dashboardData.byCategory.operations.total) *
-          100
-      ),
-    },
-    {
-      name: 'Support',
-      total: dashboardData.byCategory.support.total,
-      addressed: dashboardData.byCategory.support.addressed,
-      partial: dashboardData.byCategory.support.partial,
-      gap: dashboardData.byCategory.support.gap,
-      percent:
-        dashboardData.byCategory.support.total > 0
-          ? Math.round(
-              (dashboardData.byCategory.support.addressed /
-                dashboardData.byCategory.support.total) *
-                100
-            )
-          : 0,
+      percent: dashboardData.byCategory.operations.total > 0
+        ? Math.round((dashboardData.byCategory.operations.addressed / dashboardData.byCategory.operations.total) * 100)
+        : 0,
     },
   ];
 

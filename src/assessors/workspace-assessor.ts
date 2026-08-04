@@ -171,7 +171,7 @@ function checkPlaybook(
     return { hasPlaybook: false };
   }
 
-  const playbookStatus = getDocumentStatus(playbookPath) || undefined;
+  const playbookStatus = (getDocumentStatus(playbookPath) || undefined) as 'draft' | 'in-progress' | 'approved' | 'complete' | undefined;
 
   return {
     hasPlaybook: true,
