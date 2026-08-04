@@ -8,8 +8,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { MSP_REQUIREMENTS } from '../data/msp-requirements';
-import { MSPRequirement } from '../types';
+import { MSPRequirement, ValidationResult } from '../types';
 import { getDocumentStatus } from '../utils/frontmatter';
+import { validatorRegistry } from '../validators/validator-registry';
 
 export interface WorkspaceRequirementStatus {
   requirement: MSPRequirement;
@@ -18,6 +19,8 @@ export interface WorkspaceRequirementStatus {
   playbookStatus?: 'draft' | 'in-progress' | 'approved' | 'complete';
   hasEvidence: boolean;
   evidencePaths: string[];
+  validated?: boolean;
+  validationResult?: ValidationResult;
   overallStatus: 'complete' | 'in-progress' | 'not-started';
   completionPercentage: number;
 }
@@ -36,14 +39,15 @@ export interface WorkspaceAssessment {
 /**
  * Assess the MSP workspace (this repo) for completeness
  */
-export function assessWorkspace(
+export async function assessWorkspace(
   playbooksDir: string = './playbooks',
-  evidenceDir: string = './evidence'
-): WorkspaceAssessment {
+  evidenceDir: string = './evidence',
+  validateEvidence: boolean = true
+): Promise<WorkspaceAssessment> {
   const requirements: WorkspaceRequirementStatus[] = [];
 
   for (const req of MSP_REQUIREMENTS) {
-    const status = assessRequirement(req, playbooksDir, evidenceDir);
+    const status = await assessRequirement(req, playbooksDir, evidenceDir, validateEvidence);
     requirements.push(status);
   }
 
@@ -55,11 +59,12 @@ export function assessWorkspace(
 /**
  * Assess a single requirement for workspace completeness
  */
-function assessRequirement(
+async function assessRequirement(
   requirement: MSPRequirement,
   playbooksDir: string,
-  evidenceDir: string
-): WorkspaceRequirementStatus {
+  evidenceDir: string,
+  validateEvidence: boolean
+): Promise<WorkspaceRequirementStatus> {
   // Check for playbook
   const { hasPlaybook, playbookPath, playbookStatus } = checkPlaybook(
     requirement,
@@ -69,20 +74,39 @@ function assessRequirement(
   // Check for evidence
   const { hasEvidence, evidencePaths } = checkEvidence(requirement, evidenceDir);
 
+  // Validate evidence if requested and available
+  let validated: boolean | undefined;
+  let validationResult: ValidationResult | undefined;
+
+  if (validateEvidence && hasEvidence && evidencePaths.length > 0) {
+    try {
+      const result = await validatorRegistry.validate(requirement, evidencePaths);
+      if (result !== null) {
+        validationResult = result;
+        validated = result.passed;
+      }
+    } catch (error) {
+      console.warn(`Validation failed for ${requirement.id}: ${error}`);
+      validated = undefined;
+    }
+  }
+
   // Calculate overall status and completion percentage
   let overallStatus: 'complete' | 'in-progress' | 'not-started';
   let completionPercentage: number;
 
-  if (hasPlaybook && hasEvidence && playbookStatus === 'approved') {
+  // New completion logic: must have playbook, evidence, validation passed, and be approved
+  if (hasPlaybook && hasEvidence && validated === true && playbookStatus === 'approved') {
     overallStatus = 'complete';
     completionPercentage = 100;
   } else if (hasPlaybook || hasEvidence) {
     overallStatus = 'in-progress';
     // Calculate partial completion
     let score = 0;
-    if (hasPlaybook) score += 50;
-    if (hasEvidence) score += 30;
-    if (playbookStatus === 'approved') score += 20;
+    if (hasPlaybook) score += 40;           // Playbook: 40%
+    if (hasEvidence) score += 30;           // Evidence: 30%
+    if (validated === true) score += 20;    // Validation: 20%
+    if (playbookStatus === 'approved') score += 10; // Approval: 10%
     completionPercentage = Math.min(score, 90); // Max 90% until fully complete
   } else {
     overallStatus = 'not-started';
@@ -96,6 +120,8 @@ function assessRequirement(
     playbookStatus,
     hasEvidence,
     evidencePaths,
+    validated,
+    validationResult,
     overallStatus,
     completionPercentage,
   };
@@ -176,10 +202,22 @@ function checkEvidence(
   const evidencePatterns: Record<string, RegExp[]> = {
     'SEC-003': [/config-.+\.json/, /cloudtrail-.+\.json/, /security-hub-.+\.json/],
     'SEC-004': [/iam-.+\.json/],
-    'OPS-004': [/cloudtrail-.+\.json/, /cloudwatch-.+\.json/],
-    'OPS-005': [/backup-.+\.json/],
+    'SECP-001': [/iam-.+\.json/],
+    'SECP-002': [/public-resources\.json/],
     'SEC-007': [/inspector-.+\.json/],
     'SEC-008': [/inspector-.+\.json/, /security-hub-.+\.json/],
+    'SEC-009': [/encryption-.+\.json/],
+    'OPS-003': [/cloudwatch-.+\.json/],
+    'OPS-004': [/cloudtrail-.+\.json/, /cloudwatch-.+\.json/],
+    'OPS-005': [/backup-.+\.json/],
+    'OPS-008': [/ssm-.+\.json/, /patch-.+\.json/],
+    'OPS-011': [/availability-.+\.json/],
+    'OPSP-001': [/process-templates\.json/, /git-history\.json/],
+    'OPSP-002': [/process-templates\.json/, /git-history\.json/],
+    'OPSP-003': [/process-templates\.json/, /git-history\.json/],
+    'OPSP-005': [/process-templates\.json/],
+    'OPS-006': [/process-templates\.json/, /git-history\.json/],
+    'SEC-001': [/process-templates\.json/],
   };
 
   const patterns = evidencePatterns[requirement.id] || [];
@@ -246,6 +284,7 @@ export function printWorkspaceAssessment(assessment: WorkspaceAssessment): void 
       console.log(`  ${r.requirement.id}: ${r.requirement.name}`);
       console.log(`    ✓ Playbook: ${r.playbookStatus}`);
       console.log(`    ✓ Evidence: ${r.evidencePaths.length} file(s)`);
+      console.log(`    ✓ Validation: ${r.validated ? 'passed' : 'n/a'}`);
     });
     console.log('');
   }
@@ -256,6 +295,15 @@ export function printWorkspaceAssessment(assessment: WorkspaceAssessment): void 
       console.log(`  ${r.requirement.id}: ${r.requirement.name} (${r.completionPercentage}%)`);
       console.log(`    ${r.hasPlaybook ? '✓' : '✗'} Playbook${r.playbookStatus ? `: ${r.playbookStatus}` : ''}`);
       console.log(`    ${r.hasEvidence ? '✓' : '✗'} Evidence${r.hasEvidence ? `: ${r.evidencePaths.length} file(s)` : ''}`);
+      if (r.validated !== undefined) {
+        console.log(`    ${r.validated ? '✓' : '✗'} Validation: ${r.validated ? 'passed' : 'failed'}`);
+        if (!r.validated && r.validationResult) {
+          const failedChecks = r.validationResult.checks.filter(c => !c.passed);
+          if (failedChecks.length > 0) {
+            console.log(`      Failed: ${failedChecks.map(c => c.name).join(', ')}`);
+          }
+        }
+      }
     });
     console.log('');
   }

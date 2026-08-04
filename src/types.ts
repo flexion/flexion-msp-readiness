@@ -99,6 +99,44 @@ export interface EvidenceArtifact {
 }
 
 /**
+ * Evidence validation result
+ */
+export interface ValidationResult {
+  requirementId: string;
+  passed: boolean;
+  checks: ValidationCheck[];
+  summary: string;
+  validatedAt: Date;
+}
+
+/**
+ * Individual validation check
+ */
+export interface ValidationCheck {
+  name: string;
+  passed: boolean;
+  expected: string;
+  actual: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  message?: string;
+}
+
+/**
+ * Evidence validator interface
+ */
+export interface EvidenceValidator {
+  /**
+   * Validate evidence for a requirement
+   */
+  validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult>;
+
+  /**
+   * Get supported requirement IDs
+   */
+  getSupportedRequirements(): string[];
+}
+
+/**
  * Overall project assessment
  */
 export interface ProjectAssessment {
