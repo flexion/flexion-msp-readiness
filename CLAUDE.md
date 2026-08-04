@@ -2,6 +2,32 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
+## 🚀 Quick Start for New Sessions
+
+**Working on an issue? Use this script to update status:**
+
+```bash
+./scripts/move-issue.sh <issue-number> <status>
+# Status: backlog, ready, in-progress, in-review, done
+```
+
+**Example workflow**:
+```bash
+# Start issue #5
+./scripts/move-issue.sh 5 in-progress
+git checkout -b feature/issue-5-description
+
+# Complete and create PR
+git push -u origin feature/issue-5-description
+gh pr create
+./scripts/move-issue.sh 5 in-review
+```
+
+**Project Board**: https://github.com/orgs/flexion/projects/53  
+**Full Workflow**: See [WORKFLOW.md](WORKFLOW.md) or GitHub Project Management section below
+
+---
+
 ## Project Overview
 
 This is the **Flexion MSP Readiness Automation** project - a Claude Code skill and toolkit for automating AWS Managed Service Provider (MSP) Program readiness assessment.
@@ -193,19 +219,48 @@ This project uses GitHub Projects for issue tracking and workflow management.
 
 **Project Board**: https://github.com/orgs/flexion/projects/53
 
+### 🔧 Essential Tool: move-issue.sh
+
+**CRITICAL**: This project has a helper script that MUST be used to manage issue status in the GitHub project.
+
+```bash
+./scripts/move-issue.sh <issue-number> <status>
+```
+
+**Status values**: `backlog`, `ready`, `in-progress`, `in-review`, `done`
+
+**When to use**:
+- ✅ Starting work on an issue → `in-progress`
+- ✅ Creating a PR → `in-review`  
+- ✅ After PR merged → `done`
+
+**Example**:
+```bash
+# Start working on issue #5
+./scripts/move-issue.sh 5 in-progress
+
+# Complete and move to review
+./scripts/move-issue.sh 5 in-review
+
+# After merge
+./scripts/move-issue.sh 5 done
+```
+
+This script is the **required way** to update issue status. Do not manually update issues in the GitHub UI.
+
 ### Issue Workflow
 
 Every issue follows this workflow:
 
 1. **Backlog** → New issues start here
-2. **Ready** → Issue is prioritized and ready to work on
-3. **In Progress** → Actively being worked on
-4. **In Review** → Pull request created, awaiting review
-5. **Done** → Reviewed and merged
+2. **Ready** → Issue is prioritized and ready to work on (use `ready`)
+3. **In Progress** → Actively being worked on (use `in-progress`)
+4. **In Review** → Pull request created, awaiting review (use `in-review`)
+5. **Done** → Reviewed and merged (use `done`)
 
 ### Working on Issues
 
-**IMPORTANT**: Always use the `gh` CLI and helper scripts for project management.
+**IMPORTANT**: Always use `./scripts/move-issue.sh` for project management.
 
 #### Starting Work on an Issue
 
