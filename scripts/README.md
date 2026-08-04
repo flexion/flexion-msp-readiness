@@ -2,6 +2,30 @@
 
 Helper scripts for managing the MSP Readiness project.
 
+## validate-build.js
+
+Validates that the build process completed successfully by checking:
+- dist directory exists
+- TypeScript files were compiled to JavaScript
+- Template files (.hbs, .html) were copied from templates/ to dist/
+
+### Usage
+
+This script is automatically run as part of `npm run build`, but can be run manually:
+
+```bash
+node scripts/validate-build.js
+```
+
+### What it checks
+
+- `dist/cli.js` exists (TypeScript compilation)
+- `dist/playbooks/incident-response.hbs` exists
+- `dist/playbooks/change-management.hbs` exists
+- `dist/runbooks/access-key-rotation.hbs` exists
+
+If any checks fail, the script exits with code 1 and prints diagnostic information.
+
 ## move-issue.sh
 
 Move GitHub issues between project board columns.
