@@ -11,12 +11,13 @@ import { MSP_REQUIREMENTS } from '../data/msp-requirements';
 import { MSPRequirement, ValidationResult } from '../types';
 import { getDocumentStatus } from '../utils/frontmatter';
 import { validatorRegistry } from '../validators/validator-registry';
+import { shouldAutoApprove, autoApprovePlaybook } from '../utils/auto-approval';
 
 export interface WorkspaceRequirementStatus {
   requirement: MSPRequirement;
   hasPlaybook: boolean;
   playbookPath?: string;
-  playbookStatus?: 'draft' | 'in-progress' | 'approved' | 'complete';
+  playbookStatus?: 'draft' | 'in-progress' | 'approved' | 'complete' | 'needs-remediation';
   hasEvidence: boolean;
   evidencePaths: string[];
   validated?: boolean;
@@ -42,12 +43,13 @@ export interface WorkspaceAssessment {
 export async function assessWorkspace(
   playbooksDir: string = './playbooks',
   evidenceDir: string = './evidence',
-  validateEvidence: boolean = true
+  validateEvidence: boolean = true,
+  autoApprove: boolean = true
 ): Promise<WorkspaceAssessment> {
   const requirements: WorkspaceRequirementStatus[] = [];
 
   for (const req of MSP_REQUIREMENTS) {
-    const status = await assessRequirement(req, playbooksDir, evidenceDir, validateEvidence);
+    const status = await assessRequirement(req, playbooksDir, evidenceDir, validateEvidence, autoApprove);
     requirements.push(status);
   }
 
@@ -63,10 +65,11 @@ async function assessRequirement(
   requirement: MSPRequirement,
   playbooksDir: string,
   evidenceDir: string,
-  validateEvidence: boolean
+  validateEvidence: boolean,
+  autoApprove: boolean
 ): Promise<WorkspaceRequirementStatus> {
   // Check for playbook
-  const { hasPlaybook, playbookPath, playbookStatus } = checkPlaybook(
+  let { hasPlaybook, playbookPath, playbookStatus } = checkPlaybook(
     requirement,
     playbooksDir
   );
@@ -88,6 +91,36 @@ async function assessRequirement(
     } catch (error) {
       console.warn(`Validation failed for ${requirement.id}: ${error}`);
       validated = undefined;
+    }
+  }
+
+  // Auto-approve if conditions are met
+  if (autoApprove && playbookPath && validationResult) {
+    const shouldApprove = shouldAutoApprove(
+      hasPlaybook,
+      hasEvidence,
+      validationResult,
+      playbookStatus
+    );
+
+    if (shouldApprove) {
+      try {
+        const result = autoApprovePlaybook(playbookPath, validationResult);
+        if (result.approved) {
+          playbookStatus = 'approved';
+          console.log(`✅ Auto-approved ${requirement.id}: ${result.reason}`);
+        }
+      } catch (error) {
+        console.warn(`Failed to auto-approve ${requirement.id}: ${error}`);
+      }
+    } else if (validationResult && !validationResult.passed && playbookPath) {
+      // Mark as needs-remediation if validation failed
+      try {
+        autoApprovePlaybook(playbookPath, validationResult);
+        playbookStatus = 'needs-remediation';
+      } catch (error) {
+        console.warn(`Failed to update status for ${requirement.id}: ${error}`);
+      }
     }
   }
 
@@ -136,7 +169,7 @@ function checkPlaybook(
 ): {
   hasPlaybook: boolean;
   playbookPath?: string;
-  playbookStatus?: 'draft' | 'in-progress' | 'approved' | 'complete';
+  playbookStatus?: 'draft' | 'in-progress' | 'approved' | 'complete' | 'needs-remediation';
 } {
   // Map requirement IDs to playbook filenames
   const playbookMap: Record<string, string> = {
