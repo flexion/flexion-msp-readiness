@@ -101,6 +101,11 @@ import {
 } from './generators/playbook-generator';
 import { DocumentCompleter } from './generators/document-completer.js';
 import {
+  prepareGenerationBatch,
+  outputInteractiveContext,
+  generateDocumentTemplate,
+} from './generators/ai-document-generator.js';
+import {
   buildEvidenceMatrix,
   saveEvidenceMatrix,
   printEvidenceMatrixSummary,
@@ -139,6 +144,7 @@ program
   .option('--automated-only', 'Only run automated checks (skip manual docs)')
   .option('--manual-only', 'Only check manual documentation')
   .option('--show-automation', 'Show automation coverage for each requirement')
+  .option('--interactive-ai', 'Output project context for AI-powered document generation')
   .action(async options => {
     try {
       console.log(chalk.bold.blue('\n🔍 MSP Readiness Assessment\n'));
@@ -346,8 +352,63 @@ program
         }
       }
 
-      // Auto-complete documentation if configured
-      if (config.assessment.auto_generate_docs) {
+      // Interactive AI Mode: Output project context for Claude to generate docs
+      if (options.interactiveAi) {
+        spinner.text = 'Preparing project context for AI generation...';
+        spinner.start();
+
+        try {
+          const completer = new DocumentCompleter(config);
+          const context = await completer.extractProjectContext();
+
+          // Import MSP requirements
+          const { MSP_REQUIREMENTS } = await import('./data/msp-requirements.js');
+
+          // Identify requirements that could benefit from AI generation
+          // (not already completed, not fully automated)
+          const requirementsNeedingDocs = MSP_REQUIREMENTS.filter(req => {
+            // Check if already has completed doc
+            const assessment = requirementAssessments.find(a => a.requirement.id === req.id);
+            return assessment && assessment.status !== 'addressed';
+          });
+
+          const batch = prepareGenerationBatch(
+            MSP_REQUIREMENTS,
+            context,
+            requirementsNeedingDocs
+          );
+
+          spinner.succeed('Project context prepared');
+
+          // Output formatted context
+          console.log('\n' + outputInteractiveContext(batch));
+
+          console.log(chalk.bold.cyan('📝 Next Step: Generate Documents'));
+          console.log(chalk.gray('\nI (Claude) can now write these documents. For each requirement, I will:'));
+          console.log(chalk.gray('  1. Use the project context above'));
+          console.log(chalk.gray('  2. Write comprehensive, project-specific documentation'));
+          console.log(chalk.gray('  3. Save to docs/msp/{category}/{requirement-id}.md'));
+          console.log(chalk.gray('\nWould you like me to proceed with document generation?\n'));
+
+          // Store context for use in follow-up commands
+          const fs = await import('fs/promises');
+          await fs.writeFile(
+            '.msp-context.json',
+            JSON.stringify({ batch, context }, null, 2),
+            'utf-8'
+          );
+          console.log(chalk.gray('💾 Context saved to .msp-context.json for reference\n'));
+
+        } catch (error) {
+          spinner.fail('Failed to prepare context');
+          console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+        }
+
+        return; // Exit after interactive mode
+      }
+
+      // Auto-complete documentation if configured (legacy template mode)
+      if (config.assessment.auto_generate_docs && !options.interactiveAi) {
         spinner.text = 'Auto-completing documentation...';
         spinner.start();
         try {
@@ -1195,6 +1256,98 @@ program
       await executeExport(options);
     } catch (error) {
       console.error(chalk.red('\n❌ Error exporting package:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * AI Generate command - Generate documents using saved context
+ */
+program
+  .command('ai-generate')
+  .description('Generate MSP documents using AI from saved project context')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('--context <path>', 'Path to saved context file', '.msp-context.json')
+  .option('--requirement <id>', 'Generate specific requirement only')
+  .option('--category <category>', 'Generate all requirements in category')
+  .option('--dry-run', 'Show what would be generated without writing files')
+  .action(async options => {
+    try {
+      console.log(chalk.bold.blue('\n🤖 MSP AI Document Generator\n'));
+
+      // Load saved context
+      const fs = await import('fs/promises');
+      let contextData;
+      try {
+        const contextFile = await fs.readFile(options.context, 'utf-8');
+        contextData = JSON.parse(contextFile);
+      } catch (error) {
+        console.error(chalk.red('❌ Context file not found.'));
+        console.log(chalk.yellow('\n💡 Run with --interactive-ai flag first to generate context:\n'));
+        console.log(chalk.cyan('   msp-readiness assess --interactive-ai\n'));
+        process.exit(1);
+      }
+
+      const { batch, context } = contextData;
+      const config = loadConfig(options.config);
+
+      console.log(chalk.cyan(`📊 Loaded context for: ${context.projectName}`));
+      console.log(chalk.gray(`   ${batch.requests.length} requirements ready for generation\n`));
+
+      // Filter requirements if specified
+      let requestsToGenerate = batch.requests;
+      if (options.requirement) {
+        requestsToGenerate = batch.requests.filter(
+          (r: any) => r.requirement.id === options.requirement
+        );
+        if (requestsToGenerate.length === 0) {
+          console.error(chalk.red(`❌ Requirement ${options.requirement} not found in context`));
+          process.exit(1);
+        }
+      } else if (options.category) {
+        requestsToGenerate = batch.requests.filter(
+          (r: any) => r.requirement.category === options.category
+        );
+        if (requestsToGenerate.length === 0) {
+          console.error(chalk.red(`❌ No requirements found in category ${options.category}`));
+          process.exit(1);
+        }
+      }
+
+      console.log(chalk.bold('📝 Ready to generate documents:\n'));
+      for (const { requirement } of requestsToGenerate) {
+        console.log(chalk.cyan(`   • ${requirement.id}: ${requirement.name}`));
+      }
+      console.log('');
+
+      if (options.dryRun) {
+        console.log(chalk.yellow('🔍 Dry run mode - no files will be written\n'));
+
+        // Show template for first requirement
+        console.log(chalk.bold('Sample template structure:\n'));
+        console.log(chalk.gray('─'.repeat(80)));
+        console.log(generateDocumentTemplate(requestsToGenerate[0].requirement));
+        console.log(chalk.gray('─'.repeat(80)));
+        console.log('');
+      } else {
+        console.log(chalk.bold.yellow('⚠️  This command prepares the context, but document generation'));
+        console.log(chalk.yellow('   happens interactively with Claude in the conversation.\n'));
+
+        console.log(chalk.cyan('📋 To generate documents:'));
+        console.log(chalk.gray('   1. Review the requirements above'));
+        console.log(chalk.gray('   2. Ask Claude to generate them'));
+        console.log(chalk.gray('   3. Claude will use the project context and write each document\n'));
+
+        console.log(chalk.bold('Example prompt:\n'));
+        console.log(chalk.gray('   "Generate the BUS-001 document using the context"'));
+        console.log(chalk.gray('   "Write all business category documents"\n'));
+      }
+
+      console.log(chalk.green('✅ Ready for interactive AI generation\n'));
+
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error:'));
       console.error(error);
       process.exit(1);
     }
