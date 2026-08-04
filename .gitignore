@@ -46,3 +46,4 @@ credentials
 
 # Debug
 debug.log
+.claude/worktrees/

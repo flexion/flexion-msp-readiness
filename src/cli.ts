@@ -8,7 +8,23 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import * as path from 'path';
-import { loadConfig, printConfigSummary, ConfigError } from './config/loader';
+import {
+  loadConfig,
+  printConfigSummary,
+  ConfigError,
+  isMultiAccountMode,
+  getAccounts,
+} from './config/loader';
+import {
+  assessAccount,
+  aggregateMultiAccountAssessments,
+  printMultiAccountAssessmentSummary,
+  generateAccountComparisonReport,
+} from './assessors/multi-account-assessor';
+import {
+  collectMultiAccountEvidence,
+  printMultiAccountEvidenceSummary,
+} from './collectors/multi-account-collector';
 import { scanDocumentation, printScanSummary } from './assessors/doc-scanner';
 import { parseCDKInfrastructure, printCDKSummary } from './assessors/cdk-parser';
 import {
@@ -65,13 +81,24 @@ import {
   saveReport,
 } from './assessors/report-generator';
 import {
-  detectDrift,
-  loadBaseline,
-  saveBaseline,
-  printDriftSummary,
-} from './monitoring/drift-detector';
-import { runScheduledAssessment, loadHistory, getComplianceTrend } from './monitoring/scheduler';
-import { publishAssessmentMetrics } from './monitoring/cloudwatch-publisher';
+  exportToPDF,
+  exportToCSV,
+  exportAllCSVFormats,
+  exportEmailSummary,
+  exportToSARIF,
+  isPuppeteerAvailable,
+  getSARIFSummary,
+  BrandingConfig,
+} from './exporters';
+import {
+  loadAssessment,
+  compareAssessments,
+  filterChanges,
+  printComparisonSummary,
+  printDetailedChanges,
+  saveComparisonReport,
+  getExitCode,
+} from './assessors/comparison';
 
 const program = new Command();
 
@@ -110,6 +137,91 @@ program
         throw error;
       }
 
+      // Check if multi-account mode
+      if (isMultiAccountMode(config)) {
+        // Multi-account assessment
+        const accounts = getAccounts(config);
+        console.log(chalk.bold(`Running assessment for ${accounts.length} accounts...\n`));
+
+        const accountAssessments = [];
+        for (const account of accounts) {
+          spinner.text = `Assessing ${account.name}...`;
+          spinner.start();
+
+          try {
+            const assessment = await assessAccount(
+              { name: account.name, profile: account.profile, region: account.region },
+              config,
+              options.skipAws
+            );
+            accountAssessments.push(assessment);
+            spinner.succeed(`${account.name} assessed`);
+          } catch (error) {
+            spinner.fail(`${account.name} assessment failed`);
+            console.log(
+              chalk.yellow(`  ${error instanceof Error ? error.message : String(error)}`)
+            );
+          }
+        }
+
+        if (accountAssessments.length === 0) {
+          console.log(chalk.red('\n❌ All account assessments failed\n'));
+          process.exit(1);
+        }
+
+        // Aggregate results
+        spinner.text = 'Aggregating results...';
+        spinner.start();
+        const multiAccountAssessment = aggregateMultiAccountAssessments(
+          config.aws.accounts!,
+          accountAssessments
+        );
+        spinner.succeed('Results aggregated');
+
+        // Print summary
+        printMultiAccountAssessmentSummary(multiAccountAssessment);
+
+        // Save reports
+        spinner.text = 'Saving reports...';
+        spinner.start();
+        const reportFormat = (options.format || config.output.report_format) as
+          'markdown' | 'json' | 'both';
+
+        // Save individual account reports
+        for (const assessment of accountAssessments) {
+          const accountOutput = `${options.output}-${assessment.accountName}`;
+          await saveReport(assessment, accountOutput, reportFormat);
+        }
+
+        // Save aggregated report
+        const fs = require('fs');
+        fs.writeFileSync(
+          `${options.output}-multi-account.json`,
+          JSON.stringify(multiAccountAssessment, null, 2)
+        );
+
+        // Save comparison report
+        const comparisonReport = generateAccountComparisonReport(multiAccountAssessment);
+        fs.writeFileSync(`${options.output}-comparison.md`, comparisonReport);
+
+        spinner.succeed('Reports saved');
+
+        console.log(chalk.bold('\n📄 Reports generated:\n'));
+        console.log(chalk.cyan(`  📊 Multi-account JSON: ${options.output}-multi-account.json`));
+        console.log(chalk.cyan(`  📝 Comparison:         ${options.output}-comparison.md`));
+        for (const assessment of accountAssessments) {
+          console.log(
+            chalk.cyan(
+              `  📋 ${assessment.accountName}:          ${options.output}-${assessment.accountName}.json`
+            )
+          );
+        }
+
+        console.log(chalk.bold.green('\n✅ Multi-account assessment complete!\n'));
+        return;
+      }
+
+      // Single account mode (original flow)
       // Scan documentation
       spinner.text = 'Scanning documentation...';
       spinner.start();
@@ -221,6 +333,14 @@ program
       if (savedFiles.jsonPath) {
         console.log(chalk.cyan(`  📊 JSON:     ${savedFiles.jsonPath}`));
       }
+      if (savedFiles.remediationPath) {
+        console.log(chalk.cyan(`  🔧 Remediation: ${savedFiles.remediationPath}`));
+        console.log(
+          chalk.gray(
+            '     Contains step-by-step fixes, IaC code snippets, and AWS documentation links'
+          )
+        );
+      }
 
       console.log(chalk.bold.green('\n✅ Assessment complete!\n'));
     } catch (error) {
@@ -246,8 +366,35 @@ program
       spinner.succeed('Configuration loaded');
       printConfigSummary(config);
 
-      const artifacts: EvidenceArtifact[] = [];
       const evidencePath = config.output.evidence_path;
+
+      // Check if multi-account mode
+      if (isMultiAccountMode(config)) {
+        // Multi-account evidence collection
+        const accounts = getAccounts(config);
+        spinner.text = `Collecting evidence from ${accounts.length} accounts...`;
+        spinner.start();
+
+        const results = await collectMultiAccountEvidence(config.aws.accounts!, evidencePath);
+        spinner.succeed('Multi-account evidence collected');
+
+        printMultiAccountEvidenceSummary(results);
+
+        // Generate per-account manifests
+        for (const result of results) {
+          if (result.artifacts.length > 0) {
+            const manifest = generateManifest(result.artifacts);
+            saveManifest(manifest, `${evidencePath}/${result.accountName}/MANIFEST.md`);
+          }
+        }
+
+        console.log(chalk.bold.green(`\n✅ Multi-account evidence collection complete!\n`));
+        console.log(chalk.cyan(`  Evidence directory: ${evidencePath}\n`));
+        return;
+      }
+
+      // Single account mode (original flow)
+      const artifacts: EvidenceArtifact[] = [];
 
       // Collect CloudTrail evidence
       spinner.text = 'Collecting CloudTrail evidence...';
@@ -468,6 +615,156 @@ program
   });
 
 /**
+ * Diff command - compare two assessment runs
+ */
+program
+  .command('diff')
+  .description('Compare two assessment runs to show what changed')
+  .option(
+    '-b, --baseline <path>',
+    'Path to baseline assessment JSON',
+    './assessment-report-baseline.json'
+  )
+  .option('-c, --current <path>', 'Path to current assessment JSON', './assessment-report.json')
+  .option('-o, --output <path>', 'Output path for comparison report', './assessment-comparison')
+  .option('--format <format>', 'Report format: markdown, json, or both', 'both')
+  .option('--only <filter>', 'Filter changes: improvements, regressions, or unchanged')
+  .action(async options => {
+    try {
+      console.log(chalk.bold.blue('\n🔍 MSP Assessment Comparison\n'));
+
+      const spinner = ora('Loading assessments...').start();
+
+      // Get paths with defaults
+      const baselinePath = options.baseline || './assessment-report-baseline.json';
+      const currentPath = options.current || './assessment-report.json';
+
+      // Load baseline assessment
+      let baseline;
+      try {
+        baseline = loadAssessment(baselinePath);
+        spinner.text = 'Baseline assessment loaded...';
+      } catch (error) {
+        spinner.fail('Failed to load baseline assessment');
+        console.error(chalk.red(`\n  ${error instanceof Error ? error.message : String(error)}`));
+        console.log(
+          chalk.yellow(
+            '\n  Tip: Specify --baseline <path> to point to your baseline assessment JSON\n'
+          )
+        );
+        process.exit(1);
+      }
+
+      // Load current assessment
+      let current;
+      try {
+        current = loadAssessment(currentPath);
+        spinner.succeed('Assessments loaded');
+      } catch (error) {
+        spinner.fail('Failed to load current assessment');
+        console.error(chalk.red(`\n  ${error instanceof Error ? error.message : String(error)}`));
+        console.log(
+          chalk.yellow(
+            '\n  Tip: Specify --current <path> to point to your current assessment JSON\n'
+          )
+        );
+        process.exit(1);
+      }
+
+      // Validate assessments are for same project
+      if (baseline.projectName !== current.projectName) {
+        console.log(chalk.yellow('\n⚠️  Warning: Comparing assessments from different projects:'));
+        console.log(`  Baseline: ${baseline.projectName}`);
+        console.log(`  Current:  ${current.projectName}\n`);
+      }
+
+      // Compare assessments
+      spinner.text = 'Comparing assessments...';
+      spinner.start();
+      const result = compareAssessments(baseline, current);
+      spinner.succeed('Comparison complete');
+
+      // Print summary
+      printComparisonSummary(result);
+
+      // Filter and print detailed changes
+      const filter = options.only as 'improvements' | 'regressions' | 'unchanged' | undefined;
+
+      if (filter) {
+        const filtered = filterChanges(result, filter);
+        const title =
+          filter === 'improvements'
+            ? '📈 Improvements'
+            : filter === 'regressions'
+              ? '📉 Regressions'
+              : '➡️ Unchanged Requirements';
+        printDetailedChanges(filtered, title);
+      } else {
+        // Show improvements and regressions
+        const improvements = filterChanges(result, 'improvements');
+        if (improvements.length > 0) {
+          printDetailedChanges(improvements, '📈 Improvements');
+        }
+
+        const regressions = filterChanges(result, 'regressions');
+        if (regressions.length > 0) {
+          printDetailedChanges(regressions, '📉 Regressions');
+        }
+
+        // Show critical unchanged gaps
+        const unchangedGaps = result.changes.filter(
+          c =>
+            c.direction === 'unchanged' &&
+            (c.current.status === 'gap' || c.current.status === 'partial')
+        );
+        if (unchangedGaps.length > 0) {
+          console.log(chalk.bold('\n⚠️  Critical Unchanged Gaps\n'));
+          for (const gap of unchangedGaps.slice(0, 5)) {
+            const icon = gap.current.status === 'gap' ? '🔴' : '🟡';
+            console.log(`${icon} ${chalk.bold(gap.requirementId)}: ${gap.requirementName}`);
+            console.log(`  Status: ${gap.current.status} (${gap.priority} priority)`);
+            console.log(`  Findings: ${gap.current.findingsCount}`);
+            console.log('');
+          }
+          if (unchangedGaps.length > 5) {
+            console.log(chalk.gray(`   ... and ${unchangedGaps.length - 5} more\n`));
+          }
+        }
+      }
+
+      // Save report
+      spinner.text = 'Saving comparison report...';
+      spinner.start();
+      const reportFormat = (options.format || 'both') as 'markdown' | 'json' | 'both';
+      const outputPath = options.output || './assessment-comparison';
+      const savedFiles = saveComparisonReport(result, outputPath, reportFormat);
+      spinner.succeed('Comparison report saved');
+
+      console.log(chalk.bold('\n📄 Reports generated:\n'));
+      if (savedFiles.markdownPath) {
+        console.log(chalk.cyan(`  📝 Markdown: ${savedFiles.markdownPath}`));
+      }
+      if (savedFiles.jsonPath) {
+        console.log(chalk.cyan(`  📊 JSON:     ${savedFiles.jsonPath}`));
+      }
+
+      // Determine exit code
+      const exitCode = getExitCode(result);
+      if (exitCode === 1) {
+        console.log(chalk.bold.red('\n❌ Compliance decreased - exiting with code 1 for CI/CD\n'));
+      } else {
+        console.log(chalk.bold.green('\n✅ Comparison complete!\n'));
+      }
+
+      process.exit(exitCode);
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error during comparison:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
  * Status command - show current assessment status
  */
 program
@@ -495,254 +792,118 @@ program
   });
 
 /**
- * Drift command - detect compliance drift
+ * Scan-iac command - scan CDK/Terraform code for security issues
  */
 program
-  .command('drift')
-  .description('Detect compliance drift against baseline')
-  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
-  .option('-b, --baseline <path>', 'Path to baseline assessment')
-  .option('-i, --input <path>', 'Path to current assessment JSON', './assessment-report.json')
-  .option('--save-baseline', 'Save current assessment as new baseline')
-  .option('--skip-notifications', 'Skip sending notifications')
+  .command('scan-iac')
+  .description('Scan Infrastructure as Code (CDK/Terraform) for security issues')
+  .option('--path <path>', 'Path to infrastructure code', './cdk')
+  .option(
+    '--severity <level>',
+    'Minimum severity level to report (critical, high, medium, low, info)',
+    'low'
+  )
+  .option('--sarif <path>', 'Output SARIF report for GitHub Security')
+  .option('--json <path>', 'Output JSON report')
+  .option('--fail-on-findings', 'Exit with code 1 if security issues found (for CI/CD)')
   .action(async options => {
     try {
-      console.log(chalk.bold.blue('\n🔍 MSP Drift Detection\n'));
+      console.log(chalk.bold.blue('\n🔍 IaC Security Scan\n'));
 
-      const spinner = ora('Loading configuration...').start();
-      const config = loadConfig(options.config);
-      spinner.succeed('Configuration loaded');
+      const { scanCDKInfrastructure, convertToSARIF, saveSARIF } =
+        await import('./scanners/iac-scanner');
 
-      // Load current assessment
-      spinner.text = 'Loading current assessment...';
-      spinner.start();
-      if (!require('fs').existsSync(options.input)) {
-        spinner.fail('Current assessment not found');
-        console.log(chalk.yellow('\n  Run "msp-readiness assess" first.\n'));
-        process.exit(1);
-      }
-
-      const currentAssessment = JSON.parse(require('fs').readFileSync(options.input, 'utf-8'));
-      spinner.succeed('Current assessment loaded');
-
-      // Save as baseline if requested
-      if (options.saveBaseline) {
-        const baselinePath =
-          options.baseline || config.monitoring?.baseline_path || './baseline-assessment.json';
-        spinner.text = 'Saving baseline...';
-        spinner.start();
-        saveBaseline(currentAssessment, baselinePath);
-        spinner.succeed(`Baseline saved: ${baselinePath}`);
-        console.log(chalk.bold.green('\n✅ Baseline updated!\n'));
-        return;
-      }
-
-      // Load baseline
-      const baselinePath =
-        options.baseline || config.monitoring?.baseline_path || './baseline-assessment.json';
-
-      spinner.text = 'Loading baseline...';
-      spinner.start();
-      if (!require('fs').existsSync(baselinePath)) {
-        spinner.fail('Baseline not found');
-        console.log(chalk.yellow('\n  No baseline found. Create one with --save-baseline\n'));
-        process.exit(1);
-      }
-
-      const baseline = loadBaseline(baselinePath);
-      spinner.succeed('Baseline loaded');
-
-      // Detect drift
-      spinner.text = 'Detecting drift...';
-      spinner.start();
-      const driftResult = detectDrift(currentAssessment, baseline);
-      spinner.succeed(`Drift detection complete (${driftResult.summary.totalDrifts} drifts)`);
+      const spinner = ora('Scanning infrastructure code...').start();
+      const scanResult = await scanCDKInfrastructure(
+        options.path,
+        options.severity as 'critical' | 'high' | 'medium' | 'low' | 'info'
+      );
+      spinner.succeed(`Scanned ${scanResult.totalFiles} files in ${scanResult.scanDuration}ms`);
 
       // Print summary
-      printDriftSummary(driftResult);
+      console.log(chalk.bold('\n📊 Scan Results:\n'));
+      console.log(`  Files scanned:     ${scanResult.totalFiles}`);
+      console.log(`  Total findings:    ${scanResult.findings.length}`);
 
-      // Show critical drifts
-      const criticalDrifts = driftResult.drifts.filter(
-        d => d.severity === 'critical' || d.severity === 'high'
-      );
-
-      if (criticalDrifts.length > 0) {
-        console.log(
-          chalk.bold.red(`\n🚨 Critical/High Severity Drifts (${criticalDrifts.length}):\n`)
-        );
-        for (const drift of criticalDrifts.slice(0, 10)) {
-          const icon = drift.severity === 'critical' ? '🔴' : '🟠';
-          console.log(`${icon} ${chalk.bold(drift.requirementId)}: ${drift.description}`);
-          console.log(`   ${chalk.gray(drift.impact)}`);
+      if (scanResult.findings.length > 0) {
+        console.log(chalk.bold('\n  By Severity:'));
+        if (scanResult.findingsBySeverity.critical > 0) {
+          console.log(chalk.red(`    🔴 Critical: ${scanResult.findingsBySeverity.critical}`));
         }
-        if (criticalDrifts.length > 10) {
-          console.log(chalk.gray(`\n   ... and ${criticalDrifts.length - 10} more\n`));
+        if (scanResult.findingsBySeverity.high > 0) {
+          console.log(chalk.red(`    🟠 High:     ${scanResult.findingsBySeverity.high}`));
+        }
+        if (scanResult.findingsBySeverity.medium > 0) {
+          console.log(chalk.yellow(`    🟡 Medium:   ${scanResult.findingsBySeverity.medium}`));
+        }
+        if (scanResult.findingsBySeverity.low > 0) {
+          console.log(chalk.blue(`    🔵 Low:      ${scanResult.findingsBySeverity.low}`));
+        }
+        if (scanResult.findingsBySeverity.info > 0) {
+          console.log(chalk.gray(`    ⚪ Info:     ${scanResult.findingsBySeverity.info}`));
+        }
+
+        // Show top findings
+        const topFindings = scanResult.findings
+          .filter(f => f.severity === 'critical' || f.severity === 'high')
+          .slice(0, 10);
+
+        if (topFindings.length > 0) {
+          console.log(chalk.bold('\n🚨 Top Security Issues:\n'));
+          for (const finding of topFindings) {
+            const icon = finding.severity === 'critical' ? '🔴' : '🟠';
+            console.log(`${icon} ${chalk.bold(finding.id)}: ${finding.title}`);
+            console.log(`   📍 ${chalk.gray(finding.file)}:${chalk.gray(finding.line)}`);
+            console.log(`   ${chalk.dim(finding.description)}`);
+            console.log(`   💡 ${chalk.cyan(finding.remediation)}`);
+            console.log(`   🏷️  MSP: ${chalk.gray(finding.mspRequirements.join(', '))}\n`);
+          }
+
+          if (scanResult.findings.length > 10) {
+            console.log(
+              chalk.gray(`   ... and ${scanResult.findings.length - 10} more findings\n`)
+            );
+          }
         }
       } else {
-        console.log(chalk.green('\n✅ No critical drifts detected\n'));
+        console.log(chalk.green('\n✅ No security issues found!\n'));
       }
 
-      // Send notifications
-      if (!options.skipNotifications && config.notifications) {
-        spinner.text = 'Sending notifications...';
+      // Save SARIF output
+      if (options.sarif) {
+        spinner.text = 'Generating SARIF report...';
         spinner.start();
-        const { sendDriftNotifications } = await import('./monitoring/notifier');
-        await sendDriftNotifications(driftResult, config);
-        spinner.succeed('Notifications sent');
-      }
-
-      console.log(chalk.bold.green('\n✅ Drift detection complete!\n'));
-    } catch (error) {
-      console.error(chalk.red('\n❌ Error during drift detection:'));
-      console.error(error);
-      process.exit(1);
-    }
-  });
-
-/**
- * Monitor command - run scheduled assessment with drift detection
- */
-program
-  .command('monitor')
-  .description('Run scheduled assessment with drift detection and alerts')
-  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
-  .option('--skip-aws', 'Skip AWS infrastructure analysis')
-  .action(async options => {
-    try {
-      console.log(chalk.bold.blue('\n🔄 MSP Monitoring\n'));
-
-      const spinner = ora('Loading configuration...').start();
-      const config = loadConfig(options.config);
-      spinner.succeed('Configuration loaded');
-
-      if (!config.monitoring?.enabled) {
-        console.log(chalk.yellow('\n  Monitoring is not enabled in config.\n'));
-        console.log(chalk.gray('  Set monitoring.enabled: true in config.yaml\n'));
-        process.exit(0);
-      }
-
-      // Run assessment (same logic as assess command but streamlined)
-      spinner.text = 'Running assessment...';
-      spinner.start();
-
-      const docScan = await scanDocumentation(config.project.docs_path);
-      const cdkParse = await parseCDKInfrastructure(config.project.infra_path);
-
-      let awsAnalysis: AWSAnalysisResults | undefined;
-      if (!options.skipAws) {
-        try {
-          const [configAnalysis, iamAnalysis, securityHubAnalysis] = await Promise.all([
-            analyzeAWSConfig(config.aws.region, config.aws.profile),
-            analyzeIAM(config.aws.region, config.aws.profile),
-            analyzeSecurityHub(config.aws.region, config.aws.profile),
-          ]);
-          awsAnalysis = { configAnalysis, iamAnalysis, securityHubAnalysis };
-        } catch (error) {
-          spinner.warn('AWS analysis failed - continuing with documentation only');
-        }
-      }
-
-      const requirementAssessments = matchRequirements(
-        docScan,
-        config.assessment.skip_requirements,
-        awsAnalysis
-      );
-
-      const assessment = generateProjectAssessment(
-        config.project.name,
-        requirementAssessments,
-        config.msp.version
-      );
-
-      spinner.succeed('Assessment complete');
-
-      // Run scheduled assessment logic (drift detection, notifications, etc.)
-      await runScheduledAssessment(assessment, config);
-
-      console.log(chalk.bold.green('\n✅ Monitoring cycle complete!\n'));
-    } catch (error) {
-      console.error(chalk.red('\n❌ Error during monitoring:'));
-      console.error(error);
-      process.exit(1);
-    }
-  });
-
-/**
- * History command - show compliance history
- */
-program
-  .command('history')
-  .description('Show compliance history and trends')
-  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
-  .option('-n, --limit <number>', 'Number of recent assessments to show', '10')
-  .action(async options => {
-    try {
-      const config = loadConfig(options.config);
-
-      console.log(chalk.bold.blue('\n📈 Compliance History\n'));
-
-      const limit = parseInt(options.limit, 10);
-      const history = getComplianceTrend(config, limit);
-
-      if (history.length === 0) {
-        console.log(chalk.yellow('  No historical data found.\n'));
-        console.log(chalk.gray('  Run "msp-readiness monitor" to start collecting history.\n'));
-        return;
-      }
-
-      console.log(`Showing last ${history.length} assessments:\n`);
-
-      for (const entry of history.slice(-limit).reverse()) {
-        const date = entry.timestamp.toISOString().split('T')[0];
-        const score = entry.summary.complianceScore.toFixed(1);
-        const bar = generateProgressBar(entry.summary.complianceScore);
-
-        console.log(`${chalk.gray(date)} ${bar} ${chalk.bold(score + '%')}`);
+        const sarif = convertToSARIF(scanResult);
+        saveSARIF(sarif, options.sarif);
+        spinner.succeed(`SARIF report saved to ${options.sarif}`);
         console.log(
-          chalk.gray(
-            `  Addressed: ${entry.summary.addressed}, Partial: ${entry.summary.partial}, Gaps: ${entry.summary.gap}`
+          chalk.cyan(
+            `   Upload to GitHub Security: gh api repos/{owner}/{repo}/code-scanning/sarifs -F sarif=@${options.sarif}\n`
           )
         );
       }
 
-      // Calculate trend
-      if (history.length >= 2) {
-        const latest = history[history.length - 1];
-        const previous = history[history.length - 2];
-        const change = latest.summary.complianceScore - previous.summary.complianceScore;
-
-        console.log(chalk.bold('\n📊 Trend:\n'));
-        if (change > 0) {
-          console.log(chalk.green(`  ↑ Improved by ${change.toFixed(1)}% since last assessment`));
-        } else if (change < 0) {
-          console.log(
-            chalk.red(`  ↓ Dropped by ${Math.abs(change).toFixed(1)}% since last assessment`)
-          );
-        } else {
-          console.log(chalk.gray('  → No change since last assessment'));
-        }
+      // Save JSON output
+      if (options.json) {
+        require('fs').writeFileSync(options.json, JSON.stringify(scanResult, null, 2), 'utf-8');
+        console.log(chalk.cyan(`   JSON report saved to ${options.json}\n`));
       }
 
-      console.log();
+      // Exit with error code if findings and --fail-on-findings
+      if (options.failOnFindings && scanResult.findings.length > 0) {
+        console.log(
+          chalk.red('❌ Scan failed: Security issues found. Fix issues before deployment.\n')
+        );
+        process.exit(1);
+      }
+
+      console.log(chalk.bold.green('✅ Scan complete!\n'));
     } catch (error) {
-      console.error(chalk.red('\n❌ Error loading history:'));
+      console.error(chalk.red('\n❌ Error during IaC scan:'));
       console.error(error);
       process.exit(1);
     }
   });
-
-/**
- * Generate progress bar for compliance score
- */
-function generateProgressBar(score: number, width = 20): string {
-  const filled = Math.round((score / 100) * width);
-  const empty = width - filled;
-  const bar = '█'.repeat(filled) + '░'.repeat(empty);
-
-  if (score >= 80) return chalk.green(bar);
-  if (score >= 60) return chalk.yellow(bar);
-  return chalk.red(bar);
-}
 
 // Parse command line arguments
 program.parse(process.argv);
