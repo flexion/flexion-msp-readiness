@@ -23,7 +23,11 @@ import { validateAWSEnvironment, printAWSEnvValidation } from './utils/aws-env-v
 import { assessWorkspace, printWorkspaceAssessment } from './assessors/workspace-assessor';
 import { updateDocumentStatus } from './utils/frontmatter';
 import { generateWorkspaceDashboard } from './dashboard/workspace-dashboard';
-import { saveWorkspaceReport } from './assessors/workspace-report-generator';
+import {
+  saveWorkspaceReport,
+  saveEnhancedWorkspaceReport,
+} from './assessors/workspace-report-generator';
+import { buildCompliancePackage } from './utils/compliance-package-builder';
 import {
   collectCloudTrailEvidence,
   saveCloudTrailEvidence,
@@ -824,6 +828,138 @@ program
       printWorkspaceAssessment(assessment);
 
       console.log(chalk.gray('\nRun "msp-readiness assess" for full AWS assessment.\n'));
+    } catch (error) {
+      if (error instanceof ConfigError) {
+        console.error(chalk.red('\n' + error.message + '\n'));
+        process.exit(1);
+      }
+      throw error;
+    }
+  });
+
+/**
+ * Enhanced report command - generate comprehensive reports with category grouping
+ */
+program
+  .command('report')
+  .description('Generate enhanced MSP readiness assessment report')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option(
+    '-f, --format <format>',
+    'Output format: markdown, html, json, or all',
+    'markdown'
+  )
+  .option('-o, --output <path>', 'Output path (without extension)', './msp-assessment-report')
+  .option('--no-summary', 'Exclude executive summary')
+  .option('--no-details', 'Exclude requirement details')
+  .option('--no-checklist', 'Exclude manual evidence checklist')
+  .option('--no-remediation', 'Exclude gap remediation plan')
+  .action(async options => {
+    try {
+      const config = loadConfig(options.config);
+      const spinner = ora('Generating enhanced report...').start();
+
+      // Assess workspace
+      const assessment = await assessWorkspace(
+        config.output.playbooks_path,
+        config.output.evidence_path,
+        true
+      );
+
+      // Determine formats to generate
+      const formats = options.format === 'all' ? ['markdown', 'html', 'json'] : [options.format];
+
+      console.log(chalk.bold.blue('\n📝 Generating Enhanced Reports\n'));
+
+      for (const format of formats) {
+        spinner.text = `Generating ${format.toUpperCase()} report...`;
+
+        const result = saveEnhancedWorkspaceReport(assessment, config.project.name, options.output, {
+          format: format as 'markdown' | 'html' | 'json',
+          includeSummary: options.summary !== false,
+          includeDetails: options.details !== false,
+          includeChecklist: options.checklist !== false,
+          includeRemediationPlan: options.remediation !== false,
+          groupBy: 'category',
+        });
+
+        spinner.succeed(`${format.toUpperCase()} report generated: ${chalk.green(result.path)}`);
+      }
+
+      console.log(
+        chalk.gray('\nView the HTML report in your browser for an interactive experience.')
+      );
+      console.log(
+        chalk.gray('Use the JSON report for programmatic access to assessment data.\n')
+      );
+    } catch (error) {
+      if (error instanceof ConfigError) {
+        console.error(chalk.red('\n' + error.message + '\n'));
+        process.exit(1);
+      }
+      throw error;
+    }
+  });
+
+/**
+ * Package command - build complete compliance package
+ */
+program
+  .command('package')
+  .description('Build complete MSP compliance package for audit submission')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('-o, --output <path>', 'Output directory', './output')
+  .option('--format <format>', 'Package format: directory or zip', 'directory')
+  .option('--no-playbooks', 'Exclude playbooks')
+  .option('--no-evidence', 'Exclude evidence')
+  .option('--no-reports', 'Exclude reports')
+  .option('--templates', 'Include templates for manual requirements')
+  .action(async options => {
+    try {
+      const config = loadConfig(options.config);
+      const spinner = ora('Building compliance package...').start();
+
+      console.log(chalk.bold.blue('\n📦 Building MSP Compliance Package\n'));
+
+      // Assess workspace
+      spinner.text = 'Assessing workspace...';
+      const assessment = await assessWorkspace(
+        config.output.playbooks_path,
+        config.output.evidence_path,
+        true
+      );
+      spinner.succeed('Workspace assessed');
+
+      // Build package
+      spinner.text = 'Building package structure...';
+      spinner.start();
+
+      const packagePath = await buildCompliancePackage(config, assessment, options.output, {
+        format: options.format,
+        includePlaybooks: options.playbooks !== false,
+        includeEvidence: options.evidence !== false,
+        includeReports: options.reports !== false,
+        includeTemplates: options.templates === true,
+      });
+
+      spinner.succeed(`Package built: ${chalk.green(packagePath)}`);
+
+      console.log(chalk.gray('\nPackage contents:'));
+      console.log(chalk.gray('  - Executive summary and detailed reports'));
+      console.log(chalk.gray('  - Operational playbooks'));
+      console.log(chalk.gray('  - AWS evidence artifacts'));
+      console.log(chalk.gray('  - Requirement matrix (CSV)'));
+      console.log(chalk.gray('  - README with usage instructions'));
+
+      if (options.format === 'zip') {
+        console.log(
+          chalk.yellow(
+            '\nNote: ZIP creation requires manual step. Run: zip -r msp-compliance-package.zip msp-compliance-package/'
+          )
+        );
+      }
+
+      console.log(chalk.gray('\nReady for audit submission!\n'));
     } catch (error) {
       if (error instanceof ConfigError) {
         console.error(chalk.red('\n' + error.message + '\n'));

@@ -4,8 +4,8 @@
 
 export type RequirementStatus = 'addressed' | 'partial' | 'gap' | 'not-applicable' | 'not-started';
 export type RequirementPriority = 'critical' | 'high' | 'medium' | 'low';
-export type RequirementCategory =
-  'business' | 'people' | 'governance' | 'platform' | 'security' | 'operations';
+export type RequirementCategory = 'business' | 'people' | 'governance' | 'platform' | 'security' | 'operations';
+export type AutomationType = 'full' | 'partial' | 'manual';
 
 /**
  * MSP Program requirement definition
@@ -20,6 +20,7 @@ export interface MSPRequirement {
   awsServices?: string[]; // AWS services involved
   evidenceRequired: string[];
   estimatedHours?: number;
+  automationType?: AutomationType; // Level of automation possible
 }
 
 /**

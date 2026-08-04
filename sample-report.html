@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSP Readiness Assessment - MSP Readiness Workspace</title>
+  <style>
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f7fa;
+      color: #2d3748;
+      line-height: 1.6;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .metadata {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      font-size: 0.95rem;
+      opacity: 0.95;
+    }
+    .filters {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .filters button {
+      padding: 0.5rem 1rem;
+      border: 2px solid #e2e8f0;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .filters button:hover {
+      border-color: #667eea;
+      background: #f7fafc;
+    }
+    .filters button.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    .summary-grid {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    .summary-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .summary-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    .summary-card h3 {
+      font-size: 1rem;
+      color: #4a5568;
+      margin-bottom: 1rem;
+    }
+    .summary-card .percentage {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 0.5rem;
+    }
+    .summary-card .details {
+      font-size: 0.9rem;
+      color: #718096;
+    }
+    .progress-bar {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.3s ease;
+    }
+    .category-section {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .category-section h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: #2d3748;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 0.5rem;
+    }
+    .requirement {
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-left: 4px solid #e2e8f0;
+      border-radius: 0 8px 8px 0;
+      background: #f7fafc;
+      transition: all 0.2s;
+    }
+    .requirement:hover {
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .requirement.complete {
+      border-left-color: #48bb78;
+    }
+    .requirement.in-progress {
+      border-left-color: #ed8936;
+    }
+    .requirement.not-started {
+      border-left-color: #f56565;
+    }
+    .requirement h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      color: #2d3748;
+    }
+    .requirement .meta {
+      display: flex;
+      gap: 1rem;
+      margin: 0.5rem 0;
+      font-size: 0.9rem;
+      color: #718096;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .badge.automated {
+      background: #e6fffa;
+      color: #234e52;
+    }
+    .badge.partial-automated {
+      background: #fefcbf;
+      color: #744210;
+    }
+    .badge.manual {
+      background: #fff5f5;
+      color: #742a2a;
+    }
+    .evidence-list {
+      list-style: none;
+      margin: 1rem 0;
+    }
+    .evidence-list li {
+      padding: 0.5rem 0;
+      color: #4a5568;
+    }
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+      .metadata {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>MSP Readiness Assessment Report</h1>
+    <div class="metadata">
+      <div><strong>Generated:</strong> 8/4/2026, 2:45:39 PM</div>
+      <div><strong>Project:</strong> MSP Readiness Workspace</div>
+      <div><strong>Overall Completion:</strong> 0% (0/46 requirements)</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button onclick="filterByCategory('all')" class="active">All Categories</button>
+    <button onclick="filterByCategory('business')">🏢 Business</button>
+    <button onclick="filterByCategory('people')">👥 People</button>
+    <button onclick="filterByCategory('governance')">⚖️ Governance</button>
+    <button onclick="filterByCategory('platform')">🔧 Platform</button>
+    <button onclick="filterByCategory('security')">🔒 Security</button>
+    <button onclick="filterByCategory('operations')">🔄 Operations</button>
+    <button onclick="filterByStatus('all')" class="active">All Status</button>
+    <button onclick="filterByStatus('complete')">Complete</button>
+    <button onclick="filterByStatus('in-progress')">In Progress</button>
+    <button onclick="filterByStatus('not-started')">Not Started</button>
+  </div>
+
+  <div class="summary-grid">
+    
+    <div class="summary-card">
+      <h3>🏢 Business</h3>
+      <div class="percentage">0%</div>
+      <div class="details">0/4 complete</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  
+    
+    <div class="summary-card">
+      <h3>👥 People</h3>
+      <div class="percentage">0%</div>
+      <div class="details">0/3 complete</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  
+    
+    <div class="summary-card">
+      <h3>⚖️ Governance</h3>
+      <div class="percentage">0%</div>
+      <div class="details">0/6 complete</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  
+    
+    <div class="summary-card">
+      <h3>🔧 Platform</h3>
+      <div class="percentage">0%</div>
+      <div class="details">0/5 complete</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  
+    
+    <div class="summary-card">
+      <h3>🔒 Security</h3>
+      <div class="percentage">0%</div>
+      <div class="details">0/10 complete</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  
+    
+    <div class="summary-card">
+      <h3>🔄 Operations</h3>
+      <div class="percentage">0%</div>
+      <div class="details">0/18 complete</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  
+  </div>
+
+  
+  <div class="category-section" data-category="business">
+    <h2>🏢 Business (4)</h2>
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ BUS-001: Company Overview</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ BUS-002: MSP Practice Growth</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ BUS-003: Financial Planning and Reporting</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ BUS-004: Go-To-Market</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+  </div>
+  
+  
+  <div class="category-section" data-category="people">
+    <h2>👥 People (3)</h2>
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ PEO-001: Personnel Onboarding</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ PEO-002: Cloud Center of Excellence (CCOE)</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ PEO-003: Personnel Offboarding</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+  </div>
+  
+  
+  <div class="category-section" data-category="governance">
+    <h2>⚖️ Governance (6)</h2>
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ GOV-001: Risk and Mitigation Plans</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ GOV-002: Customer Satisfaction</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ GOV-003: Data Ownership and Customer Offboarding</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ GOV-004: Operational Readiness</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ GOV-005: Shared Responsibility Model</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ GOV-006: Sustainability Best Practices</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+  </div>
+  
+  
+  <div class="category-section" data-category="platform">
+    <h2>🔧 Platform (5)</h2>
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ PLAT-001: Account Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ PLAT-002: Solution Capabilities</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ PLAT-003: Non-Functional Requirements</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ PLAT-004: Well-Architected</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ PLAT-005: AWS Service Expertise</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge manual">Manual Required</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+  </div>
+  
+  
+  <div class="category-section" data-category="security">
+    <h2>🔒 Security (10)</h2>
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 SEC-001: Security Policies and Procedures</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge partial-automated">Partially Automated</span></span>
+        <span><strong>Completion:</strong> 40%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ SEC-002: Security Awareness Training</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge partial-automated">Partially Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 SEC-003: AWS Account Configuration</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 50%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 SEC-004: Identity and Access Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 40%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ SEC-005: Policy Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ SEC-006: Role-Based Access</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 SEC-007: Multi-Factor Authentication</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 50%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 SEC-008: Vulnerability Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 50%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 SEC-009: Security Event Logging</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 40%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 SEC-010: SaaS Tooling Account Access</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 40%</span>
+      </div>
+      
+      
+    </div>
+  
+  </div>
+  
+  
+  <div class="category-section" data-category="operations">
+    <h2>🔄 Operations (18)</h2>
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-001: Service Level Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge partial-automated">Partially Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-002: AWS Support Plan (Partner Accounts)</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 OPS-003: AWS Support Plan (Customer Accounts)</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 40%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 OPS-004: Service Desk Operations</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge partial-automated">Partially Automated</span></span>
+        <span><strong>Completion:</strong> 50%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 OPS-005: ITSM Platform</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge partial-automated">Partially Automated</span></span>
+        <span><strong>Completion:</strong> 50%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 OPS-006: Release Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 40%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-007: Configuration Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 OPS-008: Patch Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 40%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-009: Customer Deployment Pipelines</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-010: Event Management and Dynamic Monitoring</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement in-progress" data-status="in-progress">
+      <h3>🚧 OPS-011: Operational Runbooks</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> in-progress</span>
+        <span><span class="badge partial-automated">Partially Automated</span></span>
+        <span><strong>Completion:</strong> 40%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-012: Anomaly Detection</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-013: Predictive Monitoring and AIOps</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-014: Knowledge Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge partial-automated">Partially Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-015: Disaster Recovery</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-016: Cloud Financial Management</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-017: Migrations</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+    
+    <div class="requirement not-started" data-status="not-started">
+      <h3>❌ OPS-018: Artificial Intelligence</h3>
+      <div class="meta">
+        <span><strong>Status:</strong> not-started</span>
+        <span><span class="badge automated">Fully Automated</span></span>
+        <span><strong>Completion:</strong> 0%</span>
+      </div>
+      
+      
+    </div>
+  
+  </div>
+  
+
+  <script>
+    
+    function filterByCategory(category) {
+      const sections = document.querySelectorAll('.category-section');
+      sections.forEach(section => {
+        if (category === 'all' || section.dataset.category === category) {
+          section.style.display = 'block';
+        } else {
+          section.style.display = 'none';
+        }
+      });
+
+      // Update active button
+      const buttons = document.querySelectorAll('.filters button');
+      buttons.forEach(btn => {
+        if (btn.textContent.toLowerCase().includes(category.toLowerCase()) ||
+            (category === 'all' && btn.textContent === 'All Categories')) {
+          btn.classList.add('active');
+        } else if (!btn.textContent.includes('Status') && !btn.textContent.includes('Complete') &&
+                   !btn.textContent.includes('Progress') && !btn.textContent.includes('Started')) {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    function filterByStatus(status) {
+      const requirements = document.querySelectorAll('.requirement');
+      requirements.forEach(req => {
+        if (status === 'all' || req.dataset.status === status) {
+          req.style.display = 'block';
+        } else {
+          req.style.display = 'none';
+        }
+      });
+
+      // Update active button
+      const buttons = document.querySelectorAll('.filters button');
+      buttons.forEach(btn => {
+        if (btn.textContent.toLowerCase().includes(status.toLowerCase()) ||
+            (status === 'all' && btn.textContent === 'All Status')) {
+          btn.classList.add('active');
+        } else if (btn.textContent.includes('Status') || btn.textContent.includes('Complete') ||
+                   btn.textContent.includes('Progress') || btn.textContent.includes('Started')) {
+          btn.classList.remove('active');
+        }
+      });
+    }
+  
+  </script>
+</body>
+</html>
