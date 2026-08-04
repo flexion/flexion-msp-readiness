@@ -111,37 +111,59 @@ Running against the **wrong account** gives you the wrong assessment!
 
 ## 🚨 Warning About Environment Variables
 
-You currently have these environment variables set:
-```bash
-AWS_PROFILE=<something>
-AWS_ACCESS_KEY_ID=<something>
-AWS_SECRET_ACCESS_KEY=<something>
-```
+The MSP Readiness tool **automatically checks** for conflicting AWS credentials before running any AWS operations.
 
-This causes the warning:
+You may see this warning if you have multiple credential sources:
 ```
-Multiple credential sources detected: 
-Both AWS_PROFILE and the pair AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY
+⚠️  AWS Environment Warnings:
+
+  ! Multiple credential sources detected: Both AWS_PROFILE and static 
+    credentials (AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY) are set. 
+    AWS SDK may behave unpredictably. Recommend unsetting static credentials.
+
+💡 Recommendation:
+
+Run these commands to fix credential conflicts:
+  unset AWS_ACCESS_KEY_ID
+  unset AWS_SECRET_ACCESS_KEY
+  unset AWS_SESSION_TOKEN
+  export AWS_PROFILE=AWSAdministratorAccess-688672519222
 ```
 
 ### Fix This
+
+The tool will automatically provide the exact commands you need to run. Simply copy and paste them:
 
 ```bash
 # Unset the static credentials
 unset AWS_ACCESS_KEY_ID
 unset AWS_SECRET_ACCESS_KEY
+unset AWS_SESSION_TOKEN
 
 # Keep only AWS_PROFILE
 export AWS_PROFILE=AWSAdministratorAccess-688672519222
 ```
 
-Or add to your `~/.zshrc` or `~/.bashrc`:
+Or add to your `~/.zshrc` or `~/.bashrc` to make it permanent:
 ```bash
 # Use AWS SSO instead of static credentials
 unset AWS_ACCESS_KEY_ID
 unset AWS_SECRET_ACCESS_KEY
+unset AWS_SESSION_TOKEN
 export AWS_PROFILE=AWSAdministratorAccess-688672519222
 ```
+
+### Automatic Validation
+
+The MSP Readiness tool now validates your AWS environment before every command that needs AWS access:
+
+- ✅ **`msp-readiness assess`** (without --skip-aws)
+- ✅ **`msp-readiness collect-evidence`**
+
+If your environment has errors (wrong profile, missing credentials, conflicting credentials), the tool will:
+1. Show clear error/warning messages
+2. Provide recommended commands to fix the issue
+3. Exit before making any AWS API calls (if errors present)
 
 ---
 

@@ -19,6 +19,7 @@ import {
 import { analyzeAWSConfig, printAWSConfigSummary } from './assessors/aws-config-analyzer';
 import { analyzeIAM, printIAMSummary } from './assessors/iam-evaluator';
 import { analyzeSecurityHub, printSecurityHubSummary } from './assessors/security-hub-checker';
+import { validateAWSEnvironment, printAWSEnvValidation } from './utils/aws-env-validator';
 import {
   collectCloudTrailEvidence,
   saveCloudTrailEvidence,
@@ -120,6 +121,16 @@ program
       let awsAnalysis: AWSAnalysisResults | undefined;
       if (!options.skipAws) {
         try {
+          // Validate AWS environment before making API calls
+          const envValidation = validateAWSEnvironment(config.aws.profile);
+          printAWSEnvValidation(envValidation, false);
+
+          if (!envValidation.isValid) {
+            console.error(chalk.red('\n⚠️  Cannot proceed with AWS analysis due to environment errors.\n'));
+            console.error(chalk.yellow('Tip: Use --skip-aws to run assessment without AWS analysis.\n'));
+            process.exit(1);
+          }
+
           spinner.text = 'Analyzing AWS infrastructure...';
           spinner.start();
 
@@ -237,6 +248,15 @@ program
       const config = loadConfig(options.config);
       spinner.succeed('Configuration loaded');
       printConfigSummary(config);
+
+      // Validate AWS environment before making API calls
+      const envValidation = validateAWSEnvironment(config.aws.profile);
+      printAWSEnvValidation(envValidation, false);
+
+      if (!envValidation.isValid) {
+        console.error(chalk.red('\n⚠️  Cannot proceed with evidence collection due to environment errors.\n'));
+        process.exit(1);
+      }
 
       const artifacts: EvidenceArtifact[] = [];
       const evidencePath = config.output.evidence_path;

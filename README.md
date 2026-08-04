@@ -345,6 +345,89 @@ assessment:
   custom_priorities: {}  # Optional: override priority levels
 ```
 
+## Troubleshooting
+
+### AWS Authentication Issues
+
+The tool includes **automatic AWS environment validation** that checks for common credential problems before running any AWS operations.
+
+#### Multiple Credential Sources Warning
+
+If you see:
+```
+⚠️  AWS Environment Warnings:
+
+  ! Multiple credential sources detected: Both AWS_PROFILE and static 
+    credentials (AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY) are set.
+```
+
+**Fix**: The tool will provide the exact commands needed:
+```bash
+unset AWS_ACCESS_KEY_ID
+unset AWS_SECRET_ACCESS_KEY
+unset AWS_SESSION_TOKEN
+export AWS_PROFILE=your-profile-name
+```
+
+#### Profile Mismatch Error
+
+If you see:
+```
+❌ AWS_PROFILE mismatch: Expected "AWSAdministratorAccess-688672519222" 
+   but found "ClaudeCodeAccess"
+```
+
+**Fix**: Set the correct profile:
+```bash
+export AWS_PROFILE=AWSAdministratorAccess-688672519222
+aws sso login --profile AWSAdministratorAccess-688672519222
+```
+
+#### Missing Credentials Error
+
+If you see:
+```
+❌ No AWS credentials configured
+```
+
+**Fix**: Configure AWS SSO:
+```bash
+export AWS_PROFILE=your-profile-name
+aws sso login
+```
+
+#### Detailed Troubleshooting
+
+See the comprehensive troubleshooting guides:
+- **[AWS-LOGIN-GUIDE.md](AWS-LOGIN-GUIDE.md)** - How to login to the correct AWS account
+- **[AWS-PERMISSIONS-GUIDE.md](AWS-PERMISSIONS-GUIDE.md)** - Required IAM permissions
+
+### Permission Errors
+
+If you see `AccessDeniedException` errors, you're missing required AWS permissions. The tool needs read-only access to:
+
+- CloudTrail (cloudtrail:DescribeTrails)
+- AWS Config (config:DescribeConfigRules, config:DescribeConformancePacks)
+- AWS Backup (backup:ListBackupVaults, backup:ListBackupPlans)
+- Amazon Inspector (inspector2:ListFindings)
+- Security Hub (securityhub:GetFindings, securityhub:DescribeHub)
+- IAM (iam:GetAccountPasswordPolicy, iam:ListUsers)
+- CloudWatch (cloudwatch:DescribeAlarms, logs:DescribeLogGroups)
+- Systems Manager (ssm:DescribeInstanceInformation)
+
+**Fix**: Attach the AWS `SecurityAudit` managed policy or see [AWS-PERMISSIONS-GUIDE.md](AWS-PERMISSIONS-GUIDE.md) for detailed instructions.
+
+### Build Issues
+
+If `npm run build` fails:
+```bash
+# Clean and rebuild
+npm run clean
+rm -rf node_modules package-lock.json
+npm install
+npm run build
+```
+
 ## Project Structure
 
 ```
