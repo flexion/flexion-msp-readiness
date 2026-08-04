@@ -45,6 +45,44 @@ export interface AssessmentFinding {
   details?: string;
   supportive: boolean; // true if supports compliance, false if gap
   timestamp: Date;
+  remediation?: RemediationGuidance; // Optional remediation for gap findings
+}
+
+/**
+ * Remediation guidance for a finding
+ */
+export interface RemediationGuidance {
+  findingType: string; // e.g., "config-not-enabled", "cloudtrail-not-logging"
+  rootCause: string;
+  impact: string;
+  riskLevel: 'critical' | 'high' | 'medium' | 'low';
+  steps: RemediationStep[];
+  estimatedEffort: number; // hours
+  awsDocs: string[]; // Links to AWS documentation
+  iacSnippets: IaCSnippet[];
+  prerequisites?: string[];
+  validation?: string[]; // Steps to verify the fix worked
+}
+
+/**
+ * Single remediation step
+ */
+export interface RemediationStep {
+  order: number;
+  action: string;
+  details?: string;
+  command?: string; // CLI command if applicable
+  consoleSteps?: string[]; // Steps in AWS Console
+}
+
+/**
+ * Infrastructure as Code snippet
+ */
+export interface IaCSnippet {
+  language: 'cdk-typescript' | 'cdk-python' | 'cloudformation' | 'terraform';
+  description: string;
+  code: string;
+  filePath?: string; // Suggested file path
 }
 
 /**

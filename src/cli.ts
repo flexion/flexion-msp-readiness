@@ -213,6 +213,14 @@ program
       if (savedFiles.jsonPath) {
         console.log(chalk.cyan(`  📊 JSON:     ${savedFiles.jsonPath}`));
       }
+      if (savedFiles.remediationPath) {
+        console.log(chalk.cyan(`  🔧 Remediation: ${savedFiles.remediationPath}`));
+        console.log(
+          chalk.gray(
+            '     Contains step-by-step fixes, IaC code snippets, and AWS documentation links'
+          )
+        );
+      }
 
       console.log(chalk.bold.green('\n✅ Assessment complete!\n'));
     } catch (error) {

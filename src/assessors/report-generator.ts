@@ -6,6 +6,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { RequirementAssessment, ProjectAssessment } from '../types';
 import { calculateSummary, getCriticalGaps } from './requirement-matcher';
+import {
+  enrichFindingsWithRemediation,
+  generateRemediationReport,
+  saveRemediationReport,
+} from '../generators/remediation-generator';
 
 /**
  * Generate project assessment from requirement assessments
@@ -13,17 +18,24 @@ import { calculateSummary, getCriticalGaps } from './requirement-matcher';
 export function generateProjectAssessment(
   projectName: string,
   requirementAssessments: RequirementAssessment[],
-  mspVersion: string
+  mspVersion: string,
+  includeRemediation: boolean = true
 ): ProjectAssessment {
-  const summary = calculateSummary(requirementAssessments);
-  const criticalGaps = getCriticalGaps(requirementAssessments);
+  // Enrich findings with remediation guidance if requested
+  let enrichedAssessments = requirementAssessments;
+  if (includeRemediation) {
+    enrichedAssessments = enrichFindingsWithRemediation(requirementAssessments);
+  }
+
+  const summary = calculateSummary(enrichedAssessments);
+  const criticalGaps = getCriticalGaps(enrichedAssessments);
 
   const assessment: ProjectAssessment = {
     projectName,
     assessmentDate: new Date(),
     version: mspVersion,
     overallStatus: summary,
-    requirementAssessments,
+    requirementAssessments: enrichedAssessments,
     criticalGaps,
     totalEstimatedEffort: summary.totalEffort,
     summary: generateSummaryText(summary, criticalGaps.length),
@@ -238,6 +250,16 @@ export function generateMarkdownReport(assessment: ProjectAssessment): string {
       md += `\n`;
     }
 
+    // Add remediation guidance preview for gap findings
+    const gapFindingsWithRemediation = reqAssessment.findings.filter(
+      f => !f.supportive && f.remediation
+    );
+
+    if (gapFindingsWithRemediation.length > 0) {
+      md += `**Remediation Available**: ${gapFindingsWithRemediation.length} finding(s) with detailed remediation guidance\n`;
+      md += `See remediation report for step-by-step fixes, IaC code, and AWS documentation links.\n\n`;
+    }
+
     md += `---\n\n`;
   }
 
@@ -250,9 +272,10 @@ export function generateMarkdownReport(assessment: ProjectAssessment): string {
 export async function saveReport(
   assessment: ProjectAssessment,
   outputPath: string,
-  format: 'markdown' | 'json' | 'both' = 'both'
-): Promise<{ markdownPath?: string; jsonPath?: string }> {
-  const result: { markdownPath?: string; jsonPath?: string } = {};
+  format: 'markdown' | 'json' | 'both' = 'both',
+  includeRemediationReport: boolean = true
+): Promise<{ markdownPath?: string; jsonPath?: string; remediationPath?: string }> {
+  const result: { markdownPath?: string; jsonPath?: string; remediationPath?: string } = {};
 
   // Ensure output directory exists
   const outputDir = path.dirname(outputPath);
@@ -275,6 +298,13 @@ export async function saveReport(
     const jsonPath = `${basePath}.json`;
     fs.writeFileSync(jsonPath, JSON.stringify(assessment, null, 2), 'utf-8');
     result.jsonPath = jsonPath;
+  }
+
+  // Generate and save remediation report
+  if (includeRemediationReport) {
+    const remediationReport = generateRemediationReport(assessment.requirementAssessments);
+    const remediationFiles = saveRemediationReport(remediationReport, basePath, format);
+    result.remediationPath = remediationFiles.markdownPath || remediationFiles.jsonPath;
   }
 
   return result;
