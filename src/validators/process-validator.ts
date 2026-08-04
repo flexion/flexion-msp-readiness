@@ -11,10 +11,7 @@ export class ProcessValidator extends BaseValidator {
     return ['OPSP-001', 'OPSP-002', 'OPSP-003', 'OPSP-005', 'OPS-006', 'SEC-001'];
   }
 
-  async validate(
-    requirement: MSPRequirement,
-    evidencePaths: string[]
-  ): Promise<ValidationResult> {
+  async validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult> {
     const checks: ValidationCheck[] = [];
 
     try {

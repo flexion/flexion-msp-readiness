@@ -11,10 +11,7 @@ export class EncryptionValidator extends BaseValidator {
     return ['SEC-009'];
   }
 
-  async validate(
-    requirement: MSPRequirement,
-    evidencePaths: string[]
-  ): Promise<ValidationResult> {
+  async validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult> {
     const checks: ValidationCheck[] = [];
 
     try {
@@ -27,12 +24,7 @@ export class EncryptionValidator extends BaseValidator {
 
       // Check KMS keys exist
       checks.push(
-        this.validateMinimum(
-          evidence.summary?.totalKMSKeys || 0,
-          1,
-          'KMS keys configured',
-          'high'
-        )
+        this.validateMinimum(evidence.summary?.totalKMSKeys || 0, 1, 'KMS keys configured', 'high')
       );
 
       // Check for customer-managed keys (best practice)
@@ -46,10 +38,10 @@ export class EncryptionValidator extends BaseValidator {
       );
 
       // Check S3 bucket encryption
-      const totalS3 = evidence.summary?.s3BucketsEncrypted + evidence.summary?.s3BucketsUnencrypted || 0;
-      const s3EncryptionPercentage = totalS3 > 0
-        ? (evidence.summary?.s3BucketsEncrypted / totalS3) * 100
-        : 100;
+      const totalS3 =
+        evidence.summary?.s3BucketsEncrypted + evidence.summary?.s3BucketsUnencrypted || 0;
+      const s3EncryptionPercentage =
+        totalS3 > 0 ? (evidence.summary?.s3BucketsEncrypted / totalS3) * 100 : 100;
 
       checks.push(
         this.createCheck(
@@ -65,10 +57,10 @@ export class EncryptionValidator extends BaseValidator {
       );
 
       // Check RDS encryption
-      const totalRDS = evidence.summary?.rdsInstancesEncrypted + evidence.summary?.rdsInstancesUnencrypted || 0;
-      const rdsEncryptionPercentage = totalRDS > 0
-        ? (evidence.summary?.rdsInstancesEncrypted / totalRDS) * 100
-        : 100;
+      const totalRDS =
+        evidence.summary?.rdsInstancesEncrypted + evidence.summary?.rdsInstancesUnencrypted || 0;
+      const rdsEncryptionPercentage =
+        totalRDS > 0 ? (evidence.summary?.rdsInstancesEncrypted / totalRDS) * 100 : 100;
 
       checks.push(
         this.createCheck(
@@ -84,10 +76,10 @@ export class EncryptionValidator extends BaseValidator {
       );
 
       // Check EBS encryption
-      const totalEBS = evidence.summary?.ebsVolumesEncrypted + evidence.summary?.ebsVolumesUnencrypted || 0;
-      const ebsEncryptionPercentage = totalEBS > 0
-        ? (evidence.summary?.ebsVolumesEncrypted / totalEBS) * 100
-        : 100;
+      const totalEBS =
+        evidence.summary?.ebsVolumesEncrypted + evidence.summary?.ebsVolumesUnencrypted || 0;
+      const ebsEncryptionPercentage =
+        totalEBS > 0 ? (evidence.summary?.ebsVolumesEncrypted / totalEBS) * 100 : 100;
 
       checks.push(
         this.createCheck(

@@ -11,10 +11,7 @@ export class PatchManagementValidator extends BaseValidator {
     return ['OPS-008'];
   }
 
-  async validate(
-    requirement: MSPRequirement,
-    evidencePaths: string[]
-  ): Promise<ValidationResult> {
+  async validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult> {
     const checks: ValidationCheck[] = [];
 
     try {
@@ -46,9 +43,10 @@ export class PatchManagementValidator extends BaseValidator {
       );
 
       // Check that most instances are online
-      const onlinePercentage = evidence.summary?.totalInstances > 0
-        ? (evidence.summary.onlineInstances / evidence.summary.totalInstances) * 100
-        : 0;
+      const onlinePercentage =
+        evidence.summary?.totalInstances > 0
+          ? (evidence.summary.onlineInstances / evidence.summary.totalInstances) * 100
+          : 0;
 
       checks.push(
         this.createCheck(

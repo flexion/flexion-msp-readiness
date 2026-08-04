@@ -1,0 +1,141 @@
+{
+  "templates": [
+    {
+      "requirementId": "BUS-001",
+      "path": "business/company-overview.md",
+      "title": "Company Overview",
+      "category": "business",
+      "description": "Company overview presentation covering company history, locations, employees, customer profile, service differentiators, and AWS relationship details"
+    },
+    {
+      "requirementId": "BUS-002",
+      "path": "business/customer-growth.md",
+      "title": "MSP Practice Growth",
+      "category": "business",
+      "description": "Documentation of MSP practice growth with 4+ new customer contracts or addenda demonstrating growth within last 18 months"
+    },
+    {
+      "requirementId": "BUS-003",
+      "path": "business/financial-planning.md",
+      "title": "Financial Planning and Reporting",
+      "category": "business",
+      "description": "Processes for financial planning including forecasting, budgeting, and review of financial metrics"
+    },
+    {
+      "requirementId": "BUS-004",
+      "path": "business/gtm-process.md",
+      "title": "Go-To-Market Process",
+      "category": "business",
+      "description": "Documented processes for identifying MSP opportunities, training sellers, and generating demand/leads"
+    },
+    {
+      "requirementId": "PEO-001",
+      "path": "people/onboarding-checklist.md",
+      "title": "Personnel Onboarding",
+      "category": "people",
+      "description": "Defined onboarding processes and checklists for personnel relevant to MSP practice"
+    },
+    {
+      "requirementId": "PEO-002",
+      "path": "people/ccoe-charter.md",
+      "title": "Cloud Center of Excellence (CCOE)",
+      "category": "people",
+      "description": "CCOE covering cloud adoption, training, governance, strategy, and operations/automation"
+    },
+    {
+      "requirementId": "PEO-003",
+      "path": "people/offboarding-checklist.md",
+      "title": "Personnel Offboarding",
+      "category": "people",
+      "description": "Defined termination processes ensuring all access to customer and Partner systems is revoked"
+    },
+    {
+      "requirementId": "GOV-001",
+      "path": "governance/risk-register.md",
+      "title": "Risk and Mitigation Plans",
+      "category": "governance",
+      "description": "Business risks including AWS practice are outlined with documented mitigation plans"
+    },
+    {
+      "requirementId": "GOV-002",
+      "path": "governance/customer-satisfaction.md",
+      "title": "Customer Satisfaction",
+      "category": "governance",
+      "description": "Mechanism to objectively capture customer satisfaction via surveys, post-interaction feedback, or review meetings"
+    },
+    {
+      "requirementId": "GOV-003",
+      "path": "governance/data-governance.md",
+      "title": "Data Ownership and Customer Offboarding",
+      "category": "governance",
+      "description": "Customer contracts define data ownership, data transfer procedures, timeframes, and offboarding process"
+    },
+    {
+      "requirementId": "GOV-004",
+      "path": "governance/operational-readiness.md",
+      "title": "Operational Readiness",
+      "category": "governance",
+      "description": "Operational Readiness process with checklists for personnel, tools, and operational processes"
+    },
+    {
+      "requirementId": "GOV-005",
+      "path": "governance/shared-responsibility.md",
+      "title": "Shared Responsibility Model",
+      "category": "governance",
+      "description": "Defines security requirements and operational expectations via RACI matrix between Partner and Customer"
+    },
+    {
+      "requirementId": "GOV-006",
+      "path": "governance/sustainability.md",
+      "title": "Sustainability Best Practices",
+      "category": "governance",
+      "description": "AWS Partner optimizes workload placement and architecture for energy efficiency"
+    },
+    {
+      "requirementId": "PLAT-001",
+      "path": "platform/account-management.md",
+      "title": "Account Management",
+      "category": "platform",
+      "description": "AWS accounts are not shared across customers (except multi-tenant SaaS products owned by Partner)"
+    },
+    {
+      "requirementId": "PLAT-002",
+      "path": "platform/solution-capabilities.md",
+      "title": "Solution Capabilities",
+      "category": "platform",
+      "description": "Detailed design documents for 2 customers reviewed by AWS certified Solutions Architect"
+    },
+    {
+      "requirementId": "PLAT-003",
+      "path": "platform/nfr-documentation.md",
+      "title": "Non-Functional Requirements",
+      "category": "platform",
+      "description": "Design documents include performance, capacity, availability requirements, SLAs, monitoring, testing"
+    },
+    {
+      "requirementId": "PLAT-004",
+      "path": "platform/well-architected.md",
+      "title": "Well-Architected",
+      "category": "platform",
+      "description": "Customer infrastructure is well-architected per AWS Well-Architected Framework with zero HRIs"
+    },
+    {
+      "requirementId": "PLAT-005",
+      "path": "platform/service-expertise.md",
+      "title": "AWS Service Expertise",
+      "category": "platform",
+      "description": "Two customer workloads each using ≥4 AWS services beyond basic compute/network/storage"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-08-04",
+    "totalTemplates": 18,
+    "categories": {
+      "business": 4,
+      "people": 3,
+      "governance": 6,
+      "platform": 5
+    }
+  }
+}

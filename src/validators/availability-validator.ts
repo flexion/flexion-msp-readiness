@@ -11,10 +11,7 @@ export class AvailabilityValidator extends BaseValidator {
     return ['OPS-011'];
   }
 
-  async validate(
-    requirement: MSPRequirement,
-    evidencePaths: string[]
-  ): Promise<ValidationResult> {
+  async validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult> {
     const checks: ValidationCheck[] = [];
 
     try {
@@ -26,10 +23,10 @@ export class AvailabilityValidator extends BaseValidator {
       const evidence = this.loadEvidenceFile(availabilityPath);
 
       // Check RDS Multi-AZ configuration
-      const totalRDS = evidence.summary?.multiAZRDSInstances + evidence.summary?.singleAZRDSInstances || 0;
-      const multiAZPercentage = totalRDS > 0
-        ? (evidence.summary?.multiAZRDSInstances / totalRDS) * 100
-        : 100;
+      const totalRDS =
+        evidence.summary?.multiAZRDSInstances + evidence.summary?.singleAZRDSInstances || 0;
+      const multiAZPercentage =
+        totalRDS > 0 ? (evidence.summary?.multiAZRDSInstances / totalRDS) * 100 : 100;
 
       checks.push(
         this.createCheck(

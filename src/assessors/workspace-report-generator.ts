@@ -30,7 +30,9 @@ export function generateWorkspaceReport(
   // Summary
   lines.push('## Summary');
   lines.push('');
-  lines.push(`Overall completion: ${summary.completionPercentage}% (${summary.complete}/${summary.total} requirements fully complete).`);
+  lines.push(
+    `Overall completion: ${summary.completionPercentage}% (${summary.complete}/${summary.total} requirements fully complete).`
+  );
   lines.push(`${summary.inProgress} requirements in progress, ${summary.notStarted} not started.`);
   lines.push('');
 
@@ -148,11 +150,15 @@ export function generateWorkspaceReport(
     lines.push(`1. **Generate ${needPlaybooks} missing playbook(s)**: \`msp-readiness generate\``);
   }
   if (needEvidence > 0) {
-    lines.push(`2. **Collect evidence for ${needEvidence} requirement(s)**: \`msp-readiness collect-evidence\``);
+    lines.push(
+      `2. **Collect evidence for ${needEvidence} requirement(s)**: \`msp-readiness collect-evidence\``
+    );
   }
   if (needApproval > 0) {
     const ids = requirements
-      .filter(r => r.hasPlaybook && r.hasEvidence && (!r.playbookStatus || r.playbookStatus === 'draft'))
+      .filter(
+        r => r.hasPlaybook && r.hasEvidence && (!r.playbookStatus || r.playbookStatus === 'draft')
+      )
       .map(r => r.requirement.id)
       .join(',');
     lines.push(`3. **Approve ${needApproval} playbook(s)**: \`msp-readiness approve ${ids}\``);

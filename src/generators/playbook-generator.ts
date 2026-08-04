@@ -7,11 +7,7 @@ import * as path from 'path';
 import { renderTemplate, TemplateContext, saveRenderedTemplate } from './template-engine';
 import { GeneratedPlaybook, PlaybookMode, AutomationType, MSPRequirement } from '../types';
 import { Config } from '../types';
-import {
-  addFrontmatter,
-  isUserModified,
-  DocumentMetadata,
-} from '../utils/frontmatter';
+import { addFrontmatter, isUserModified, DocumentMetadata } from '../utils/frontmatter';
 import { getRequirement } from '../data/msp-requirements';
 
 export interface PlaybookSpec {
@@ -294,7 +290,9 @@ export async function generatePlaybooks(
 
       // Check if file exists and is user-modified (unless --force)
       if (!options.force && fs.existsSync(outputPath) && isUserModified(outputPath)) {
-        console.log(`⚠ Skipped ${spec.type}: ${spec.name} (user modified, use --force to overwrite)`);
+        console.log(
+          `⚠ Skipped ${spec.type}: ${spec.name} (user modified, use --force to overwrite)`
+        );
         skipped.push(spec.name);
         continue;
       }
@@ -339,9 +337,7 @@ export async function generatePlaybooks(
       `\n📋 Dry run complete: Would generate ${generated.length} files, skip ${skipped.length} files`
     );
   } else if (skipped.length > 0) {
-    console.log(
-      `\n⚠️  Skipped ${skipped.length} user-modified file(s). Use --force to overwrite.`
-    );
+    console.log(`\n⚠️  Skipped ${skipped.length} user-modified file(s). Use --force to overwrite.`);
   }
 
   return generated;
