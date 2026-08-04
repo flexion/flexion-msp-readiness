@@ -120,6 +120,7 @@ msp-readiness assess
 msp-readiness collect-evidence
 msp-readiness generate
 msp-readiness dashboard
+msp-readiness diff --baseline old.json --current new.json
 
 # Or use the skill helper
 ~/repos/flexion-msp-readiness/bin/msp-skill full
@@ -170,7 +171,59 @@ All generated content is:
 - CIS Controls v8 aligned
 - Ready for review (not requiring rewrite)
 
-### 4. Compliance Dashboard
+### 4. Assessment Comparison
+
+Compare two assessment runs to track improvements and validate remediation efforts:
+
+```bash
+# Compare baseline with current assessment
+msp-readiness diff \
+  --baseline assessment-2026-01-01.json \
+  --current assessment-2026-02-01.json
+
+# Filter for specific changes
+msp-readiness diff --only improvements
+msp-readiness diff --only regressions
+
+# CI/CD integration - exits with code 1 if compliance decreases
+msp-readiness diff --baseline baseline.json --current current.json
+```
+
+Features:
+- **Show compliance changes**: Percentage point increase/decrease
+- **Track improvements**: Requirements that moved from gap → partial → addressed
+- **Detect regressions**: Requirements that lost compliance
+- **Explain changes**: Specific reasons for each status change (new findings, evidence, etc.)
+- **CI/CD integration**: Exit code 1 if compliance drops (blocks deployments)
+- **Multiple formats**: JSON and markdown reports
+
+Example output:
+```
+📊 Assessment Comparison
+
+Baseline:
+  Date: 2026-01-01
+  Compliance: 50%
+
+Current:
+  Date: 2026-02-01
+  Compliance: 65%
+
+📈 Compliance Change: +15%
+
+📝 Changes Summary:
+✅ Improved:   5 requirements
+❌ Regressed:  0 requirements
+➡️  Unchanged: 14 requirements
+
+📈 Improvements:
+📈 OPSP-001: Incident Management
+  Status: gap → addressed
+  Confidence: 50% → 90%
+  Reason: Status changed from 'gap' to 'addressed'; Confidence increased by 40%; 2 new findings added; 1 new evidence artifact
+```
+
+### 5. Compliance Dashboard
 
 Interactive HTML dashboard showing:
 
