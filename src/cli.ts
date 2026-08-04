@@ -64,6 +64,18 @@ import {
   generateMarkdownReport,
   saveReport,
 } from './assessors/report-generator';
+import {
+  saveAssessmentToHistory,
+  listHistoricalAssessments,
+  loadAssessment,
+  compareAssessments,
+  analyzeTrend,
+  exportHistoryToCSV,
+  exportComparisonToCSV,
+  cleanupOldAssessments,
+  getBaselineAssessment,
+  getMostRecentAssessment,
+} from './utils/history-manager';
 
 const program = new Command();
 
@@ -212,6 +224,17 @@ program
       }
       if (savedFiles.jsonPath) {
         console.log(chalk.cyan(`  📊 JSON:     ${savedFiles.jsonPath}`));
+      }
+
+      // Save to history
+      const historyPath = path.join(process.cwd(), '.msp-history');
+      const historyFile = saveAssessmentToHistory(assessment, historyPath);
+      console.log(chalk.cyan(`  📜 History:  ${historyFile}`));
+
+      // Cleanup old assessments
+      const deletedCount = cleanupOldAssessments(historyPath, 10);
+      if (deletedCount > 0) {
+        console.log(chalk.gray(`  🗑️  Cleaned up ${deletedCount} old assessment(s)`));
       }
 
       console.log(chalk.bold.green('\n✅ Assessment complete!\n'));
@@ -440,7 +463,12 @@ program
       // Aggregate data
       spinner.text = 'Aggregating dashboard data...';
       spinner.start();
-      const dashboardData = aggregateDashboardData(assessment, config.output.evidence_path);
+      const historyPath = path.join(process.cwd(), '.msp-history');
+      const dashboardData = aggregateDashboardData(
+        assessment,
+        config.output.evidence_path,
+        historyPath
+      );
       spinner.succeed('Data aggregated');
 
       // Build dashboard
@@ -454,6 +482,239 @@ program
       console.log(chalk.cyan(`  Open with: open ${config.output.dashboard_path}\n`));
     } catch (error) {
       console.error(chalk.red('\n❌ Error building dashboard:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Compare command - compare two assessments
+ */
+program
+  .command('compare')
+  .description('Compare baseline and current assessments to track progress')
+  .option('--baseline <path>', 'Path to baseline assessment (default: oldest in history)')
+  .option('--current <path>', 'Path to current assessment (default: most recent in history)')
+  .option('--history <path>', 'Path to history directory', './.msp-history')
+  .option('--csv <path>', 'Export comparison to CSV')
+  .action(async options => {
+    try {
+      console.log(chalk.bold.blue('\n📊 Assessment Comparison\n'));
+
+      const spinner = ora('Loading assessments...').start();
+
+      let baseline, current;
+
+      if (options.baseline && options.current) {
+        // Load specific files
+        baseline = loadAssessment(options.baseline);
+        current = loadAssessment(options.current);
+      } else {
+        // Load from history
+        baseline = getBaselineAssessment(options.history);
+        current = getMostRecentAssessment(options.history);
+
+        if (!baseline || !current) {
+          spinner.fail('Not enough history');
+          console.log(
+            chalk.yellow(
+              '\n  Need at least 2 assessments in history. Run "msp-readiness assess" multiple times.\n'
+            )
+          );
+          process.exit(1);
+        }
+      }
+
+      spinner.succeed('Assessments loaded');
+
+      // Compare
+      spinner.text = 'Comparing assessments...';
+      spinner.start();
+      const comparison = compareAssessments(baseline, current);
+      spinner.succeed('Comparison complete');
+
+      // Print results
+      console.log(chalk.bold('\n📈 Progress Summary:\n'));
+      console.log(`Baseline: ${chalk.cyan(baseline.assessmentDate.toLocaleDateString())}`);
+      console.log(`Current:  ${chalk.cyan(current.assessmentDate.toLocaleDateString())}`);
+      console.log(`Time span: ${chalk.cyan(comparison.summary.timeSpan + ' days')}\n`);
+
+      console.log(chalk.green(`✅ Improved:   ${comparison.summary.totalImproved} requirements`));
+      console.log(chalk.red(`❌ Regressed:  ${comparison.summary.totalRegressed} requirements`));
+      console.log(
+        chalk.gray(`⚪ Unchanged:  ${comparison.summary.totalUnchanged} requirements`)
+      );
+
+      if (comparison.newRequirements.length > 0) {
+        console.log(
+          chalk.blue(`🆕 New:        ${comparison.newRequirements.length} requirements`)
+        );
+      }
+
+      const netChange = comparison.summary.netChange;
+      const netChangeText =
+        netChange > 0
+          ? chalk.green(`+${netChange}`)
+          : netChange < 0
+            ? chalk.red(`${netChange}`)
+            : chalk.gray('0');
+      console.log(`\nNet change: ${netChangeText} requirements\n`);
+
+      // Show improved requirements
+      if (comparison.improved.length > 0) {
+        console.log(chalk.bold.green(`\n🎉 Improved Requirements:\n`));
+        comparison.improved.slice(0, 10).forEach(ra => {
+          const baselineRA = baseline.requirementAssessments.find(
+            bra => bra.requirement.id === ra.requirement.id
+          );
+          console.log(
+            `  ${chalk.green('↑')} ${chalk.bold(ra.requirement.id)}: ${ra.requirement.name}`
+          );
+          console.log(`     ${baselineRA?.status} → ${chalk.green(ra.status)}`);
+        });
+        if (comparison.improved.length > 10) {
+          console.log(chalk.gray(`   ... and ${comparison.improved.length - 10} more\n`));
+        }
+      }
+
+      // Show regressed requirements
+      if (comparison.regressed.length > 0) {
+        console.log(chalk.bold.red(`\n⚠️  Regressed Requirements:\n`));
+        comparison.regressed.forEach(ra => {
+          const baselineRA = baseline.requirementAssessments.find(
+            bra => bra.requirement.id === ra.requirement.id
+          );
+          console.log(
+            `  ${chalk.red('↓')} ${chalk.bold(ra.requirement.id)}: ${ra.requirement.name}`
+          );
+          console.log(`     ${baselineRA?.status} → ${chalk.red(ra.status)}`);
+        });
+      }
+
+      // Export to CSV if requested
+      if (options.csv) {
+        spinner.text = 'Exporting to CSV...';
+        spinner.start();
+        exportComparisonToCSV(comparison, options.csv);
+        spinner.succeed('CSV exported');
+        console.log(chalk.cyan(`\n📊 Comparison exported to: ${options.csv}\n`));
+      }
+
+      console.log(chalk.bold.green('\n✅ Comparison complete!\n'));
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error comparing assessments:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * History command - show assessment history and trends
+ */
+program
+  .command('history')
+  .description('Show assessment history and compliance trends')
+  .option('--history <path>', 'Path to history directory', './.msp-history')
+  .option('--csv <path>', 'Export history to CSV')
+  .action(async options => {
+    try {
+      console.log(chalk.bold.blue('\n📜 Assessment History\n'));
+
+      const spinner = ora('Loading history...').start();
+      const files = listHistoricalAssessments(options.history);
+
+      if (files.length === 0) {
+        spinner.fail('No history found');
+        console.log(
+          chalk.yellow('\n  No historical assessments found. Run "msp-readiness assess" first.\n')
+        );
+        process.exit(1);
+      }
+
+      spinner.succeed(`Found ${files.length} assessment(s)`);
+
+      // Show recent assessments
+      console.log(chalk.bold('\n📅 Recent Assessments:\n'));
+      files.slice(0, 10).forEach((file, index) => {
+        const assessment = loadAssessment(path.join(options.history, file));
+        const total =
+          assessment.overallStatus.addressed +
+          assessment.overallStatus.partial +
+          assessment.overallStatus.gap +
+          assessment.overallStatus.notApplicable;
+        const completionPercent = Math.round((assessment.overallStatus.addressed / total) * 100);
+
+        const dateStr = assessment.assessmentDate.toLocaleDateString();
+        const timeStr = assessment.assessmentDate.toLocaleTimeString();
+
+        console.log(
+          `${index === 0 ? '📍' : '  '} ${chalk.cyan(dateStr)} ${chalk.gray(timeStr)} - ${chalk.bold(completionPercent + '%')} complete`
+        );
+        console.log(
+          `     ✅ ${assessment.overallStatus.addressed} | ⚠️  ${assessment.overallStatus.partial} | ❌ ${assessment.overallStatus.gap}`
+        );
+      });
+
+      if (files.length > 10) {
+        console.log(chalk.gray(`   ... and ${files.length - 10} more\n`));
+      }
+
+      // Analyze trend
+      if (files.length >= 2) {
+        spinner.text = 'Analyzing trends...';
+        spinner.start();
+        const trendData = analyzeTrend(options.history);
+        spinner.succeed('Trend analysis complete');
+
+        console.log(chalk.bold('\n📈 Trend Analysis:\n'));
+
+        const trendIcon =
+          trendData.trend.direction === 'improving'
+            ? '📈'
+            : trendData.trend.direction === 'declining'
+              ? '📉'
+              : '➡️';
+        const trendColor =
+          trendData.trend.direction === 'improving'
+            ? chalk.green
+            : trendData.trend.direction === 'declining'
+              ? chalk.red
+              : chalk.yellow;
+
+        console.log(`${trendIcon} Direction: ${trendColor(trendData.trend.direction)}`);
+        console.log(
+          `📊 Average change: ${trendData.trend.averageChangePerWeek.toFixed(2)}% per week`
+        );
+
+        if (trendData.trend.projectedCompletion) {
+          console.log(
+            `🎯 Projected 100% completion: ${chalk.cyan(trendData.trend.projectedCompletion.toLocaleDateString())}`
+          );
+        }
+
+        // Show chart (simple text-based)
+        console.log(chalk.bold('\n📊 Completion Trend:\n'));
+        trendData.assessments.forEach(a => {
+          const percent = a.summary.completionPercent;
+          const barLength = Math.floor(percent / 2); // Scale to 50 chars max
+          const bar = '█'.repeat(barLength);
+          const dateStr = a.date.toLocaleDateString();
+          console.log(`${dateStr.padEnd(12)} ${bar} ${percent}%`);
+        });
+      }
+
+      // Export to CSV if requested
+      if (options.csv) {
+        spinner.text = 'Exporting to CSV...';
+        spinner.start();
+        exportHistoryToCSV(options.history, options.csv);
+        spinner.succeed('CSV exported');
+        console.log(chalk.cyan(`\n📊 History exported to: ${options.csv}\n`));
+      }
+
+      console.log(chalk.bold.green('\n✅ History loaded!\n'));
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error loading history:'));
       console.error(error);
       process.exit(1);
     }

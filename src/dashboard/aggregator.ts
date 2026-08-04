@@ -5,10 +5,12 @@
 import { ProjectAssessment, DashboardData, RequirementCategory } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
+import { analyzeTrend, listHistoricalAssessments } from '../utils/history-manager';
 
 export function aggregateDashboardData(
   assessment: ProjectAssessment,
-  evidencePath: string
+  evidencePath: string,
+  historyPath?: string
 ): DashboardData {
   // By category statistics
   const byCategory: DashboardData['byCategory'] = {
@@ -79,6 +81,27 @@ export function aggregateDashboardData(
     remainingEffort -= weekEffort;
   }
 
+  // Trend analysis (optional)
+  let trend: DashboardData['trend'];
+  if (historyPath && fs.existsSync(historyPath)) {
+    const files = listHistoricalAssessments(historyPath);
+    if (files.length >= 2) {
+      const trendData = analyzeTrend(historyPath);
+      trend = {
+        direction: trendData.trend.direction,
+        averageChangePerWeek: trendData.trend.averageChangePerWeek,
+        projectedCompletion: trendData.trend.projectedCompletion,
+        history: trendData.assessments.map(a => ({
+          date: a.date,
+          completionPercent: a.summary.completionPercent,
+          addressed: a.summary.addressed,
+          partial: a.summary.partial,
+          gap: a.summary.gap,
+        })),
+      };
+    }
+  }
+
   return {
     assessment,
     byCategory,
@@ -86,5 +109,6 @@ export function aggregateDashboardData(
     evidenceInventory,
     generatedArtifacts,
     timeline,
+    trend,
   };
 }

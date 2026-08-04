@@ -147,6 +147,18 @@ export interface DashboardData {
     tasks: string[];
     effort: number;
   }[];
+  trend?: {
+    direction: 'improving' | 'declining' | 'stable';
+    averageChangePerWeek: number;
+    projectedCompletion?: Date;
+    history: Array<{
+      date: Date;
+      completionPercent: number;
+      addressed: number;
+      partial: number;
+      gap: number;
+    }>;
+  };
 }
 
 /**

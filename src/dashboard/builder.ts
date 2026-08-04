@@ -11,8 +11,11 @@ export async function buildDashboard(
   dashboardData: DashboardData,
   outputPath: string
 ): Promise<void> {
-  // Load template
-  const templatePath = path.join(__dirname, 'templates', 'dashboard.html');
+  // Load template - check both locations for backwards compatibility
+  let templatePath = path.join(__dirname, '..', '..', 'templates', 'dashboard', 'dashboard.hbs');
+  if (!fs.existsSync(templatePath)) {
+    templatePath = path.join(__dirname, 'templates', 'dashboard.hbs');
+  }
   const templateContent = fs.readFileSync(templatePath, 'utf-8');
   const template = Handlebars.compile(templateContent);
 
@@ -84,6 +87,41 @@ export async function buildDashboard(
     description: c.requirement.description,
   }));
 
+  // Prepare trend data if available
+  let trendContext;
+  if (dashboardData.trend && dashboardData.trend.history.length >= 2) {
+    const history = dashboardData.trend.history;
+    trendContext = {
+      hasTrend: true,
+      direction: dashboardData.trend.direction,
+      directionIcon:
+        dashboardData.trend.direction === 'improving'
+          ? '📈'
+          : dashboardData.trend.direction === 'declining'
+            ? '📉'
+            : '➡️',
+      directionClass:
+        dashboardData.trend.direction === 'improving'
+          ? 'trend-up'
+          : dashboardData.trend.direction === 'declining'
+            ? 'trend-down'
+            : 'trend-stable',
+      averageChange: dashboardData.trend.averageChangePerWeek.toFixed(2),
+      projectedCompletion: dashboardData.trend.projectedCompletion
+        ? dashboardData.trend.projectedCompletion.toLocaleDateString()
+        : null,
+      chartLabels: JSON.stringify(history.map(h => h.date.toLocaleDateString())),
+      chartData: JSON.stringify(history.map(h => h.completionPercent)),
+      chartAddressed: JSON.stringify(history.map(h => h.addressed)),
+      chartPartial: JSON.stringify(history.map(h => h.partial)),
+      chartGap: JSON.stringify(history.map(h => h.gap)),
+    };
+  } else {
+    trendContext = {
+      hasTrend: false,
+    };
+  }
+
   const context = {
     projectName: dashboardData.assessment.projectName,
     date: new Date().toISOString().split('T')[0],
@@ -97,6 +135,7 @@ export async function buildDashboard(
     criticalGaps,
     hasCriticalGaps: criticalGaps.length > 0,
     evidenceCount: dashboardData.evidenceInventory.total,
+    trend: trendContext,
   };
 
   // Render template
