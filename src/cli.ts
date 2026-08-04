@@ -22,7 +22,6 @@ import { analyzeSecurityHub, printSecurityHubSummary } from './assessors/securit
 import { validateAWSEnvironment, printAWSEnvValidation } from './utils/aws-env-validator';
 import { assessWorkspace, printWorkspaceAssessment } from './assessors/workspace-assessor';
 import { updateDocumentStatus } from './utils/frontmatter';
-import { manuallyApprovePlaybook, markForRemediation } from './utils/auto-approval';
 import { generateWorkspaceDashboard } from './dashboard/workspace-dashboard';
 import { saveWorkspaceReport } from './assessors/workspace-report-generator';
 import {
@@ -125,8 +124,6 @@ program
   .option('--format <format>', 'Report format: markdown, json, or both', 'both')
   .option('--skip-aws', 'Skip AWS infrastructure analysis')
   .option('--self', 'Assess workspace (this repo) instead of external project')
-  .option('--no-auto-approve', 'Disable auto-approval of playbooks (keep manual workflow)')
-  .option('--no-validation', 'Skip evidence validation (faster but less accurate)')
   .action(async options => {
     try {
       console.log(chalk.bold.blue('\n🔍 MSP Readiness Assessment\n'));
@@ -157,8 +154,7 @@ program
         const workspaceAssessment = await assessWorkspace(
           config.output.playbooks_path,
           config.output.evidence_path,
-          options.validation !== false, // Enable validation unless --no-validation
-          options.autoApprove !== false  // Enable auto-approval unless --no-auto-approve
+          true // Enable evidence validation
         );
 
         printWorkspaceAssessment(workspaceAssessment);
@@ -683,8 +679,7 @@ program
         const workspaceAssessment = await assessWorkspace(
           config.output.playbooks_path,
           config.output.evidence_path,
-          false, // Skip validation for dashboard generation (faster)
-          false  // Skip auto-approval for dashboard
+          false // Skip validation for dashboard generation (faster)
         );
 
         // Create detailed text dashboard
@@ -757,8 +752,7 @@ program
       const assessment = await assessWorkspace(
         config.output.playbooks_path,
         config.output.evidence_path,
-        true,  // Enable validation
-        false  // Don't auto-approve in status command
+        true // Enable validation
       );
 
       printWorkspaceAssessment(assessment);
@@ -828,17 +822,9 @@ program
           continue;
         }
 
-        try {
-          const result = manuallyApprovePlaybook(playbookPath);
-          console.log(chalk.green(`✓ Approved: ${reqId} (manual)`));
-          if (result.validationPassed === false) {
-            console.log(chalk.yellow(`  ⚠️  Note: Validation previously failed, manual override applied`));
-          }
-          approved++;
-        } catch (error) {
-          console.log(chalk.red(`✗ Failed to approve ${reqId}: ${error}`));
-          notFound++;
-        }
+        updateDocumentStatus(playbookPath, 'approved');
+        console.log(chalk.green(`✓ Approved: ${reqId}`));
+        approved++;
       }
 
       console.log(chalk.bold.green(`\n✅ Approved ${approved} playbook(s)`));
