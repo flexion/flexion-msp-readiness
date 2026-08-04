@@ -7,7 +7,9 @@
     "msp-readiness": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run clean && tsc && npm run copy-templates && npm run validate-build",
+    "copy-templates": "copyfiles -u 1 \"templates/**/*.{hbs,html}\" dist",
+    "validate-build": "node scripts/validate-build.js",
     "watch": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -59,6 +61,7 @@
     "@types/node-cron": "^3.0.11",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+    "copyfiles": "^2.4.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.0.1",
