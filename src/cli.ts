@@ -88,6 +88,8 @@ import {
 import { EvidenceArtifact } from './types';
 import {
   generatePlaybooks,
+  generatePlaybookForRequirement,
+  generateAllRequirementPlaybooks,
   identifyMissingPlaybooks,
   AVAILABLE_PLAYBOOKS,
   AVAILABLE_RUNBOOKS,
@@ -585,6 +587,8 @@ program
   .command('generate')
   .description('Generate missing playbooks, runbooks, and evidence matrix')
   .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('-r, --requirement <id>', 'Generate playbook for specific requirement ID (e.g., BUS-001)')
+  .option('--all', 'Generate playbooks for all 46 requirements')
   .option('--playbooks-only', 'Generate only playbooks')
   .option('--runbooks-only', 'Generate only runbooks')
   .option('--matrix-only', 'Generate only evidence matrix')
@@ -599,6 +603,53 @@ program
       spinner.succeed('Configuration loaded');
 
       const outputDir = config.output.playbooks_path;
+
+      // Generate specific requirement playbook
+      if (options.requirement) {
+        spinner.text = `Generating playbook for ${options.requirement}...`;
+        spinner.start();
+
+        const generateOptions = {
+          force: options.force,
+          dryRun: options.dryRun,
+        };
+
+        const playbook = await generatePlaybookForRequirement(
+          config,
+          options.requirement,
+          outputDir,
+          generateOptions
+        );
+
+        if (playbook) {
+          spinner.succeed(`Generated playbook for ${options.requirement}`);
+          console.log(chalk.cyan(`\n  Type: ${playbook.mode}`));
+          console.log(chalk.cyan(`  Automation: ${playbook.automationType} (${playbook.automationPercentage}%)`));
+          console.log(chalk.cyan(`  Output: ${playbook.path}\n`));
+        } else {
+          spinner.fail(`Failed to generate playbook for ${options.requirement}`);
+        }
+        return;
+      }
+
+      // Generate all requirement playbooks
+      if (options.all) {
+        spinner.text = 'Generating playbooks for all 46 requirements...';
+        spinner.start();
+
+        const generateOptions = {
+          force: options.force,
+          dryRun: options.dryRun,
+        };
+
+        const generated = await generateAllRequirementPlaybooks(config, outputDir, generateOptions);
+        spinner.succeed(`Generated ${generated.length} playbook(s)`);
+        printGenerationSummary(generated);
+
+        console.log(chalk.bold.green(`\n✅ Generation complete!\n`));
+        console.log(chalk.cyan(`  Output directory: ${outputDir}\n`));
+        return;
+      }
 
       // Scan existing docs
       spinner.text = 'Scanning existing documentation...';

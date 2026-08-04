@@ -1,0 +1,225 @@
+# {{title}} Playbook
+
+**Project**: {{projectName}}
+**Organization**: {{organization}}
+**Last Updated**: {{date}}
+
+## Overview
+
+{{description}}
+
+**Requirement Category**: {{category}}
+**Priority**: {{priority}}
+**Automation Coverage**: {{automationPercentage}}%
+
+### Components
+
+This requirement has both automated and manual components:
+
+- ✅ **AWS Automation**: Technical checks and evidence collection
+- 📋 **Process Documentation**: Manual procedures and policies
+
+## Part 1: AWS Automation
+
+### AWS Services Involved
+
+{{#if awsServices}}
+This requirement involves the following AWS services:
+
+{{#each awsServices}}
+- **{{this}}**
+{{/each}}
+
+### Automated Checks
+
+The following checks can be automated using AWS services:
+
+{{#each automatedChecks}}
+#### {{name}}
+
+**Service**: {{service}}
+**Check**: {{description}}
+
+**Implementation**:
+```bash
+{{command}}
+```
+
+**Expected Result**: {{expectedResult}}
+
+**Validation**: {{validation}}
+
+---
+
+{{/each}}
+
+### Evidence Collection
+
+The following evidence is automatically collected:
+
+{{#each autoEvidence}}
+- **{{name}}**: {{description}}
+  - **Source**: {{source}}
+  - **Format**: {{format}}
+{{/each}}
+{{else}}
+No AWS automation is available for this requirement.
+{{/if}}
+
+## Part 2: Process Documentation
+
+### Required Documentation
+
+In addition to automated checks, you must create and maintain:
+
+{{#each manualEvidence}}
+- **{{this}}**
+{{/each}}
+
+### How to Complete Process Components
+
+#### Step 1: Review Template
+
+{{#if templatePath}}
+A template is available at: `{{templatePath}}`
+{{else}}
+Create documentation from scratch based on requirements below.
+{{/if}}
+
+#### Step 2: Document Procedures
+
+Create documentation covering:
+
+{{#each procedureSteps}}
+1. **{{name}}**: {{description}}
+{{/each}}
+
+#### Step 3: Define Policies
+
+Establish policies that address:
+
+{{#each policyRequirements}}
+- {{this}}
+{{/each}}
+
+#### Step 4: Create Checklists
+
+Develop operational checklists for:
+
+{{#each checklistItems}}
+- {{this}}
+{{/each}}
+
+### Process Validation
+
+Manual validation steps:
+
+- [ ] All procedures documented
+- [ ] Policies approved by management
+- [ ] Checklists tested in practice
+- [ ] Staff trained on procedures
+- [ ] Documentation saved to: `docs/msp/{{category}}/`
+
+## Combined Validation
+
+### Automated Validation
+
+Run the following to validate automated components:
+
+```bash
+# Validate AWS configuration
+npm run dev -- validate --requirement {{requirementId}}
+
+# Collect evidence
+npm run dev -- collect --requirement {{requirementId}}
+```
+
+### Manual Validation
+
+Complete this checklist for manual components:
+
+- [ ] Process documentation exists
+- [ ] All required policies defined
+- [ ] Checklists created and tested
+- [ ] Evidence artifacts collected
+- [ ] Documentation reviewed and approved
+
+## Evidence Required for MSP Assessment
+
+**Automated Evidence**:
+{{#each autoEvidence}}
+- {{name}} (collected automatically)
+{{/each}}
+
+**Manual Evidence**:
+{{#each manualEvidence}}
+- {{this}} (must be provided)
+{{/each}}
+
+## Integration Points
+
+This requirement integrates with:
+
+{{#if integrations}}
+{{#each integrations}}
+- **{{system}}**: {{description}}
+{{/each}}
+{{else}}
+No specific integrations required.
+{{/if}}
+
+## Maintenance
+
+### Automated Components
+
+- **Frequency**: Continuous monitoring via AWS services
+- **Alerts**: Configured in {{monitoringService}}
+- **Dashboard**: View compliance status in Security Hub/Config
+
+### Manual Components
+
+- **Review Frequency**: {{maintenanceFrequency}}
+- **Owner**: {{maintenanceOwner}}
+- **Update Triggers**:
+{{#each updateTriggers}}
+  - {{this}}
+{{/each}}
+
+## Related Requirements
+
+{{#if relatedRequirements}}
+{{#each relatedRequirements}}
+- **{{id}}**: {{name}}
+{{/each}}
+{{else}}
+None identified
+{{/if}}
+
+## CIS Controls
+
+{{#if cisControls}}
+This requirement aligns with CIS Controls v8:
+{{#each cisControls}}
+- Control {{this}}
+{{/each}}
+{{/if}}
+
+## Support and Resources
+
+### AWS Documentation
+
+{{#if awsServices}}
+{{#each awsServices}}
+- [AWS {{this}} Documentation](https://docs.aws.amazon.com/)
+{{/each}}
+{{/if}}
+
+### Internal Resources
+
+- **Support Channel**: {{slackChannel}}
+- **Contact**: {{contact}}
+- **Wiki**: Internal documentation portal
+
+## Notes
+
+Add project-specific notes, exceptions, or special considerations here.

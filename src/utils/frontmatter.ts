@@ -18,6 +18,10 @@ export interface DocumentMetadata {
   last_validated?: string;
   validation_failures?: string[];
   remediation_required?: boolean;
+  // Playbook metadata
+  playbook_mode?: 'technical' | 'process' | 'mixed';
+  automation_type?: 'full' | 'partial' | 'manual';
+  automation_percentage?: number;
 }
 
 /**
