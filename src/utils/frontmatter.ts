@@ -8,9 +8,16 @@ export interface DocumentMetadata {
   generated: string;
   template_version: string;
   last_modified?: string;
-  status: 'draft' | 'in-progress' | 'approved' | 'complete';
+  status: 'draft' | 'in-progress' | 'approved' | 'complete' | 'needs-remediation';
   requirement_id: string;
   custom_sections?: string[];
+  // Auto-approval metadata
+  approved_at?: string;
+  approval_method?: 'auto' | 'manual';
+  validation_passed?: boolean;
+  last_validated?: string;
+  validation_failures?: string[];
+  remediation_required?: boolean;
 }
 
 /**
