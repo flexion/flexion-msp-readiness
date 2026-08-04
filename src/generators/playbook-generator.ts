@@ -161,15 +161,22 @@ export const AVAILABLE_RUNBOOKS: PlaybookSpec[] = [
   },
 ];
 
+export interface GenerateOptions {
+  force?: boolean;
+  dryRun?: boolean;
+}
+
 /**
  * Generate playbooks/runbooks
  */
 export async function generatePlaybooks(
   config: Config,
   specs: PlaybookSpec[],
-  outputDir: string
+  outputDir: string,
+  options: GenerateOptions = {}
 ): Promise<GeneratedPlaybook[]> {
   const generated: GeneratedPlaybook[] = [];
+  const skipped: string[] = [];
 
   // Build template context
   const context: TemplateContext = {
@@ -207,7 +214,30 @@ export async function generatePlaybooks(
       // Save to output
       const fileName = spec.template.replace('.hbs', '.md');
       const outputPath = path.join(outputDir, fileName);
-      saveRenderedTemplate(content, outputPath);
+
+      // Check if file exists and is user-modified (unless --force)
+      if (!options.force && fs.existsSync(outputPath) && isUserModified(outputPath)) {
+        console.log(`⚠ Skipped ${spec.type}: ${spec.name} (user modified, use --force to overwrite)`);
+        skipped.push(spec.name);
+        continue;
+      }
+
+      // Dry run - just report what would happen
+      if (options.dryRun) {
+        console.log(`✓ Would generate ${spec.type}: ${spec.name} → ${fileName}`);
+        continue;
+      }
+
+      // Add frontmatter metadata
+      const metadata: DocumentMetadata = {
+        generated: new Date().toISOString(),
+        template_version: '1.0',
+        status: 'draft',
+        requirement_id: spec.requirementIds[0],
+      };
+      const contentWithFrontmatter = addFrontmatter(content, metadata);
+
+      saveRenderedTemplate(contentWithFrontmatter, outputPath);
 
       generated.push({
         title: spec.name,
@@ -224,6 +254,17 @@ export async function generatePlaybooks(
     } catch (error) {
       console.error(`Failed to generate ${spec.name}: ${error}`);
     }
+  }
+
+  // Print summary
+  if (options.dryRun) {
+    console.log(
+      `\n📋 Dry run complete: Would generate ${generated.length} files, skip ${skipped.length} files`
+    );
+  } else if (skipped.length > 0) {
+    console.log(
+      `\n⚠️  Skipped ${skipped.length} user-modified file(s). Use --force to overwrite.`
+    );
   }
 
   return generated;

@@ -59,6 +59,11 @@ output:
   report_format: "both"
 
 assessment:
+  # Assessment mode: 'self' = assess this workspace, 'external' = assess target project
+  # When 'self': checks playbooks/evidence in this repo
+  # When 'external': checks docs/infra in project.docs_path
+  mode: "self"  # or "external"
+
   # Skip specific requirements (e.g., if not applicable)
   skip_requirements: []
   #   - "OPSP-005"  # Skip if you don't offer 24/7 support

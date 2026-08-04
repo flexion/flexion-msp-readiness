@@ -22,6 +22,7 @@ import { analyzeSecurityHub, printSecurityHubSummary } from './assessors/securit
 import { validateAWSEnvironment, printAWSEnvValidation } from './utils/aws-env-validator';
 import { assessWorkspace, printWorkspaceAssessment } from './assessors/workspace-assessor';
 import { updateDocumentStatus } from './utils/frontmatter';
+import { generateWorkspaceDashboard } from './dashboard/workspace-dashboard';
 import {
   collectCloudTrailEvidence,
   saveCloudTrailEvidence,
@@ -85,6 +86,7 @@ program
   .option('-o, --output <path>', 'Output path for report', './assessment-report')
   .option('--format <format>', 'Report format: markdown, json, or both', 'both')
   .option('--skip-aws', 'Skip AWS infrastructure analysis')
+  .option('--self', 'Assess workspace (this repo) instead of external project')
   .action(async options => {
     try {
       console.log(chalk.bold.blue('\n🔍 MSP Readiness Assessment\n'));
@@ -104,6 +106,28 @@ program
         }
         throw error;
       }
+
+      // Check if using self-assessment mode
+      const assessmentMode = options.self || config.assessment.mode === 'self' ? 'self' : 'external';
+
+      if (assessmentMode === 'self') {
+        // Self-assessment: Assess workspace completeness
+        console.log(chalk.cyan('Mode: Self-assessment (workspace)\n'));
+
+        const workspaceAssessment = assessWorkspace(
+          config.output.playbooks_path,
+          config.output.evidence_path
+        );
+
+        printWorkspaceAssessment(workspaceAssessment);
+
+        // Exit early - self assessment is simpler
+        console.log(chalk.gray('\nFor full AWS analysis, run without --self flag.\n'));
+        return;
+      }
+
+      // External mode: Continue with normal assessment
+      console.log(chalk.cyan('Mode: External project assessment\n'));
 
       // Scan documentation
       spinner.text = 'Scanning documentation...';
@@ -369,6 +393,8 @@ program
   .option('--playbooks-only', 'Generate only playbooks')
   .option('--runbooks-only', 'Generate only runbooks')
   .option('--matrix-only', 'Generate only evidence matrix')
+  .option('--force', 'Overwrite user-modified files')
+  .option('--dry-run', 'Show what would be generated without writing files')
   .action(async options => {
     try {
       console.log(chalk.bold.blue('\n📝 Generating MSP Documentation\n'));
@@ -399,7 +425,12 @@ program
           spinner.text = `Generating ${missing.length} missing document(s)...`;
           spinner.start();
 
-          const generated = await generatePlaybooks(config, missing, outputDir);
+          const generateOptions = {
+            force: options.force,
+            dryRun: options.dryRun,
+          };
+
+          const generated = await generatePlaybooks(config, missing, outputDir, generateOptions);
           spinner.succeed(`Generated ${generated.length} document(s)`);
           printGenerationSummary(generated);
         }
@@ -436,6 +467,7 @@ program
   .description('Generate interactive HTML compliance dashboard')
   .option('-c, --config <path>', 'Path to config file', 'config.yaml')
   .option('-i, --input <path>', 'Path to assessment JSON', './assessment-report.json')
+  .option('--workspace', 'Generate workspace dashboard instead of project dashboard')
   .action(async options => {
     try {
       console.log(chalk.bold.blue('\n📊 Building MSP Dashboard\n'));
@@ -443,6 +475,28 @@ program
       const spinner = ora('Loading configuration...').start();
       const config = loadConfig(options.config);
       spinner.succeed('Configuration loaded');
+
+      // Check if workspace mode
+      if (options.workspace || config.assessment.mode === 'self') {
+        // Generate workspace text dashboard
+        console.log(chalk.cyan('Mode: Workspace dashboard\n'));
+
+        const workspaceAssessment = assessWorkspace(
+          config.output.playbooks_path,
+          config.output.evidence_path
+        );
+
+        // Create detailed text dashboard
+        const dashboardPath = config.output.dashboard_path.replace('.html', '-workspace.md');
+        const dashboardContent = generateWorkspaceDashboard(workspaceAssessment, config);
+
+        require('fs').writeFileSync(dashboardPath, dashboardContent, 'utf-8');
+
+        console.log(chalk.bold.green('\n✅ Workspace dashboard complete!\n'));
+        console.log(chalk.cyan(`  Dashboard: ${dashboardPath}\n`));
+
+        return;
+      }
 
       // Load assessment
       spinner.text = 'Loading assessment data...';
