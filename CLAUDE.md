@@ -187,40 +187,35 @@ npm run dev -- assess
 
 ## Development Plan
 
-See [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) for the complete development roadmap broken into 3 phases with 13 GitHub issues:
+See [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md) for the complete development roadmap.
 
-**Phase 1: Critical MVP (Weeks 1-6)** - 176 hours
-- Issue #2: Complete Playbook Coverage (40h)
-- Issue #3: Expand Evidence Collectors (32h)
-- Issue #4: Add Remediation Guidance (24h)
-- Issue #5: Fix Build Process (4h) ⚡ Quick win
-- Issue #6: Pre-flight Permission Check (16h)
-- Issue #7: fipco-infra Integration (40h) ✅ Complete
-- Issue #14: Refine Existing Playbooks (20h)
+**Current Status** (2026-08-04):
+- ✅ Issue #7: fipco-infra Integration (40h)
+- ✅ Issue #37: Workspace Model Redesign (24h)
+- ✅ Issue #9: Better Reporting Formats (20h)
+- 🚧 Issue #2: Complete Playbook Coverage (19/19 generated, need refinement)
+- 📋 Issue #39: Evidence Validation (48h) - NEW priority
 
-**Phase 2: Production Ready (Weeks 7-10)** - 44 hours
-- Issue #8: Progress Tracking Over Time (24h)
-- Issue #9: Better Reporting Formats (20h)
+**Workspace Progress**: 26% complete (5/19 requirements)
+- 5 requirements fully complete (playbook + evidence + approved)
+- 14 requirements in-progress (playbook draft, missing evidence or approval)
 
-**Phase 3: Advanced Features (Future)** - 112 hours
-- Issue #10: Multi-Account Support (28h)
-- Issue #11: Automated Drift Detection (32h)
-- Issue #12: Comparison Mode (16h)
-- Issue #13: CDK/Terraform Scanner (36h)
-
-**Current Status**: Issue #7 complete and in review, Phase 1 issues ready to start
+**Next Priorities**:
+1. Issue #39: Evidence Validation - Verify playbook compliance
+2. Issue #5: Fix Build Process - Quick win
+3. Issue #2: Complete Playbook Coverage - Refine and approve drafts
 
 **GitHub Project**: https://github.com/orgs/flexion/projects/53
-
-**Recommended next**: Issue #5 (Fix Build Process - 4h quick win)
 
 ## Key Files
 
 - `src/types.ts` - Core TypeScript type definitions
 - `src/data/msp-requirements.ts` - MSP Program requirements data
+- `src/assessors/workspace-assessor.ts` - Workspace completeness assessment
+- `src/generators/playbook-generator.ts` - Playbook generation with frontmatter
 - `config.example.yaml` - Configuration template
 - `.claude/skills/msp-readiness.md` - Claude Code skill definition
-- `PLAN.md` - Detailed development plan
+- `PROJECT_ROADMAP.md` - Development roadmap with all issues
 
 ## MSP Requirements Reference
 

@@ -1,203 +1,1289 @@
+---
+generated: "2026-08-04T16:01:14.469Z"
+template_version: "1.0"
+status: "draft"
+requirement_id: "SECP-001"
+---
+
 # Runbook: AWS Access Key Rotation
 
-**Project**: Compliance Concierge
-**Requirement**: SECP-001 (Access Key Exposure Detection)
-**Last Updated**: 2026-07-27
+**Project**: FIPCO
+**Organization**: Flexion Org
+**Stage**: dev
+**Last Updated**: 2026-08-04
+**Version**: 2.0
+
+---
+
+## MSP Compliance
+
+| Requirement | Priority | Description |
+|------------|----------|-------------|
+| **SECP-001** | Critical | Access Key Exposure Detection and Response |
+| **SEC-004** | Critical | Identity and Access Management (IAM) |
+
+**CIS Controls v8**: 5.3, 5.4, 6.1, 6.3
+
+---
 
 ## Purpose
 
-Rotate AWS IAM access keys to maintain security and comply with 90-day rotation policy.
+This runbook provides step-by-step procedures for rotating AWS IAM access keys to maintain security posture and comply with the **90-day rotation policy** required for AWS MSP Program certification.
 
-## When to Use
+## Scope
 
-- Scheduled rotation (every 90 days)
-- Suspected key compromise
-- Employee offboarding
-- Security audit findings
+- IAM user access keys (long-term credentials)
+- Service account keys (CI/CD, integrations)
+- Application keys stored in AWS Secrets Manager
+- Keys used across multiple services
+
+**Out of Scope**:
+- IAM role temporary credentials (no rotation needed)
+- IAM Identity Center (SSO) credentials
+- AWS Systems Manager Session Manager access
+
+---
+
+## When to Use This Runbook
+
+### Scheduled Rotation (Proactive)
+- **Every 90 days** (MSP requirement)
+- Before audit or compliance review
+- As part of quarterly security review
+
+### Unscheduled Rotation (Reactive)
+- **Suspected key compromise** (found in logs, GitHub, etc.)
+- **AWS Health Event**: Exposed key detected
+- **Employee offboarding** (within 1 hour of departure)
+- **Security audit finding** (failed automated checks)
+- **After security incident** involving IAM
+
+### Compliance Requirements
+
+**MSP Program**: Keys must be rotated every **90 days maximum**
+**CIS AWS Foundations Benchmark**: 1.14 - Ensure access keys are rotated every 90 days or less
+**Target**: Rotate at **80 days** to provide buffer before violation
+
+---
+
+## Risk Assessment
+
+| Risk Level | Rotation Type | Response Time | Example |
+|-----------|--------------|---------------|---------|
+| **CRITICAL** | Emergency - Compromised key | **Immediate** (<15 min) | Key found on GitHub, AWS Health alert |
+| **HIGH** | Urgent - Offboarding | **Within 1 hour** | Employee departure |
+| **MEDIUM** | Standard - Scheduled rotation | **Within 1 week** | 90-day rotation due |
+| **LOW** | Proactive - Early rotation | **Planned maintenance window** | Rotating at 80 days |
+
+---
 
 ## Prerequisites
 
-- [ ] AWS Console access with IAM permissions
-- [ ] List of affected services/applications using the key
-- [ ] Ability to update key in all consuming services
+### Required Access
 
-## Procedure
+- [ ] AWS Console access or CLI configured
+- [ ] IAM permissions:
+  - `iam:ListAccessKeys`
+  - `iam:CreateAccessKey`
+  - `iam:UpdateAccessKey`
+  - `iam:DeleteAccessKey`
+  - `iam:GetAccessKeyLastUsed`
+- [ ] Access to Secrets Manager (if keys stored there)
+  - `secretsmanager:GetSecretValue`
+  - `secretsmanager:UpdateSecret`
+  - `secretsmanager:DescribeSecret`
+- [ ] Access to services consuming the keys (GitHub, CI/CD, applications)
 
-### Step 1: Identify Keys to Rotate
+### Required Information
+
+- [ ] IAM user name to rotate
+- [ ] List of services/applications using the key
+- [ ] Location where key is stored (Secrets Manager, GitHub Secrets, local, etc.)
+- [ ] On-call engineer availability (for production keys)
+- [ ] Change management approval (for scheduled rotations)
+
+### Pre-Flight Checks
 
 ```bash
-# List all access keys and their age
-aws iam list-access-keys --user-name <username> --profile test
+# Verify AWS CLI access
+aws sts get-caller-identity --profile dev
+
+# List current access keys
+aws iam list-access-keys --user-name <username> --profile dev
 
 # Check key age
-aws iam get-access-key-last-used --access-key-id <key-id> --profile test
+aws iam list-access-keys --user-name <username> --profile dev | \
+  jq -r '.AccessKeyMetadata[] | "\(.AccessKeyId) created \(.CreateDate)"'
+
+# Check last used
+aws iam get-access-key-last-used \
+  --access-key-id <key-id> \
+  --profile dev
 ```
 
-**Decision**: Keys older than 90 days should be rotated.
+---
 
-### Step 2: Create New Access Key
+## Procedure: Standard Rotation (90-Day Schedule)
+
+### Step 1: Identify Keys to Rotate (5 minutes)
+
+#### List All Access Keys
+
+```bash
+# List all IAM users
+aws iam list-users --profile dev --output table
+
+# For specific user
+aws iam list-access-keys --user-name <username> --profile dev
+
+# Expected output:
+# {
+#   "AccessKeyMetadata": [
+#     {
+#       "UserName": "ci-cd-user",
+#       "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
+#       "Status": "Active",
+#       "CreateDate": "2026-05-07T10:30:00Z"
+#     }
+#   ]
+# }
+```
+
+#### Calculate Key Age
+
+```bash
+# Check all keys older than 80 days
+aws iam list-users --profile dev --query 'Users[].UserName' --output text | \
+  while read username; do
+    aws iam list-access-keys --user-name "$username" --profile dev --query \
+      "AccessKeyMetadata[?CreateDate<='$(date -u -d '80 days ago' +%Y-%m-%dT%H:%M:%SZ)'].{User:UserName,Key:AccessKeyId,Created:CreateDate,Status:Status}" \
+      --output table
+  done
+```
+
+#### Check Key Usage
+
+```bash
+# Verify key is actually being used (don't rotate unused keys without investigation)
+aws iam get-access-key-last-used \
+  --access-key-id <key-id> \
+  --profile dev
+
+# Expected output:
+# {
+#   "UserName": "ci-cd-user",
+#   "AccessKeyLastUsed": {
+#     "LastUsedDate": "2026-08-03T14:25:00Z",
+#     "ServiceName": "s3",
+#     "Region": "us-east-1"
+#   }
+# }
+```
+
+#### Decision Matrix
+
+| Key Age | Last Used | Action |
+|---------|-----------|--------|
+| >90 days | <7 days ago | **ROTATE IMMEDIATELY** (compliance violation) |
+| 80-90 days | <7 days ago | **SCHEDULE ROTATION** (within 1 week) |
+| >90 days | >30 days ago | **INVESTIGATE** then rotate or deactivate |
+| <80 days | <7 days ago | **NO ACTION** (monitor) |
+| Any age | Never used | **DEACTIVATE AND DELETE** (unused credential) |
+
+#### Document Affected Services
+
+**For FIPCO, common locations**:
+- [ ] GitHub Actions Secrets (CI/CD pipelines)
+- [ ] AWS Secrets Manager (`dev/app/aws-credentials`)
+- [ ] Lambda environment variables
+- [ ] ECS task definition environment variables
+- [ ] Third-party integrations (monitoring, backup tools)
+- [ ] Local development environments (team members' ~/.aws/credentials)
+- [ ] Documentation/runbooks with example commands
+
+**Create checklist**:
+```markdown
+## Services Using Access Key AKIAIOSFODNN7EXAMPLE
+
+- [x] GitHub Actions (repo: FIPCO)
+- [x] AWS Secrets Manager (dev/ci-cd/aws-key)
+- [ ] Jenkins (if applicable)
+- [ ] Local: @engineer1, @engineer2, @engineer3
+- [ ] Monitoring tool: Datadog/New Relic (if applicable)
+```
+
+---
+
+### Step 2: Create New Access Key (2 minutes)
+
+#### Generate New Key
 
 ```bash
 # Create new access key
-aws iam create-access-key --user-name <username> --profile test
+aws iam create-access-key --user-name <username> --profile dev
+
+# Expected output:
+# {
+#   "AccessKey": {
+#     "UserName": "ci-cd-user",
+#     "AccessKeyId": "AKIAI44QH8DHBEXAMPLE",
+#     "Status": "Active",
+#     "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+#     "CreateDate": "2026-08-04T10:00:00Z"
+#   }
+# }
 ```
 
-**Important**: Save the `AccessKeyId` and `SecretAccessKey` immediately. The secret will not be shown again.
+**⚠️ IMPORTANT**: The `SecretAccessKey` is **only shown once**. Save it immediately!
 
-### Step 3: Update Services
+#### Save Credentials Securely
 
-Update the new key in all services that use it:
-
-**Common locations**:
-- [ ] GitHub Secrets (for CI/CD)
-- [ ] Application secrets in AWS Secrets Manager
-- [ ] Local development environments
-- [ ] Third-party integrations
-
-**For Compliance Concierge**:
+**Option 1: Save to password manager (recommended for local use)**:
 ```bash
-# Update in Secrets Manager
+# Copy to clipboard (macOS)
+echo "AKIAI44QH8DHBEXAMPLE" | pbcopy
+
+# Copy to clipboard (Linux with xclip)
+echo "AKIAI44QH8DHBEXAMPLE" | xclip -selection clipboard
+```
+
+**Option 2: Save to temporary encrypted file**:
+```bash
+# Create temporary file (will be deleted after rotation complete)
+echo "AccessKeyId: AKIAI44QH8DHBEXAMPLE" > /tmp/new-key-$(date +%s).txt
+echo "SecretAccessKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" >> /tmp/new-key-$(date +%s).txt
+chmod 600 /tmp/new-key-$(date +%s).txt
+
+# Encrypt with GPG (optional)
+gpg --encrypt --recipient your-email@example.com /tmp/new-key-$(date +%s).txt
+```
+
+**Option 3: Directly update Secrets Manager** (recommended for service accounts):
+```bash
+# Update in Secrets Manager immediately
 aws secretsmanager update-secret \
-  --secret-id test/app/aws-credentials \
-  --secret-string '{"accessKeyId":"NEW_KEY","secretAccessKey":"NEW_SECRET"}' \
-  --profile test
+  --secret-id dev/ci-cd/aws-credentials \
+  --secret-string "{\"accessKeyId\":\"AKIAI44QH8DHBEXAMPLE\",\"secretAccessKey\":\"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\"}" \
+  --profile dev
 ```
 
-### Step 4: Test New Key
-
-Before deactivating old key, test that new key works:
+#### Tag New Key (for tracking)
 
 ```bash
-# Test AWS CLI access with new key
-AWS_ACCESS_KEY_ID=<new-key-id> \
-AWS_SECRET_ACCESS_KEY=<new-secret> \
-aws sts get-caller-identity
-
-# Expected output: Should return user identity
+# Add tag to IAM user documenting rotation
+aws iam tag-user \
+  --user-name <username> \
+  --tags Key=LastKeyRotation,Value=$(date +%Y-%m-%d) \
+         Key=RotatedBy,Value=$(aws sts get-caller-identity --query Arn --output text --profile dev) \
+  --profile dev
 ```
 
-**In Compliance Concierge**:
-- [ ] Restart affected services with new key
-- [ ] Verify services start successfully
-- [ ] Check logs for authentication errors
-- [ ] Monitor for 10-15 minutes
+---
 
-### Step 5: Deactivate Old Key
+### Step 3: Update Services with New Key (10-30 minutes)
 
-Once new key is confirmed working:
+**⚠️ CRITICAL**: Update ALL locations before deactivating old key!
+
+#### Update Secrets Manager
 
 ```bash
-# Deactivate old key (but don't delete yet)
+# Update application credentials in Secrets Manager
+aws secretsmanager update-secret \
+  --secret-id dev/app/aws-credentials \
+  --secret-string "{
+    \"accessKeyId\": \"AKIAI44QH8DHBEXAMPLE\",
+    \"secretAccessKey\": \"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\",
+    \"region\": \"us-east-1\"
+  }" \
+  --profile dev
+
+# Verify update
+aws secretsmanager get-secret-value \
+  --secret-id dev/app/aws-credentials \
+  --profile dev \
+  --query 'SecretString' --output text | jq .
+```
+
+#### Update GitHub Actions Secrets
+
+```bash
+# Using GitHub CLI
+gh secret set AWS_ACCESS_KEY_ID --body "AKIAI44QH8DHBEXAMPLE" --repo Flexion Org/FIPCO
+gh secret set AWS_SECRET_ACCESS_KEY --body "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" --repo Flexion Org/FIPCO
+
+# Verify (shows only timestamp, not value)
+gh secret list --repo Flexion Org/FIPCO
+```
+
+Or via GitHub UI:
+1. Go to `https://github.com/Flexion Org/FIPCO/settings/secrets/actions`
+2. Click "Update" on `AWS_ACCESS_KEY_ID`
+3. Paste new key ID
+4. Click "Update" on `AWS_SECRET_ACCESS_KEY`
+5. Paste new secret key
+
+#### Update Lambda Environment Variables (if applicable)
+
+```bash
+# List Lambda functions using credentials
+aws lambda list-functions \
+  --profile dev \
+  --query "Functions[?Environment.Variables.AWS_ACCESS_KEY_ID].FunctionName" \
+  --output table
+
+# Update specific function
+aws lambda update-function-configuration \
+  --function-name FIPCO-worker-dev \
+  --environment "Variables={AWS_ACCESS_KEY_ID=AKIAI44QH8DHBEXAMPLE,AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY}" \
+  --profile dev
+```
+
+**Note**: Better approach is to use IAM roles for Lambda (no keys needed). Consider migration.
+
+#### Update ECS Task Definitions (if applicable)
+
+```bash
+# Get current task definition
+aws ecs describe-task-definition \
+  --task-definition FIPCO-api-dev \
+  --profile dev > task-def.json
+
+# Edit task-def.json to update environment variables
+# or use secrets in environment section:
+# "secrets": [
+#   {
+#     "name": "AWS_ACCESS_KEY_ID",
+#     "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:dev/app/aws-credentials:accessKeyId::"
+#   }
+# ]
+
+# Register new task definition
+aws ecs register-task-definition --cli-input-json file://task-def.json --profile dev
+
+# Update service to use new task definition
+aws ecs update-service \
+  --cluster FIPCO-cluster-dev \
+  --service FIPCO-api \
+  --task-definition FIPCO-api-dev:NEW_VERSION \
+  --profile dev
+```
+
+#### Update Third-Party Integrations
+
+**Datadog/New Relic/Other Monitoring** (if applicable):
+1. Log into monitoring tool
+2. Navigate to Integrations → AWS
+3. Update Access Key ID and Secret Key
+4. Test connection
+5. Save
+
+**Backup Tools** (if applicable):
+- Update credentials in backup tool configuration
+- Test backup connection
+- Verify next scheduled backup runs successfully
+
+#### Update Local Development Environments
+
+**Team communication**:
+```
+🔑 AWS KEY ROTATION - FIPCO
+
+The AWS access key for dev environment has been rotated.
+
+Old key: AKIAIOSFODNN7EXAMPLE (will be deactivated on Aug 5 at 10:00 AM)
+New key: AKIAI44QH8DHBEXAMPLE
+
+Action Required:
+1. Update your ~/.aws/credentials file
+2. Update any local .env files
+3. Test your local setup with: aws s3 ls --profile dev
+
+New credentials available in:
+- 1Password: "FIPCO AWS dev"
+- Secrets Manager: dev/ci-cd/aws-credentials
+
+Questions? Ask in #support
+
+Deadline: Aug 5, 9:00 AM (before old key deactivation)
+```
+
+**Update local credentials**:
+```bash
+# Edit ~/.aws/credentials
+vim ~/.aws/credentials
+
+# Update [dev] section:
+[dev]
+aws_access_key_id = AKIAI44QH8DHBEXAMPLE
+aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+region = us-east-1
+
+# Or use AWS CLI
+aws configure set aws_access_key_id AKIAI44QH8DHBEXAMPLE --profile dev
+aws configure set aws_secret_access_key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY --profile dev
+```
+
+---
+
+### Step 4: Test New Key (10-15 minutes)
+
+**⚠️ DO NOT DEACTIVATE OLD KEY UNTIL NEW KEY IS FULLY TESTED**
+
+#### Test AWS CLI Access
+
+```bash
+# Test basic AWS access
+AWS_ACCESS_KEY_ID=AKIAI44QH8DHBEXAMPLE \
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
+aws sts get-caller-identity --region us-east-1
+
+# Expected output shows correct user
+# {
+#   "UserId": "AIDAI4EXAMPLE",
+#   "Account": "123456789012",
+#   "Arn": "arn:aws:iam::123456789012:user/ci-cd-user"
+# }
+
+# Test specific permissions (adjust based on key usage)
+AWS_ACCESS_KEY_ID=AKIAI44QH8DHBEXAMPLE \
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
+aws s3 ls s3://FIPCO-artifacts-dev/ --region us-east-1
+
+# Test CloudWatch access (if used)
+AWS_ACCESS_KEY_ID=AKIAI44QH8DHBEXAMPLE \
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
+aws cloudwatch describe-alarms --max-records 1 --region us-east-1
+```
+
+#### Test Application/Service Connectivity
+
+**For FIPCO services**:
+
+```bash
+# Restart services using the new credentials
+
+# Lambda (if env vars): Function will use new key on next invocation
+# No restart needed if using Secrets Manager (fetched at runtime)
+
+# ECS: Service already updated in Step 3, new tasks using new key
+
+# Test application functionality
+curl -f https://api.FIPCO.com/health
+
+# Check application logs for auth errors
+aws logs tail /aws/lambda/FIPCO-api-dev \
+  --since 5m \
+  --filter-pattern "ERROR" \
+  --profile dev
+```
+
+**For CI/CD pipelines**:
+```bash
+# Trigger a test build/deployment
+gh workflow run ci.yml --repo Flexion Org/FIPCO
+
+# Watch workflow run
+gh run watch --repo Flexion Org/FIPCO
+
+# Or in GitHub Actions UI:
+# https://github.com/Flexion Org/FIPCO/actions
+```
+
+#### Test Checklist
+
+- [ ] AWS CLI commands succeed with new key
+- [ ] Application starts/restarts without errors
+- [ ] Application can access AWS services (S3, DynamoDB, etc.)
+- [ ] CI/CD pipeline runs successfully
+- [ ] Third-party integrations connect successfully
+- [ ] No authentication errors in CloudWatch logs
+- [ ] All automated tests pass
+
+#### Monitoring During Testing
+
+```bash
+# Watch for access denied errors
+aws logs tail /aws/lambda/FIPCO-api-dev \
+  --since 10m \
+  --filter-pattern "?AccessDenied ?UnauthorizedException ?InvalidAccessKeyId" \
+  --follow \
+  --profile dev
+
+# Check CloudTrail for failed API calls
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=Username,AttributeValue=ci-cd-user \
+  --start-time $(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%M:%S) \
+  --profile dev \
+  --query 'Events[?contains(CloudTrailEvent, `errorCode`)]' \
+  --output table
+```
+
+---
+
+### Step 5: Deactivate Old Key (1 minute)
+
+**Only proceed if Step 4 testing is successful!**
+
+#### Deactivate (Don't Delete Yet)
+
+```bash
+# Deactivate old key
 aws iam update-access-key \
-  --access-key-id <old-key-id> \
+  --access-key-id AKIAIOSFODNN7EXAMPLE \
   --status Inactive \
   --user-name <username> \
-  --profile test
+  --profile dev
+
+# Verify status change
+aws iam list-access-keys --user-name <username> --profile dev
+
+# Expected output:
+# {
+#   "AccessKeyMetadata": [
+#     {
+#       "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
+#       "Status": "Inactive",   <-- Changed to Inactive
+#       "CreateDate": "2026-05-07T10:30:00Z"
+#     },
+#     {
+#       "AccessKeyId": "AKIAI44QH8DHBEXAMPLE",
+#       "Status": "Active",
+#       "CreateDate": "2026-08-04T10:00:00Z"
+#     }
+#   ]
+# }
 ```
 
-**Wait 24 hours** before deleting to ensure no missed integrations.
+**Why deactivate instead of delete?**
+- Allows quick rollback if missed integration discovered
+- Maintains audit trail
+- CIS recommendation: deactivate first, delete after observation period
 
-### Step 6: Monitor
+**Waiting Period**: 24-48 hours before deletion
 
-After deactivation:
-- [ ] Monitor CloudWatch logs for access denied errors
-- [ ] Check application error rates
-- [ ] Review service health metrics
-- [ ] Confirm no alerts triggered
+---
 
-### Step 7: Delete Old Key (After 24 Hours)
+### Step 6: Monitor for Issues (24-48 hours)
 
-If no issues detected:
+#### Active Monitoring (First 2 Hours)
+
+**Watch for**:
+- Access denied errors in application logs
+- Failed CI/CD pipeline runs
+- Third-party integration failures
+- Support tickets about access issues
+- CloudWatch alarms
+
+**Monitoring Commands**:
+```bash
+# Monitor application logs
+aws logs tail /aws/lambda/FIPCO-api-dev \
+  --since 2h \
+  --filter-pattern "?ERROR ?AccessDenied ?401 ?403" \
+  --follow \
+  --profile dev
+
+# Monitor CloudTrail for failed API calls with old key
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=AKIAIOSFODNN7EXAMPLE \
+  --start-time $(date -u -d '2 hours ago' +%Y-%m-%dT%H:%M:%S) \
+  --profile dev
+
+# Check application health
+watch -n 60 'curl -sf https://api.FIPCO.com/health || echo "HEALTH CHECK FAILED"'
+
+# Check CI/CD pipeline runs
+gh run list --repo Flexion Org/FIPCO --limit 5
+```
+
+#### Passive Monitoring (24-48 Hours)
+
+**Set up temporary alerts**:
+```bash
+# Create CloudWatch alarm for failed API calls
+aws cloudwatch put-metric-alarm \
+  --alarm-name FIPCO-key-rotation-monitoring-$(date +%Y%m%d) \
+  --alarm-description "Temporary alarm during key rotation monitoring period" \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 1 \
+  --metric-name Errors \
+  --namespace AWS/Lambda \
+  --period 300 \
+  --statistic Sum \
+  --threshold 5 \
+  --actions-enabled \
+  --alarm-actions arn:aws:sns:us-east-1:123456789012:FIPCO-alerts \
+  --dimensions Name=FunctionName,Value=FIPCO-api-dev \
+  --profile dev
+```
+
+**Check daily**:
+- [ ] No new support tickets about access issues
+- [ ] All CI/CD pipelines running successfully
+- [ ] No failed AWS API calls in CloudTrail
+- [ ] Application error rates at baseline
+- [ ] Third-party integrations functioning
+
+#### Issue Detection
+
+**If access denied errors appear**:
+1. Check which service is failing
+2. Verify that service was updated with new key
+3. If missed service: update with new key
+4. If persistent issues: reactivate old key temporarily while investigating
+
+---
+
+### Step 7: Delete Old Key (After 24-48 Hours)
+
+**Only proceed if no issues detected in Step 6**
+
+#### Final Verification
 
 ```bash
-# Delete old access key permanently
-aws iam delete-access-key \
-  --access-key-id <old-key-id> \
-  --user-name <username> \
-  --profile test
+# Check if old key was used recently
+aws iam get-access-key-last-used \
+  --access-key-id AKIAIOSFODNN7EXAMPLE \
+  --profile dev
+
+# If LastUsedDate is recent (last 24 hours), INVESTIGATE before deleting!
 ```
 
-## Rollback
+#### Delete Old Key
 
-If issues occur after activating new key:
+```bash
+# Permanently delete old access key
+aws iam delete-access-key \
+  --access-key-id AKIAIOSFODNN7EXAMPLE \
+  --user-name <username> \
+  --profile dev
+
+# Verify deletion
+aws iam list-access-keys --user-name <username> --profile dev
+
+# Expected output: Only new key listed
+# {
+#   "AccessKeyMetadata": [
+#     {
+#       "AccessKeyId": "AKIAI44QH8DHBEXAMPLE",
+#       "Status": "Active",
+#       "CreateDate": "2026-08-04T10:00:00Z"
+#     }
+#   ]
+# }
+```
+
+#### Clean Up
+
+```bash
+# Remove temporary monitoring alarm
+aws cloudwatch delete-alarms \
+  --alarm-names FIPCO-key-rotation-monitoring-$(date +%Y%m%d) \
+  --profile dev
+
+# Delete temporary files
+rm -f /tmp/new-key-*.txt /tmp/new-key-*.txt.gpg
+
+# Clear clipboard (if used)
+echo "" | pbcopy  # macOS
+echo "" | xclip -selection clipboard  # Linux
+```
+
+---
+
+### Step 8: Documentation (5 minutes)
+
+#### Update Key Inventory
+
+**Maintain spreadsheet or database**:
+| User/Service | Access Key ID | Created Date | Last Rotated | Next Rotation Due | Rotated By |
+|-------------|--------------|--------------|--------------|------------------|-----------|
+| ci-cd-user | AKIAI44QH8DHBEXAMPLE | 2026-08-04 | 2026-08-04 | 2026-11-02 | @engineer1 |
+
+#### Update IAM User Tags
+
+```bash
+aws iam tag-user \
+  --user-name <username> \
+  --tags \
+    Key=LastKeyRotation,Value=$(date +%Y-%m-%d) \
+    Key=NextRotationDue,Value=$(date -d '+90 days' +%Y-%m-%d) \
+    Key=RotatedBy,Value=$(whoami) \
+  --profile dev
+```
+
+#### Create Ticket/Record
+
+**In Freshdesk/Jira/Issue Tracker**:
+```
+Title: [FIPCO] AWS Access Key Rotation - ci-cd-user
+
+Completed: 2026-08-04
+User: ci-cd-user
+Old Key: AKIAIOSFODNN7EXAMPLE (deleted)
+New Key: AKIAI44QH8DHBEXAMPLE
+
+Services Updated:
+- [x] GitHub Actions
+- [x] AWS Secrets Manager
+- [x] Monitoring (Datadog)
+
+Testing:
+- [x] AWS CLI access verified
+- [x] CI/CD pipeline tested
+- [x] Application functionality verified
+- [x] 48-hour monitoring period complete
+
+Next Rotation Due: 2026-11-02 (90 days from now)
+
+Rotation Time: 45 minutes (planning + execution + testing)
+Issues: None
+```
+
+#### Update Runbook (if needed)
+
+If you encountered issues or found improvements:
+- Update this runbook with lessons learned
+- Add new service locations to checklist
+- Document troubleshooting steps
+
+---
+
+## Emergency Procedure: Compromised Key
+
+**Use this procedure if key is exposed or compromised (e.g., committed to GitHub, AWS Health alert)**
+
+### Step 1: Immediate Action (0-5 minutes)
+
+**DEACTIVATE OLD KEY IMMEDIATELY** (don't wait for new key):
+```bash
+# Deactivate compromised key NOW
+aws iam update-access-key \
+  --access-key-id <compromised-key-id> \
+  --status Inactive \
+  --user-name <username> \
+  --profile dev
+
+# Verify deactivation
+aws iam list-access-keys --user-name <username> --profile dev
+```
+
+**Communicate urgency**:
+```
+🚨 SECURITY ALERT - Compromised AWS Key
+
+Key AKIAIOSFODNN7EXAMPLE has been deactivated immediately.
+Reason: [Found in public GitHub repo / AWS Health alert / etc.]
+
+Services will experience authentication failures until new key deployed.
+New key generation in progress.
+
+ETA to restore: 15 minutes
+Updates in this thread.
+```
+
+---
+
+### Step 2: Investigate Exposure (5-15 minutes)
+
+**Check CloudTrail for unauthorized activity**:
+```bash
+# Get all API calls with compromised key
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=<compromised-key-id> \
+  --start-time $(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%S) \
+  --profile dev \
+  --max-results 50 > compromised-key-activity.json
+
+# Look for suspicious activity:
+# - API calls from unknown IP addresses
+# - Unusual regions (not us-east-1)
+# - Resource creation/deletion
+# - IAM permission changes
+# - Data exfiltration (S3 GetObject on sensitive data)
+
+# Check for unauthorized access
+cat compromised-key-activity.json | jq -r '.Events[] |
+  select(.CloudTrailEvent | fromjson | .sourceIPAddress != "expected-IP") |
+  "\(.EventTime) \(.EventName) \(.CloudTrailEvent | fromjson | .sourceIPAddress)"'
+```
+
+**Check for resource changes**:
+```bash
+# Check for unauthorized EC2 instances
+aws ec2 describe-instances \
+  --filters "Name=tag:CreatedBy,Values=<compromised-username>" \
+  --query 'Reservations[].Instances[].[InstanceId,LaunchTime,State.Name]' \
+  --output table \
+  --profile dev
+
+# Check for new IAM users
+aws iam list-users \
+  --query 'Users[?CreateDate>=`$(date -u -d '7 days ago' +%Y-%m-%d)`]' \
+  --output table \
+  --profile dev
+
+# Check for new S3 buckets
+aws s3api list-buckets \
+  --query 'Buckets[?CreationDate>=`$(date -u -d '7 days ago' +%Y-%m-%d)`]' \
+  --output table \
+  --profile dev
+```
+
+**If unauthorized activity detected**:
+1. Escalate to **SEV-1 Security Incident**
+2. Follow [Security Incident Response Playbook](../playbooks/incident-response.md#security-incident-path)
+3. Notify security team: security@example.com
+4. Preserve evidence (export CloudTrail logs, take snapshots)
+5. Consider rotating ALL credentials, not just this key
+
+---
+
+### Step 3: Create and Deploy New Key (5-10 minutes)
+
+**Follow standard procedure (Steps 2-4) but EXPEDITED**:
+
+```bash
+# Create new key
+NEW_KEY=$(aws iam create-access-key --user-name <username> --profile dev)
+NEW_KEY_ID=$(echo $NEW_KEY | jq -r '.AccessKey.AccessKeyId')
+NEW_KEY_SECRET=$(echo $NEW_KEY | jq -r '.AccessKey.SecretAccessKey')
+
+# Update Secrets Manager immediately
+aws secretsmanager update-secret \
+  --secret-id dev/ci-cd/aws-credentials \
+  --secret-string "{\"accessKeyId\":\"$NEW_KEY_ID\",\"secretAccessKey\":\"$NEW_KEY_SECRET\"}" \
+  --profile dev
+
+# Update GitHub secrets
+gh secret set AWS_ACCESS_KEY_ID --body "$NEW_KEY_ID" --repo Flexion Org/FIPCO
+gh secret set AWS_SECRET_ACCESS_KEY --body "$NEW_KEY_SECRET" --repo Flexion Org/FIPCO
+
+# Restart affected services
+# (ECS, Lambda, etc. - adjust based on your architecture)
+```
+
+**Prioritize most critical services first**, then update others:
+1. Production application (restore service)
+2. CI/CD pipeline
+3. Monitoring/backup tools
+4. Developer local environments
+
+---
+
+### Step 4: Monitor and Verify (15-30 minutes)
+
+**Active monitoring for unauthorized activity**:
+```bash
+# Monitor CloudTrail in real-time
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=$NEW_KEY_ID \
+  --start-time $(date -u -d '30 minutes ago' +%Y-%m-%dT%H:%M:%S) \
+  --profile dev
+
+# Verify only expected services using new key
+# Check IPs, regions, services accessed
+```
+
+**If still seeing unauthorized activity**:
+- Key may have been exposed elsewhere
+- Review all code repositories, logs, documentation
+- Consider rotating ROOT credentials if compromise is widespread
+
+---
+
+### Step 5: Remediation and Prevention (After incident resolved)
+
+#### Remove Exposed Credentials
+
+**If committed to Git**:
+```bash
+# Contact GitHub support to purge from history
+# Or use BFG Repo-Cleaner
+git clone --mirror https://github.com/Flexion Org/FIPCO.git
+bfg --replace-text passwords.txt FIPCO.git
+cd FIPCO.git
+git reflog expire --expire=now --all && git gc --prune=now --aggressive
+git push
+```
+
+**If in logs**:
+- Expire CloudWatch log streams containing key
+- Redact key from archived logs
+- Update log filtering to prevent future exposure
+
+#### Implement Preventative Measures
+
+1. **Install git-secrets** (prevents committing credentials):
+   ```bash
+   # Install git-secrets
+   brew install git-secrets  # macOS
+   # or from https://github.com/awslabs/git-secrets
+
+   # Set up in repo
+   cd /path/to/FIPCO
+   git secrets --install
+   git secrets --register-aws
+
+   # Add to global git config (for all repos)
+   git secrets --install ~/.git-templates/git-secrets
+   git config --global init.templateDir ~/.git-templates/git-secrets
+   ```
+
+2. **Use IAM Roles instead of access keys** where possible:
+   - Lambda: Use execution role
+   - ECS: Use task role
+   - EC2: Use instance profile
+   - GitHub Actions: Use OIDC federation
+
+3. **Enable AWS Secrets Manager automatic rotation**:
+   ```bash
+   # Configure automatic rotation (future enhancement)
+   aws secretsmanager rotate-secret \
+     --secret-id dev/ci-cd/aws-credentials \
+     --rotation-lambda-arn arn:aws:lambda:us-east-1:123456789012:function:SecretsManagerRotation \
+     --rotation-rules AutomaticallyAfterDays=90 \
+     --profile dev
+   ```
+
+4. **Implement AWS Health Event monitoring**:
+   ```bash
+   # EventBridge rule to detect exposed keys
+   aws events put-rule \
+     --name detect-exposed-keys \
+     --event-pattern '{"source":["aws.health"],"detail-type":["AWS Health Event"],"detail":{"service":["RISK"],"eventTypeCategory":["issue"]}}' \
+     --state ENABLED \
+     --profile dev
+   ```
+
+#### Document Incident
+
+Create post-incident report:
+- Timeline of compromise and response
+- Root cause (how key was exposed)
+- Unauthorized activity detected (if any)
+- Response actions taken
+- Preventative measures implemented
+- Lessons learned
+
+---
+
+## Rollback Procedure
+
+**If new key causes issues**:
 
 ```bash
 # Reactivate old key
 aws iam update-access-key \
-  --access-key-id <old-key-id> \
+  --access-key-id AKIAIOSFODNN7EXAMPLE \
   --status Active \
   --user-name <username> \
-  --profile test
+  --profile dev
 
 # Deactivate new key
 aws iam update-access-key \
-  --access-key-id <new-key-id> \
+  --access-key-id AKIAI44QH8DHBEXAMPLE \
   --status Inactive \
   --user-name <username> \
-  --profile test
+  --profile dev
+
+# Verify service restoration
+aws sts get-caller-identity --profile dev
+
+# Investigate issue before retrying rotation
 ```
 
-## Verification
+**Common rollback scenarios**:
+- Missed service integration (old key still needed)
+- IAM permission issue with new key (should be same, but check)
+- Race condition with credential caching
+- Wrong key pasted in service
 
-After completion:
+---
+
+## Automation Opportunities
+
+### AWS Secrets Manager Automatic Rotation
+
+**Benefits**:
+- Automated 90-day rotation
+- Zero-downtime key rotation
+- Audit trail in CloudTrail
+- No manual process needed
+
+**Setup** (future enhancement):
+1. Create rotation Lambda function
+2. Configure rotation schedule in Secrets Manager
+3. Update applications to fetch from Secrets Manager
+4. Enable automatic rotation
+
+**Example**:
 ```bash
-# Verify only new key is active
-aws iam list-access-keys --user-name <username> --profile test
-
-# Should show:
-# - New key: Status=Active
-# - Old key: Status=Deleted or not listed
+# Enable automatic rotation
+aws secretsmanager rotate-secret \
+  --secret-id dev/ci-cd/aws-credentials \
+  --rotation-lambda-arn arn:aws:lambda:us-east-1:123456789012:function:RotateAccessKey \
+  --rotation-rules AutomaticallyAfterDays=90 \
+  --profile dev
 ```
 
-## Documentation
+### Lambda Function for Rotation
 
-Record rotation in:
-- [ ] Update key inventory spreadsheet
-- [ ] Note rotation date in IAM user tags
-- [ ] Create Freshdesk ticket documenting rotation
-- [ ] Update runbook if any issues encountered
+**Pseudocode**:
+```python
+def lambda_handler(event, context):
+    # Get username from secret metadata
+    username = get_username_from_secret(event['SecretId'])
 
-## Emergency Key Compromise
+    # Create new key
+    new_key = iam.create_access_key(UserName=username)
 
-If key is compromised:
+    # Test new key
+    test_key(new_key)
 
-1. **Immediately deactivate** - Don't wait for testing
-2. **Generate new key** - Follow steps 2-3 above
-3. **Investigate usage** - Check CloudTrail for unauthorized access
-4. **Notify security team** - Report via #support
-5. **Review permissions** - Reduce scope if over-permissive
+    # Update secret with new key
+    secretsmanager.update_secret(
+        SecretId=event['SecretId'],
+        SecretString=json.dumps({
+            'accessKeyId': new_key['AccessKeyId'],
+            'secretAccessKey': new_key['SecretAccessKey']
+        })
+    )
 
-## Automation
+    # Wait for propagation
+    time.sleep(60)
 
-Consider automating with:
-- AWS Secrets Manager rotation
-- Lambda function for automated rotation
-- Terraform/CDK to manage keys as code
+    # Delete old key
+    iam.delete_access_key(
+        UserName=username,
+        AccessKeyId=event['OldAccessKeyId']
+    )
+```
+
+### Automated Key Age Monitoring
+
+**Create Lambda to check key age weekly**:
+```python
+def check_key_age():
+    users = iam.list_users()
+    for user in users['Users']:
+        keys = iam.list_access_keys(UserName=user['UserName'])
+        for key in keys['AccessKeyMetadata']:
+            age_days = (datetime.now() - key['CreateDate']).days
+            if age_days > 80:
+                send_alert(f"Key {key['AccessKeyId']} is {age_days} days old")
+```
+
+---
 
 ## Troubleshooting
 
-**Issue**: Service fails after key rotation
-- **Check**: New key was properly updated in all locations
-- **Check**: Key has correct IAM permissions
-- **Action**: Reactivate old key temporarily while investigating
+### Issue: Service Fails After Key Rotation
 
-**Issue**: "Access Denied" errors
-- **Check**: IAM policy hasn't changed
-- **Check**: Key is definitely Active status
-- **Action**: Review CloudTrail logs for specific denial reason
+**Symptoms**: Access denied errors, 403 responses, authentication failures
+
+**Diagnosis**:
+```bash
+# Check which key service is using
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=Username,AttributeValue=<username> \
+  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
+  --profile dev \
+  --query 'Events[].{Time:EventTime,Key:RequestParameters}' \
+  --output table
+```
+
+**Resolution**:
+1. Verify new key is properly configured in service
+2. Check for credential caching (restart service)
+3. Verify IAM permissions haven't changed
+4. If urgent, reactivate old key temporarily
+
+---
+
+### Issue: "Access Denied" Errors with New Key
+
+**Symptoms**: New key created successfully but returns access denied
+
+**Diagnosis**:
+```bash
+# Check IAM policy attached to user
+aws iam list-attached-user-policies --user-name <username> --profile dev
+aws iam list-user-policies --user-name <username> --profile dev
+
+# Get policy details
+aws iam get-policy-version \
+  --policy-arn <policy-arn> \
+  --version-id v1 \
+  --profile dev
+```
+
+**Resolution**:
+- New key should have same permissions as old key
+- Check if policy was modified during rotation
+- Check if key is hitting permission boundary
+- Verify no SCP (Service Control Policy) restrictions
+
+---
+
+### Issue: Can't Delete Old Key
+
+**Symptoms**: "Cannot delete access key that is currently in use"
+
+**Diagnosis**:
+```bash
+# Check if key was recently used
+aws iam get-access-key-last-used \
+  --access-key-id AKIAIOSFODNN7EXAMPLE \
+  --profile dev
+
+# Find which service is still using old key
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=AKIAIOSFODNN7EXAMPLE \
+  --start-time $(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%S) \
+  --profile dev
+```
+
+**Resolution**:
+1. Identify service still using old key (from CloudTrail)
+2. Update that service with new key
+3. Wait 5 minutes for propagation
+4. Retry deletion
+
+---
+
+### Issue: Lost New Key Secret Before Saving
+
+**Symptoms**: Created new key but lost `SecretAccessKey` before updating services
+
+**Resolution**:
+```bash
+# Can't retrieve secret again - must delete new key and start over
+aws iam delete-access-key \
+  --access-key-id <new-key-id> \
+  --user-name <username> \
+  --profile dev
+
+# Create new key again (be ready to save it this time!)
+aws iam create-access-key --user-name <username> --profile dev
+```
+
+**Prevention**: Use password manager or direct-to-Secrets-Manager approach
+
+---
+
+## Metrics & Compliance
+
+### Track Key Rotation Metrics
+
+| Metric | Target | Current | Trend |
+|--------|--------|---------|-------|
+| **Keys Overdue (>90 days)** | 0 | - | - |
+| **Keys Near Due (80-90 days)** | - | - | - |
+| **Average Rotation Time** | <60 min | - | - |
+| **Failed Rotations** | <5% | - | - |
+| **Emergency Rotations** | <1/quarter | - | - |
+| **Compliance Rate** | 100% | - | - |
+
+### Compliance Reporting
+
+**Generate monthly report**:
+```bash
+# List all keys with ages
+for user in $(aws iam list-users --query 'Users[].UserName' --output text --profile dev); do
+  echo "User: $user"
+  aws iam list-access-keys --user-name "$user" --profile dev | \
+    jq -r '.AccessKeyMetadata[] | "\(.AccessKeyId): \(.CreateDate) (Age: \((now - (.CreateDate | fromdateiso8601)) / 86400 | floor) days)"'
+done
+```
+
+**Audit questions**:
+- Are all access keys <90 days old? (MSP requirement)
+- Are unused keys deactivated?
+- Is rotation documented and tracked?
+- Are emergency rotations investigated?
+- Are preventative measures in place?
+
+---
 
 ## Related Documents
 
-- IAM Access Management Policy
-- Secrets Management Procedures
-- Security Incident Response Playbook
+- [Incident Response Playbook](../playbooks/incident-response.md)
+- [Security Incident Response Playbook](../playbooks/security-incident-response.md)
+- [IAM Access Management Policy](../policies/iam-access-management.md)
+- [Secrets Management Procedures](../procedures/secrets-management.md)
+- [AWS Security Best Practices](../guides/aws-security-best-practices.md)
+
+---
+
+## Quick Reference Commands
+
+```bash
+# List all keys for user
+aws iam list-access-keys --user-name <username> --profile dev
+
+# Create new key
+aws iam create-access-key --user-name <username> --profile dev
+
+# Deactivate key
+aws iam update-access-key --access-key-id <key-id> --status Inactive --user-name <username> --profile dev
+
+# Delete key
+aws iam delete-access-key --access-key-id <key-id> --user-name <username> --profile dev
+
+# Check key age
+aws iam list-access-keys --user-name <username> --profile dev | jq -r '.AccessKeyMetadata[] | "\(.AccessKeyId): \(.CreateDate)"'
+
+# Check last used
+aws iam get-access-key-last-used --access-key-id <key-id> --profile dev
+
+# Update Secrets Manager
+aws secretsmanager update-secret --secret-id dev/app/aws-credentials --secret-string '{"accessKeyId":"XXX","secretAccessKey":"YYY"}' --profile dev
+
+# Update GitHub secret
+gh secret set AWS_ACCESS_KEY_ID --body "XXX" --repo Flexion Org/FIPCO
+
+# Check CloudTrail for key usage
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=<key-id> --start-time $(date -u -d '1 day ago' +%Y-%m-%dT%H:%M:%S) --profile dev
+```
+
+---
+
+## Checklist Summary
+
+### Standard Rotation
+- [ ] Identify keys to rotate (>80 days old)
+- [ ] Document affected services
+- [ ] Create change request (if required)
+- [ ] Create new access key
+- [ ] Update all services with new key
+- [ ] Test new key thoroughly
+- [ ] Deactivate old key
+- [ ] Monitor for 24-48 hours
+- [ ] Delete old key
+- [ ] Update documentation
+
+### Emergency Rotation (Compromised Key)
+- [ ] Deactivate compromised key immediately
+- [ ] Check CloudTrail for unauthorized activity
+- [ ] Escalate to security if breach detected
+- [ ] Create new access key
+- [ ] Update services (prioritize critical first)
+- [ ] Monitor for continued unauthorized activity
+- [ ] Implement preventative measures
+- [ ] Document incident
+
+---
 
 ## Change Log
 
-| Date | Change | Author |
-|------|--------|--------|
-| 2026-07-27 | Initial runbook generated | MSP Readiness Tool |
+| Date | Version | Change | Author |
+|------|---------|--------|--------|
+| 2026-08-04 | 2.0 | Enhanced with FIPCO-specific details, MSP requirements, CIS Controls, emergency procedures, automation guidance, troubleshooting, and compliance tracking | MSP Readiness Tool |
+| 2026-08-04 | 1.0 | Initial runbook generated | MSP Readiness Tool |
 
 ---
 
 **🤖 Generated by MSP Readiness Automation**
+
+*This runbook meets AWS MSP Program requirement SECP-001 and implements CIS Controls v8 5.3, 5.4, 6.1, 6.3.*

@@ -22,28 +22,22 @@ Manual MSP readiness preparation is time-consuming and error-prone:
 
 This tool automates 80% of the preparation work, allowing teams to focus on gaps and decision-making.
 
-## ⚠️ Important: Current Limitations
+## Workspace Model
 
-**Completeness Model** (Issue #37):  
-The current version assesses the **target project** (e.g., `fipco-infra`) for completeness, but generates artifacts **in this repo** (`./playbooks`, `./evidence`). This means:
+This tool uses a **workspace-based** approach where this repository serves as your MSP readiness workspace:
 
-- ✅ Tool generates playbooks and collects evidence
-- ❌ Assessment shows 0% until you manually copy artifacts to target project
-- ❌ Regenerating can overwrite your customizations
+- **Self-Assessment Mode**: Run `msp-readiness assess --self` to assess workspace completeness
+- **Overwrite Protection**: Generated files include frontmatter metadata to detect user modifications
+- **Status Tracking**: Documents progress through lifecycle: draft → in-progress → approved → complete
+- **Completion Tracking**: Requirements are complete when: playbook exists + evidence collected + playbook approved
 
-**Planned Fix (Issue #37)**:  
-Redesign so this repo IS your MSP workspace:
-- Self-assessment mode (`--self` flag)
-- Overwrite protection with frontmatter metadata
-- Status tracking (draft → in-progress → approved → complete)
-- Clear completeness: playbook + evidence + addressed = complete
-
-For now, workflow is:
-1. Generate playbooks: `msp-readiness generate`
-2. Review and customize in `./playbooks`
-3. Copy to your project: `cp ./playbooks/* /path/to/project/docs/msp/`
-4. Commit to project repo
-5. Re-assess: `msp-readiness assess` (now shows completion)
+**Typical Workflow**:
+1. Generate missing playbooks: `msp-readiness generate`
+2. Review and customize playbooks in `./playbooks/`
+3. Collect evidence from AWS: `msp-readiness collect-evidence`
+4. Approve completed playbooks: `msp-readiness approve <requirement-id>`
+5. Check progress: `msp-readiness assess --self`
+6. View dashboard: `msp-readiness dashboard --workspace`
 
 ## Architecture
 
@@ -594,13 +588,22 @@ See [WORKFLOW.md](WORKFLOW.md) for detailed workflow.
 
 ## Project Status
 
-**Current Status**: Phase 1 in progress
+**Current Phase**: Phase 1 - Critical MVP
 
-- ✅ Issue #7 complete: fipco-infra integration with CDK parser
-- 🔄 6 Phase 1 issues ready to start (176 hours)
-- 📋 6 Phase 2-3 issues in backlog (112 hours)
+**Completed**:
+- ✅ Issue #7: fipco-infra integration with CDK parser
+- ✅ Issue #37: Workspace model redesign with self-assessment
+- ✅ Issue #9: Better reporting formats (markdown + JSON)
+
+**Workspace Status**: 26% complete (5/19 requirements)
+- 5 complete requirements with approved playbooks and evidence
+- 14 in-progress requirements with draft playbooks
+- Run `msp-readiness assess --self` to see current status
+
+**Next Priorities**:
+- Issue #39: Evidence validation (verify playbook compliance)
+- Issue #5: Fix build process
+- Issue #2: Complete playbook coverage
 
 **Project Board**: https://github.com/orgs/flexion/projects/53
-
-**Recommended Next**: Issue #5 (Fix Build Process - 4h quick win)
 

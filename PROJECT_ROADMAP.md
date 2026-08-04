@@ -17,52 +17,67 @@ This roadmap outlines the development priorities for the Flexion MSP Readiness a
 
 ## Phase 1: Critical MVP (Weeks 1-6) - 140 hours
 
-### Week 1-2: Documentation & Build
+### Completed ✅
+- **#7** - Integrate with fipco-infra (40h) 🟠 ✅
+  - Parse real CDK code and documentation
+  - Real assessment vs placeholder data
+- **#9** - Better Reporting Formats (20h) 🟡 ✅
+  - JSON export for all assessment reports
+  - Markdown report format with detailed breakdowns
+  - Assessment comparison with diff command
+- **#37** - Workspace Model Redesign (24h) 🔴 ✅
+  - Self-assessment mode with --self flag
+  - Overwrite protection with frontmatter metadata
+  - Document lifecycle tracking (draft → approved → complete)
+  - Workspace report generator and dashboard
+
+### In Progress 🚧
 - **#2** - Complete Playbook/Runbook Coverage (40h) 🔴
-  - Generate all 16 missing playbooks/runbooks
-  - Cover all 19 MSP requirements
+  - 19/19 playbooks generated (draft status)
+  - Need refinement and approval
+- **#39** - Evidence Validation (48h) 🔴 NEW
+  - Verify evidence matches playbook requirements
+  - Validate actual compliance, not just documentation existence
+
+### Ready to Start
 - **#5** - Fix Build Process (4h) 🔴
   - Copy template files to dist/
   - Tool works after npm install
 - **#14** - Refine Existing Playbooks (20h) 🟠
-  - Add specific details to current 3 playbooks
-  - Customize for FIPCO environment
-
-### Week 3-4: Evidence & Remediation  
+  - Add specific details to current playbooks
+  - Customize for specific environments
 - **#3** - Expand Evidence Collectors (32h) 🔴
   - Security Hub, IAM Analyzer, CloudWatch, Systems Manager
   - Provide proof of compliance
 - **#4** - Add Remediation Guidance (24h) 🟠
   - Show HOW to fix each gap
   - Include AWS docs and IaC snippets
-
-### Week 5-6: Permissions & Integration
 - **#6** - Pre-flight Permission Check (16h) 🟠
   - Validate AWS permissions before running
   - Generate IAM policy for missing permissions
-- **#7** - Integrate with fipco-infra (40h) 🟠
-  - Parse real CDK code and documentation
-  - Real assessment vs placeholder data
 
-**Phase 1 Total**: 140 hours (~1 developer for 6 weeks)
+**Phase 1 Total**: 140 hours (84h completed, 56h remaining)
 
 ---
 
-## Phase 2: Production Ready (Weeks 7-10) - 68 hours
+## Phase 2: Production Ready (Weeks 7-10) - 48 hours
 
-### Week 7-8: Progress & Reporting
+### Completed ✅
+- **#9** - Better Reporting Formats (20h) 🟡 ✅
+  - JSON/Markdown export formats
+  - Assessment comparison with diff command
+  - Moved to Phase 1 (completed early)
+
+### Ready to Start
 - **#8** - Progress Tracking Over Time (24h) 🟡
   - Store historical assessments
   - Show compliance trends
   - Prove continuous improvement
-
-### Week 9-10: Export & Reporting
-- **#9** - Better Reporting Formats (20h) 🟡
+- **#15** - PDF Export (24h) 🟡 NEW
   - PDF export for stakeholders
-  - CSV for tracking systems
-  - Email summaries
+  - Professional formatting for audits
 
-**Phase 2 Total**: 68 hours (~1 developer for 4 weeks)
+**Phase 2 Total**: 48 hours (20h completed, 28h remaining)
 
 ---
 

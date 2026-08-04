@@ -1,0 +1,528 @@
+---
+generated: "2026-08-04T16:01:14.456Z"
+template_version: "1.0"
+status: "draft"
+requirement_id: "OPSP-003"
+---
+
+# Deployment Risk Management Playbook
+
+**Project**: FIPCO
+**Organization**: Flexion Org
+**Last Updated**: 2026-08-04
+
+## Purpose
+
+This playbook defines the process for assessing and managing risks associated with deploying changes to FIPCO infrastructure and applications.
+
+## Scope
+
+This playbook covers:
+- Deployment risk assessment
+- Change categorization
+- Pre-deployment validation
+- Deployment strategies
+- Rollback procedures
+- Post-deployment monitoring
+
+## Change Risk Classification
+
+### Risk Categories
+
+| Risk Level | Definition | Approval | Testing | Deployment Window |
+|------------|-----------|----------|---------|-------------------|
+| **LOW** | Minor config, non-breaking changes | Auto-approved | Unit tests | Anytime |
+| **MEDIUM** | Feature additions, dependency updates | Tech Lead | Full test suite + staging | Business hours |
+| **HIGH** | Database migrations, API changes | CAB approval | Full suite + load testing | Maintenance window |
+| **CRITICAL** | Architecture changes, data migrations | Executive approval | Full validation + DR test | Scheduled maintenance |
+
+### Risk Factors
+
+**Technical Risk**:
+- Database schema changes
+- Breaking API changes
+- Infrastructure modifications
+- Third-party service dependencies
+- Performance impact potential
+
+**Business Risk**:
+- Customer-facing changes
+- Revenue impact
+- Compliance requirements
+- SLA commitments
+- Peak usage timing
+
+**Operational Risk**:
+- Rollback complexity
+- Team availability
+- Testing coverage
+- Documentation completeness
+- Deployment automation maturity
+
+## Pre-Deployment Checklist
+
+### LOW Risk Deployments
+
+- [ ] Code review completed (1 approval)
+- [ ] Unit tests passing
+- [ ] Security scan passed
+- [ ] Deployed to dev environment
+- [ ] No errors in logs
+
+### MEDIUM Risk Deployments
+
+All LOW requirements plus:
+- [ ] Code review completed (2 approvals)
+- [ ] Integration tests passing
+- [ ] Deployed to staging environment
+- [ ] Manual testing completed
+- [ ] Performance baseline established
+- [ ] Monitoring dashboards reviewed
+- [ ] Rollback plan documented
+- [ ] Team notified in #support
+
+### HIGH Risk Deployments
+
+All MEDIUM requirements plus:
+- [ ] CAB approval obtained
+- [ ] Load testing completed
+- [ ] Database backup verified
+- [ ] Runbook updated
+- [ ] On-call engineer identified
+- [ ] Customer communication prepared (if needed)
+- [ ] Deployment scheduled in maintenance window
+- [ ] Rollback tested in staging
+
+### CRITICAL Risk Deployments
+
+All HIGH requirements plus:
+- [ ] Executive sponsor approval
+- [ ] Full disaster recovery test completed
+- [ ] Multiple rollback strategies prepared
+- [ ] War room scheduled
+- [ ] Customer communication plan finalized
+- [ ] Support team briefed
+- [ ] External partners notified (if applicable)
+
+## Deployment Strategies
+
+### Blue-Green Deployment
+
+**Use**: Zero-downtime deployments, easy rollback
+
+**Process**:
+1. Deploy new version to "green" environment
+2. Test green environment thoroughly
+3. Switch traffic from "blue" to "green" (DNS/ALB)
+4. Monitor green environment
+5. Keep blue environment for quick rollback
+
+**Rollback**: Switch traffic back to blue
+
+**Example (ALB Target Groups)**:
+```typescript
+// Shift traffic gradually
+const listener = alb.addListener('Listener', {
+  defaultActions: [
+    {
+      type: 'forward',
+      targetGroups: [
+        { targetGroup: blueTargetGroup, weight: 100 },
+        { targetGroup: greenTargetGroup, weight: 0 },
+      ],
+    },
+  ],
+});
+
+// After validation, flip to green
+// weight: blue=0, green=100
+```
+
+### Canary Deployment
+
+**Use**: Gradual rollout, early detection of issues
+
+**Process**:
+1. Deploy new version to small subset (5% traffic)
+2. Monitor metrics for 30 minutes
+3. Increase to 25% if metrics normal
+4. Increase to 50% after 1 hour
+5. Full rollout after 2 hours
+
+**Rollback**: Reduce traffic to 0% immediately
+
+**Monitoring Metrics**:
+- Error rate (target: <0.5% increase)
+- Latency p99 (target: <10% increase)
+- CPU/memory (target: within 20% of baseline)
+
+**Example (AWS CodeDeploy)**:
+```yaml
+Canary10Percent15Minutes:
+  Type: AWS::CodeDeploy::DeploymentConfig
+  Properties:
+    TrafficRoutingConfig:
+      Type: TimeBasedCanary
+      TimeBasedCanary:
+        CanaryPercentage: 10
+        CanaryInterval: 15
+```
+
+### Rolling Deployment
+
+**Use**: Updates with minimal resource overhead
+
+**Process**:
+1. Take 1 instance out of service
+2. Deploy new version
+3. Health checks pass
+4. Return to service
+5. Repeat for next instance
+
+**Rollback**: Deploy previous version
+
+**Considerations**:
+- Both versions running simultaneously
+- Ensure backward compatibility
+- Monitor instance health
+
+### Feature Flags
+
+**Use**: Deploy code without activating features
+
+**Benefits**:
+- Decouple deployment from release
+- Test in production safely
+- Instant rollback (toggle flag)
+- Gradual rollout by user segment
+
+**Example**:
+```typescript
+if (featureFlags.isEnabled('new-checkout-flow', user)) {
+  return newCheckoutFlow();
+} else {
+  return legacyCheckoutFlow();
+}
+```
+
+**Flag Management**: LaunchDarkly, AWS AppConfig, or custom
+
+## Rollback Procedures
+
+### Rollback Decision Matrix
+
+**Trigger Rollback If**:
+- Error rate >2x baseline for >5 minutes
+- P99 latency >3x baseline
+- Critical functionality broken
+- Security vulnerability introduced
+- Data corruption detected
+
+**Do Not Rollback If**:
+- Minor cosmetic issues
+- Non-critical feature broken (can be disabled)
+- Expected temporary spike during deployment
+- Issue can be fixed forward quickly (<15 min)
+
+### Rollback Process
+
+**Application Rollback** (via CI/CD):
+```bash
+# Identify previous working version
+git log --oneline
+
+# Revert to previous commit
+git revert HEAD
+git push
+
+# Or redeploy previous version
+aws ecs update-service \
+  --cluster FIPCO-dev \
+  --service api \
+  --task-definition FIPCO-api:42  # Previous version
+```
+
+**Database Rollback**:
+1. Stop application writes
+2. Restore from backup (point-in-time)
+3. Verify data integrity
+4. Resume application
+
+**Infrastructure Rollback** (CDK/Terraform):
+```bash
+# Revert IaC changes
+git revert HEAD
+git push
+
+# Redeploy stack
+cdk deploy FIPCO-dev
+
+# Or rollback in CloudFormation console
+aws cloudformation cancel-update-stack \
+  --stack-name FIPCO-dev
+```
+
+## Database Migration Safety
+
+### Pre-Migration
+
+**Risk Assessment**:
+- Data volume impact
+- Downtime requirements
+- Rollback complexity
+- Impact on queries
+
+**Testing**:
+1. Test on production-sized dataset
+2. Measure migration duration
+3. Verify application compatibility
+4. Test rollback procedure
+
+### Safe Migration Patterns
+
+**Add Column** (safe):
+```sql
+-- Step 1: Add nullable column
+ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+
+-- Step 2 (later deploy): Populate data
+UPDATE users SET phone = legacy_phone WHERE phone IS NULL;
+
+-- Step 3 (later deploy): Make NOT NULL if needed
+ALTER TABLE users ALTER COLUMN phone SET NOT NULL;
+```
+
+**Remove Column** (multi-step):
+```sql
+-- Step 1: Stop writing to column (code deploy)
+-- Deploy: Remove column from INSERT/UPDATE statements
+
+-- Step 2 (after validation): Drop column
+ALTER TABLE users DROP COLUMN old_field;
+```
+
+**Rename Column** (multi-step):
+```sql
+-- Step 1: Add new column
+ALTER TABLE users ADD COLUMN email_address VARCHAR(255);
+
+-- Step 2: Dual-write to both columns (code deploy)
+-- Step 3: Backfill data
+UPDATE users SET email_address = email WHERE email_address IS NULL;
+
+-- Step 4: Switch reads to new column (code deploy)
+-- Step 5: Drop old column
+ALTER TABLE users DROP COLUMN email;
+```
+
+### Migration Rollback
+
+**Before Migration**:
+```bash
+# Create backup
+aws rds create-db-snapshot \
+  --db-instance-identifier FIPCO-dev-db \
+  --db-snapshot-identifier pre-migration-$(date +%Y%m%d-%H%M)
+```
+
+**If Migration Fails**:
+1. Stop application
+2. Restore from backup
+3. Verify data integrity
+4. Resume application
+5. Investigate failure
+
+## Deployment Monitoring
+
+### Key Metrics
+
+**Application Health**:
+- Error rate (by endpoint)
+- Response time (p50, p95, p99)
+- Throughput (requests/sec)
+- Active connections
+
+**Infrastructure Health**:
+- CPU utilization
+- Memory usage
+- Disk I/O
+- Network throughput
+
+**Business Metrics**:
+- Conversion rate
+- Transaction volume
+- User sign-ups
+- API usage
+
+### Monitoring Windows
+
+| Deployment Risk | Monitoring Duration | Escalation Threshold |
+|----------------|---------------------|---------------------|
+| **LOW** | 15 minutes | Any critical errors |
+| **MEDIUM** | 1 hour | Error rate >2x baseline |
+| **HIGH** | 4 hours | Error rate >1.5x baseline |
+| **CRITICAL** | 24 hours | Any deviation from baseline |
+
+### Automated Rollback
+
+**CloudWatch Alarms → Lambda → Rollback**:
+
+```python
+def lambda_handler(event, context):
+    alarm = event['detail']['alarmName']
+
+    if 'high-error-rate' in alarm:
+        # Trigger CodeDeploy rollback
+        codedeploy.stop_deployment(
+            deploymentId=get_active_deployment(),
+            autoRollbackEnabled=True
+        )
+
+        # Notify team
+        sns.publish(
+            TopicArn='arn:aws:sns:...:deployment-alerts',
+            Subject='🚨 Automatic Rollback Triggered',
+            Message=f'Deployment rolled back due to: {alarm}'
+        )
+```
+
+## War Room Procedures
+
+### When to Activate War Room
+
+- CRITICAL risk deployments
+- HIGH risk deployments during peak hours
+- Deployments with known elevated risk
+- Rollback of failed deployment
+
+### War Room Setup
+
+**Virtual**: Zoom/Google Meet + #support
+
+**Attendees**:
+- Deployment Lead
+- Technical Lead
+- On-Call Engineer
+- Product Owner
+- Customer Success (if customer impact expected)
+
+**Communication**:
+- Status updates every 15 minutes
+- Use #support for coordination
+- Keep executive team informed
+
+**Roles**:
+- **Deployment Lead**: Orchestrates deployment, makes go/no-go decisions
+- **Technical Lead**: Monitors metrics, troubleshoots issues
+- **Scribe**: Documents timeline, decisions, issues
+
+## Post-Deployment Review
+
+### Immediate (Within 1 hour)
+
+- [ ] All health checks passing
+- [ ] Error rates normal
+- [ ] Performance metrics within thresholds
+- [ ] No new critical errors in logs
+- [ ] Customer-facing features verified
+
+### Short-term (Within 24 hours)
+
+- [ ] Monitor for delayed issues
+- [ ] Review customer feedback
+- [ ] Check support tickets
+- [ ] Analyze performance trends
+- [ ] Document any incidents
+
+### Post-Deployment Report
+
+**For HIGH/CRITICAL deployments**:
+
+```
+Deployment: [Name/Version]
+Date: [Deployment date]
+Risk Level: [HIGH/CRITICAL]
+Duration: [Start - End]
+
+**Summary**:
+[2-3 sentences about what was deployed]
+
+**Issues Encountered**:
+- [Issue 1 and resolution]
+- [Issue 2 and resolution]
+
+**Metrics**:
+- Deployment time: [Expected vs. Actual]
+- Error rate: [Before vs. After]
+- Performance: [Before vs. After]
+
+**Rollbacks**: [None / Description]
+
+**Lessons Learned**:
+- [Learning 1]
+- [Learning 2]
+
+**Action Items**:
+- [Action 1]
+- [Action 2]
+```
+
+## Deployment Calendar
+
+### Blackout Windows
+
+**No deployments**:
+- Major holidays (Black Friday, Cyber Monday, etc.)
+- Month-end/quarter-end (accounting close)
+- Peak usage hours (M-F 9am-5pm ET)
+- Friday afternoons (reduced support availability)
+
+**Require Executive Approval**:
+- Weekend deployments
+- Deployments during business hours (HIGH/CRITICAL)
+- Emergency patches outside maintenance window
+
+### Maintenance Windows
+
+**Production**:
+- **Day**: Second Saturday of each month
+- **Time**: 2 AM - 6 AM UTC
+- **Duration**: 4 hours
+- **Notification**: 1 week advance notice
+
+**Staging**:
+- Anytime (business hours preferred)
+
+## Roles & Responsibilities
+
+| Role | Responsibility |
+|------|----------------|
+| **Deployment Lead** | Orchestrate deployment, go/no-go decision, communicate status |
+| **Technical Lead** | Risk assessment, technical validation, troubleshooting |
+| **CAB** | Review and approve HIGH/CRITICAL changes |
+| **Product Owner** | Business risk assessment, customer communication |
+| **On-Call Engineer** | Monitor deployment, respond to issues, execute rollback |
+
+## Compliance Mapping
+
+| MSP Requirement | Evidence |
+|----------------|----------|
+| **OPSP-003** | Deployment risk assessment process, change records |
+| **CIS Control 2, 4, 16** | Change management procedures, testing requirements |
+
+## Related Documents
+
+- Change Management Playbook
+- Incident Response Playbook
+- Problem Management Playbook
+- Deployment Runbooks
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-08-04 | Initial playbook generated | MSP Readiness Tool |
+
+---
+
+**🤖 Generated by MSP Readiness Automation**

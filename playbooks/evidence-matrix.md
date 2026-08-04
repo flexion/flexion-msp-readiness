@@ -1,37 +1,37 @@
 # Evidence Matrix
-**Generated**: 2026-07-27
+**Generated**: 2026-08-04
 
 Links MSP requirements to collected evidence.
 
 ## Summary
 
-- ✅ **Addressed**: 19 requirements
+- ✅ **Addressed**: 0 requirements
 - ⚠️ **Partial**: 0 requirements
-- ❌ **Gap**: 0 requirements
+- ❌ **Gap**: 19 requirements
 
 ## Evidence by Requirement
 
 | Requirement | Status | Evidence Files | Gaps |
 |-------------|--------|----------------|------|
-| ✅ **OPSP-001**: Incident Management | addressed | TODO: Collect evidence | None |
-| ✅ **OPSP-002**: Problem Management | addressed | TODO: Collect evidence | None |
-| ✅ **OPSP-003**: Deployment Risk Management | addressed | TODO: Collect evidence | None |
-| ✅ **OPSP-005**: Service Continuity | addressed | TODO: Collect evidence | None |
-| ✅ **OPS-003**: Monitoring and Alerting | addressed | TODO: Collect evidence | None |
-| ✅ **OPS-004**: Logging | addressed | TODO: Collect evidence | None |
-| ✅ **OPS-005**: Backup and Recovery | addressed | TODO: Collect evidence | None |
-| ✅ **OPS-006**: Change Management | addressed | TODO: Collect evidence | None |
-| ✅ **OPS-008**: Patch Management | addressed | TODO: Collect evidence | None |
-| ✅ **OPS-011**: Availability Management | addressed | TODO: Collect evidence | None |
-| ✅ **SEC-001**: Security Policies and Procedures | addressed | TODO: Collect evidence | None |
-| ✅ **SEC-003**: AWS Account Configuration | addressed | TODO: Collect evidence | None |
-| ✅ **SEC-004**: Identity and Access Management | addressed | TODO: Collect evidence | None |
-| ✅ **SEC-007**: Vulnerability Scanning | addressed | TODO: Collect evidence | None |
-| ✅ **SEC-008**: Vulnerability Remediation | addressed | TODO: Collect evidence | None |
-| ✅ **SEC-009**: Data Protection | addressed | TODO: Collect evidence | None |
-| ✅ **SEC-010**: Incident Response | addressed | TODO: Collect evidence | None |
-| ✅ **SECP-001**: Access Key Exposure Detection | addressed | TODO: Collect evidence | None |
-| ✅ **SECP-002**: Public Resources Detection | addressed | TODO: Collect evidence | None |
+| ❌ **OPSP-001**: Incident Management | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **OPSP-002**: Problem Management | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **OPSP-003**: Deployment Risk Management | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **OPSP-005**: Service Continuity | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **OPS-003**: Monitoring and Alerting | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **OPS-004**: Logging | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **OPS-005**: Backup and Recovery | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **OPS-006**: Change Management | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **OPS-008**: Patch Management | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **OPS-011**: Availability Management | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **SEC-001**: Security Policies and Procedures | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **SEC-003**: AWS Account Configuration | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **SEC-004**: Identity and Access Management | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **SEC-007**: Vulnerability Scanning | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **SEC-008**: Vulnerability Remediation | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **SEC-009**: Data Protection | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **SEC-010**: Incident Response | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **SECP-001**: Access Key Exposure Detection | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
+| ❌ **SECP-002**: Public Resources Detection | gap | TODO: Collect evidence | No documentation found for this requirement; No evidence artifacts present |
 
 ## Action Items
 
