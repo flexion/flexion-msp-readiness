@@ -7,6 +7,11 @@ import * as path from 'path';
 import { renderTemplate, TemplateContext, saveRenderedTemplate } from './template-engine';
 import { GeneratedPlaybook } from '../types';
 import { Config } from '../types';
+import {
+  addFrontmatter,
+  isUserModified,
+  DocumentMetadata,
+} from '../utils/frontmatter';
 
 export interface PlaybookSpec {
   name: string;

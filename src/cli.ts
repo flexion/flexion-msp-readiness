@@ -20,6 +20,8 @@ import { analyzeAWSConfig, printAWSConfigSummary } from './assessors/aws-config-
 import { analyzeIAM, printIAMSummary } from './assessors/iam-evaluator';
 import { analyzeSecurityHub, printSecurityHubSummary } from './assessors/security-hub-checker';
 import { validateAWSEnvironment, printAWSEnvValidation } from './utils/aws-env-validator';
+import { assessWorkspace, printWorkspaceAssessment } from './assessors/workspace-assessor';
+import { updateDocumentStatus } from './utils/frontmatter';
 import {
   collectCloudTrailEvidence,
   saveCloudTrailEvidence,
@@ -480,11 +482,11 @@ program
   });
 
 /**
- * Status command - show current assessment status
+ * Status command - show workspace completeness status
  */
 program
   .command('status')
-  .description('Show current MSP readiness status')
+  .description('Show MSP workspace completeness status')
   .option('-c, --config <path>', 'Path to config file', 'config.yaml')
   .action(async options => {
     try {
@@ -496,7 +498,88 @@ program
       console.log(`MSP Version: ${chalk.bold(config.msp.version)}`);
       console.log(`CIS IG Level: ${chalk.bold(config.msp.ig_level)}`);
 
-      console.log(chalk.gray('\nRun "msp-readiness assess" for full assessment.\n'));
+      // Assess workspace completeness
+      const assessment = assessWorkspace(
+        config.output.playbooks_path,
+        config.output.evidence_path
+      );
+
+      printWorkspaceAssessment(assessment);
+
+      console.log(chalk.gray('\nRun "msp-readiness assess" for full AWS assessment.\n'));
+    } catch (error) {
+      if (error instanceof ConfigError) {
+        console.error(chalk.red('\n' + error.message + '\n'));
+        process.exit(1);
+      }
+      throw error;
+    }
+  });
+
+/**
+ * Approve command - mark requirements as approved for audit
+ */
+program
+  .command('approve <requirement-ids>')
+  .description('Mark playbooks as approved for audit (comma-separated list)')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .action(async (ids, options) => {
+    try {
+      const config = loadConfig(options.config);
+      const requirementIds = ids.split(',').map((id: string) => id.trim());
+
+      console.log(chalk.bold.blue('\n✅ Approving Playbooks\n'));
+
+      // Map requirement IDs to playbook filenames
+      const playbookMap: Record<string, string> = {
+        'OPSP-001': 'incident-response.md',
+        'SEC-010': 'incident-response.md',
+        'OPS-006': 'change-management.md',
+        'OPSP-003': 'change-management.md',
+        'OPS-003': 'monitoring-alerting.md',
+        'OPS-005': 'backup-recovery.md',
+        'OPS-008': 'patch-management.md',
+        'SEC-008': 'vulnerability-remediation.md',
+        'SEC-009': 'data-protection.md',
+        'SEC-001': 'security-policies.md',
+        'SEC-003': 'aws-account-config.md',
+        'SEC-004': 'iam-management.md',
+        'OPSP-002': 'problem-management.md',
+        'OPSP-005': 'service-continuity.md',
+        'OPS-004': 'logging.md',
+        'OPS-011': 'availability-management.md',
+        'SEC-007': 'vulnerability-scanning.md',
+        'SECP-001': 'access-key-rotation.md',
+        'SECP-002': 'public-resources.md',
+      };
+
+      let approved = 0;
+      let notFound = 0;
+
+      for (const reqId of requirementIds) {
+        const filename = playbookMap[reqId];
+        if (!filename) {
+          console.log(chalk.yellow(`⚠ Unknown requirement: ${reqId}`));
+          notFound++;
+          continue;
+        }
+
+        const playbookPath = path.join(config.output.playbooks_path, filename);
+        if (!require('fs').existsSync(playbookPath)) {
+          console.log(chalk.yellow(`⚠ Playbook not found: ${reqId} (${filename})`));
+          notFound++;
+          continue;
+        }
+
+        updateDocumentStatus(playbookPath, 'approved');
+        console.log(chalk.green(`✓ Approved: ${reqId}`));
+        approved++;
+      }
+
+      console.log(chalk.bold.green(`\n✅ Approved ${approved} playbook(s)`));
+      if (notFound > 0) {
+        console.log(chalk.yellow(`⚠️  ${notFound} not found or unknown\n`));
+      }
     } catch (error) {
       if (error instanceof ConfigError) {
         console.error(chalk.red('\n' + error.message + '\n'));
