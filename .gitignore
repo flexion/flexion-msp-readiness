@@ -35,10 +35,21 @@ output/
 dashboard.html
 *.log
 
+# Assessment reports (generated during test runs)
+assessment-report*.json
+assessment-report*.md
+msp-assessment-report.*
+*-compliance-package/
+
+# Generated playbooks (for testing - projects should have their own)
+playbooks/*.md
+!playbooks/README.md
+
 # Temporary files
 tmp/
 temp/
 *.tmp
+.msp-context.json
 
 # AWS
 .aws/
