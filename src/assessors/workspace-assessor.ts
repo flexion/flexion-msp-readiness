@@ -66,10 +66,7 @@ async function assessRequirement(
   validateEvidence: boolean
 ): Promise<WorkspaceRequirementStatus> {
   // Check for playbook
-  const { hasPlaybook, playbookPath, playbookStatus } = checkPlaybook(
-    requirement,
-    playbooksDir
-  );
+  const { hasPlaybook, playbookPath, playbookStatus } = checkPlaybook(requirement, playbooksDir);
 
   // Check for evidence
   const { hasEvidence, evidencePaths } = checkEvidence(requirement, evidenceDir);
@@ -103,9 +100,9 @@ async function assessRequirement(
     overallStatus = 'in-progress';
     // Calculate partial completion
     let score = 0;
-    if (hasPlaybook) score += 40;           // Playbook: 40%
-    if (hasEvidence) score += 30;           // Evidence: 30%
-    if (validated === true) score += 20;    // Validation: 20%
+    if (hasPlaybook) score += 40; // Playbook: 40%
+    if (hasEvidence) score += 30; // Evidence: 30%
+    if (validated === true) score += 20; // Validation: 20%
     if (playbookStatus === 'approved') score += 10; // Approval: 10%
     completionPercentage = Math.min(score, 90); // Max 90% until fully complete
   } else {
@@ -171,7 +168,8 @@ function checkPlaybook(
     return { hasPlaybook: false };
   }
 
-  const playbookStatus = (getDocumentStatus(playbookPath) || undefined) as 'draft' | 'in-progress' | 'approved' | 'complete' | undefined;
+  const playbookStatus = (getDocumentStatus(playbookPath) || undefined) as
+    'draft' | 'in-progress' | 'approved' | 'complete' | undefined;
 
   return {
     hasPlaybook: true,
@@ -267,7 +265,9 @@ export function printWorkspaceAssessment(assessment: WorkspaceAssessment): void 
   const { summary, requirements } = assessment;
 
   console.log('\n📊 MSP Workspace Status\n');
-  console.log(`Overall Completion: ${summary.completionPercentage}% (${summary.complete}/${summary.total})\n`);
+  console.log(
+    `Overall Completion: ${summary.completionPercentage}% (${summary.complete}/${summary.total})\n`
+  );
 
   console.log(`✅ Complete:     ${summary.complete} requirements`);
   console.log(`🚧 In Progress:  ${summary.inProgress} requirements`);
@@ -293,10 +293,16 @@ export function printWorkspaceAssessment(assessment: WorkspaceAssessment): void 
     console.log('🚧 In Progress:');
     inProgress.forEach(r => {
       console.log(`  ${r.requirement.id}: ${r.requirement.name} (${r.completionPercentage}%)`);
-      console.log(`    ${r.hasPlaybook ? '✓' : '✗'} Playbook${r.playbookStatus ? `: ${r.playbookStatus}` : ''}`);
-      console.log(`    ${r.hasEvidence ? '✓' : '✗'} Evidence${r.hasEvidence ? `: ${r.evidencePaths.length} file(s)` : ''}`);
+      console.log(
+        `    ${r.hasPlaybook ? '✓' : '✗'} Playbook${r.playbookStatus ? `: ${r.playbookStatus}` : ''}`
+      );
+      console.log(
+        `    ${r.hasEvidence ? '✓' : '✗'} Evidence${r.hasEvidence ? `: ${r.evidencePaths.length} file(s)` : ''}`
+      );
       if (r.validated !== undefined) {
-        console.log(`    ${r.validated ? '✓' : '✗'} Validation: ${r.validated ? 'passed' : 'failed'}`);
+        console.log(
+          `    ${r.validated ? '✓' : '✗'} Validation: ${r.validated ? 'passed' : 'failed'}`
+        );
         if (!r.validated && r.validationResult) {
           const failedChecks = r.validationResult.checks.filter(c => !c.passed);
           if (failedChecks.length > 0) {

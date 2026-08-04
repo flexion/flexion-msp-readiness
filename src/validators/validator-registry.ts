@@ -28,21 +28,21 @@ export class ValidatorRegistry {
    */
   private registerDefaultValidators(): void {
     // Core AWS service validators
-    this.register(new LoggingValidator());           // OPS-004
-    this.register(new BackupValidator());            // OPS-005
-    this.register(new MonitoringValidator());        // OPS-003
-    this.register(new PatchManagementValidator());   // OPS-008
-    this.register(new AvailabilityValidator());      // OPS-011
+    this.register(new LoggingValidator()); // OPS-004
+    this.register(new BackupValidator()); // OPS-005
+    this.register(new MonitoringValidator()); // OPS-003
+    this.register(new PatchManagementValidator()); // OPS-008
+    this.register(new AvailabilityValidator()); // OPS-011
 
     // Security validators
-    this.register(new IAMValidator());               // SEC-004, SECP-001
-    this.register(new EncryptionValidator());        // SEC-009
-    this.register(new PublicResourcesValidator());   // SECP-002
-    this.register(new VulnerabilityValidator());     // SEC-007, SEC-008
-    this.register(new AWSConfigValidator());         // SEC-003
+    this.register(new IAMValidator()); // SEC-004, SECP-001
+    this.register(new EncryptionValidator()); // SEC-009
+    this.register(new PublicResourcesValidator()); // SECP-002
+    this.register(new VulnerabilityValidator()); // SEC-007, SEC-008
+    this.register(new AWSConfigValidator()); // SEC-003
 
     // Process validators
-    this.register(new ProcessValidator());           // OPSP-001, OPSP-002, OPSP-003, OPSP-005, OPS-006, SEC-001
+    this.register(new ProcessValidator()); // OPSP-001, OPSP-002, OPSP-003, OPSP-005, OPS-006, SEC-001
   }
 
   /**

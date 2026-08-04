@@ -76,10 +76,7 @@ export interface SSMSummary {
   patchGroups: number;
 }
 
-export async function collectSSMEvidence(
-  region: string,
-  profile: string
-): Promise<SSMEvidence> {
+export async function collectSSMEvidence(region: string, profile: string): Promise<SSMEvidence> {
   const clientConfig = { region };
   const ssmClient = new SSMClient(clientConfig);
   const timestamp = new Date();
@@ -166,15 +163,15 @@ export async function collectSSMEvidence(
 
     // Get patch baselines
     const baselinesResponse = await ssmClient.send(new DescribePatchBaselinesCommand({}));
-    const patchBaselines: PatchBaselineInfo[] = (
-      baselinesResponse.BaselineIdentities ?? []
-    ).map(baseline => ({
-      baselineId: baseline.BaselineId ?? '',
-      name: baseline.BaselineName ?? '',
-      operatingSystem: baseline.OperatingSystem ?? 'UNKNOWN',
-      description: baseline.BaselineDescription,
-      defaultBaseline: baseline.DefaultBaseline ?? false,
-    }));
+    const patchBaselines: PatchBaselineInfo[] = (baselinesResponse.BaselineIdentities ?? []).map(
+      baseline => ({
+        baselineId: baseline.BaselineId ?? '',
+        name: baseline.BaselineName ?? '',
+        operatingSystem: baseline.OperatingSystem ?? 'UNKNOWN',
+        description: baseline.BaselineDescription,
+        defaultBaseline: baseline.DefaultBaseline ?? false,
+      })
+    );
 
     // Get patch groups
     const groupsResponse = await ssmClient.send(new DescribePatchGroupsCommand({}));

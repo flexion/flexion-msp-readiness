@@ -11,10 +11,7 @@ export class LoggingValidator extends BaseValidator {
     return ['OPS-004'];
   }
 
-  async validate(
-    requirement: MSPRequirement,
-    evidencePaths: string[]
-  ): Promise<ValidationResult> {
+  async validate(requirement: MSPRequirement, evidencePaths: string[]): Promise<ValidationResult> {
     const checks: ValidationCheck[] = [];
 
     try {

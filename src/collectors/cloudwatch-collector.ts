@@ -140,9 +140,7 @@ export async function collectCloudWatchEvidence(
         nextToken: nextToken,
       };
 
-      const logGroupsResponse = await logsClient.send(
-        new DescribeLogGroupsCommand(logGroupsInput)
-      );
+      const logGroupsResponse = await logsClient.send(new DescribeLogGroupsCommand(logGroupsInput));
 
       for (const logGroup of logGroupsResponse.logGroups ?? []) {
         logGroups.push({
@@ -150,9 +148,7 @@ export async function collectCloudWatchEvidence(
           arn: logGroup.arn ?? '',
           retentionInDays: logGroup.retentionInDays,
           storedBytes: logGroup.storedBytes ?? 0,
-          creationTime: logGroup.creationTime
-            ? new Date(logGroup.creationTime)
-            : new Date(),
+          creationTime: logGroup.creationTime ? new Date(logGroup.creationTime) : new Date(),
           metricFilterCount: logGroup.metricFilterCount,
         });
       }

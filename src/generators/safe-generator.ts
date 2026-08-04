@@ -3,11 +3,7 @@
  */
 
 import * as fs from 'fs';
-import {
-  addFrontmatter,
-  isUserModified,
-  DocumentMetadata,
-} from '../utils/frontmatter';
+import { addFrontmatter, isUserModified, DocumentMetadata } from '../utils/frontmatter';
 
 export interface SafeGenerationOptions {
   force?: boolean;

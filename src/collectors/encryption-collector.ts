@@ -4,11 +4,7 @@
  */
 
 import { KMSClient, ListKeysCommand, DescribeKeyCommand } from '@aws-sdk/client-kms';
-import {
-  S3Client,
-  ListBucketsCommand,
-  GetBucketEncryptionCommand,
-} from '@aws-sdk/client-s3';
+import { S3Client, ListBucketsCommand, GetBucketEncryptionCommand } from '@aws-sdk/client-s3';
 import { RDSClient, DescribeDBInstancesCommand } from '@aws-sdk/client-rds';
 import { EC2Client, DescribeVolumesCommand } from '@aws-sdk/client-ec2';
 import { EvidenceArtifact } from '../types';
@@ -87,9 +83,7 @@ export async function collectEncryptionEvidence(
       if (!key.KeyId) continue;
 
       try {
-        const keyDetails = await kmsClient.send(
-          new DescribeKeyCommand({ KeyId: key.KeyId })
-        );
+        const keyDetails = await kmsClient.send(new DescribeKeyCommand({ KeyId: key.KeyId }));
 
         const metadata = keyDetails.KeyMetadata;
         kmsKeys.push({

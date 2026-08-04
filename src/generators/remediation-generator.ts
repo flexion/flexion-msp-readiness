@@ -3,10 +3,7 @@
  */
 
 import { RequirementAssessment, AssessmentFinding, RemediationGuidance } from '../types';
-import {
-  getRemediationGuidance,
-  mapGapToRemediationType,
-} from '../data/remediation-guidance';
+import { getRemediationGuidance, mapGapToRemediationType } from '../data/remediation-guidance';
 
 /**
  * Enhanced assessment finding with remediation
@@ -86,9 +83,7 @@ export function enrichFindingsWithRemediation(
 /**
  * Generate remediation report from assessments
  */
-export function generateRemediationReport(
-  assessments: RequirementAssessment[]
-): RemediationReport {
+export function generateRemediationReport(assessments: RequirementAssessment[]): RemediationReport {
   const allFindings: FindingWithRemediation[] = [];
 
   for (const assessment of assessments) {
