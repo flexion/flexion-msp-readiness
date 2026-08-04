@@ -1,199 +1,1181 @@
+---
+generated: "2026-08-04T16:01:14.442Z"
+template_version: "1.0"
+status: "draft"
+requirement_id: "OPS-006"
+---
+
 # Change Management Playbook
 
-**Project**: Compliance Concierge
-**Organization**: Flexion Inc.
-**Stage**: test
-**Last Updated**: 2026-07-27
+**Project**: FIPCO
+**Organization**: Flexion Org
+**Stage**: dev
+**Last Updated**: 2026-08-04
+**Version**: 2.0
+
+---
+
+## MSP Compliance
+
+| Requirement | Priority | Description |
+|------------|----------|-------------|
+| **OPS-006** | High | Documented change management process |
+| **OPSP-003** | High | Process for assessing and managing deployment risks |
+
+**CIS Controls v8**: 2.3, 2.5, 4.1, 4.2, 16.1, 16.11
+
+---
 
 ## Purpose
 
-Defines the process for planning, coordinating, and executing changes to Compliance Concierge infrastructure and applications.
+This playbook defines the process for planning, approving, implementing, and verifying changes to FIPCO infrastructure, applications, and configurations. It ensures changes are coordinated, tested, documented, and can be rolled back if issues occur.
 
 ## Scope
 
-- Infrastructure changes (AWS resources, networking, security)
-- Application deployments (new features, bug fixes)
-- Configuration changes (environment variables, feature flags)
-- Database schema changes
+This playbook applies to:
+- **Infrastructure changes**: AWS resources (EC2, RDS, networking, security groups), CDK/Terraform/CloudFormation
+- **Application deployments**: New features, bug fixes, dependency updates
+- **Configuration changes**: Environment variables, feature flags, secrets
+- **Database changes**: Schema migrations, data migrations, index changes
+- **Security changes**: IAM policies, security groups, certificates
+- **Third-party integrations**: API changes, vendor updates
 
-## Change Types
+**Out of Scope**:
+- Automated patching (covered by Patch Management)
+- Emergency incident response (covered by Incident Response Playbook)
+- Documentation-only changes (no approval required)
 
-| Type | Description | Approval | Testing |
-|------|-------------|----------|---------|
-| **Standard** | Pre-approved, low-risk changes (e.g., routine patches) | Automatic | Automated tests |
-| **Normal** | Regular changes following standard process | Change manager | Full test suite |
-| **Emergency** | Urgent fixes for critical issues | Post-implementation | Smoke tests minimum |
+---
+
+## Change Types & Approval Requirements
+
+| Change Type | Risk Level | Approval Required | Testing Required | Change Window | Example |
+|-------------|-----------|-------------------|------------------|---------------|---------|
+| **Standard** | Low | Pre-approved | Automated tests | Anytime | Security patches, dependency updates, routine configuration |
+| **Normal** | Medium | Change Manager | Full test suite + staging | Scheduled | New features, non-breaking API changes, infrastructure scaling |
+| **Major** | High | Change Board | Full testing + staging + load testing | Scheduled, low-traffic | Database schema changes, breaking API changes, major architecture changes |
+| **Emergency** | Varies | On-call Lead (post-approval) | Smoke tests minimum | Immediate | Critical security fixes, SEV-1 incident remediation |
+
+### Pre-Approved Standard Changes
+
+**Automatically approved** (no change request needed):
+- Security patches applied via AWS Systems Manager
+- Package dependency updates (patch/minor versions)
+- SSL/TLS certificate renewals
+- Log retention period adjustments
+- CloudWatch alarm threshold tuning
+- Feature flag changes (to pre-tested values)
+- Synthetic test updates
+
+**Conditions**:
+- Must be fully tested in staging
+- Must have automated rollback
+- Must be tracked in change log
+- Must monitor for 24 hours post-change
+
+---
 
 ## Change Request Process
 
-### 1. Planning
+### Step 1: Planning (1-3 days before change)
 
-**Before submitting change request**:
-- [ ] Document what is changing and why
-- [ ] Identify affected systems/services
-- [ ] Assess risk (high/medium/low)
-- [ ] Plan rollback strategy
-- [ ] Schedule appropriate maintenance window
+#### Change Request Form
 
-### 2. Approval
+**Required Information**:
+```yaml
+Change ID: CHG-2026-08-04-001
+Submitter: [Your Name]
+Date Submitted: 2026-08-04
+Change Type: [Standard/Normal/Major/Emergency]
+Priority: [Low/Medium/High/Critical]
 
-**Required approvals**:
-- Standard changes: Automated approval
-- Normal changes: Change manager approval
-- Emergency changes: On-call lead approval (post-implementation review required)
+Description:
+  Title: Deploy API v2.5.0 with new authentication endpoint
+  Details: |
+    Adds new /auth/refresh endpoint to support token refresh.
+    No breaking changes to existing endpoints.
 
-**Change freeze periods**:
-- End of quarter: 1 week before quarter end
-- Major releases: During release preparation
-- Holiday periods: As announced
+Justification:
+  Business: Improve user experience by reducing re-login frequency
+  Technical: Implement RFC-compliant token refresh per security audit
 
-### 3. Communication
+Affected Systems:
+  - API Gateway (FIPCO-api)
+  - Lambda functions (auth-service)
+  - DynamoDB (sessions table)
+  - Cognito User Pool
 
-**Internal** (#support):
-- Post change request 24 hours before
-- Include: What, When, Expected impact, Rollback plan
+Risk Assessment: Medium
+  - New code path could affect existing authentication
+  - Database schema change (adds refresh_token column)
+  - Medium user impact if failures occur
 
-**External** (if customer-impacting):
-- Notify customers 48 hours in advance
-- Schedule during off-peak hours when possible
+Implementation Plan:
+  1. Deploy database migration (add column)
+  2. Deploy Lambda functions with new endpoint
+  3. Update API Gateway configuration
+  4. Enable feature flag for 10% of users
+  5. Monitor for 2 hours
+  6. Roll out to 100% if no issues
 
-### 4. Pre-Deployment Checklist
+Rollback Plan:
+  1. Disable feature flag immediately
+  2. Rollback Lambda to previous version
+  3. Database rollback not required (column can remain)
+  4. Verify existing auth flows working
+  Estimated rollback time: 10 minutes
 
-- [ ] Code reviewed and approved
-- [ ] All tests passing (unit, integration, E2E)
-- [ ] Tested in test environment
+Testing Completed:
+  - [x] Unit tests (100% coverage)
+  - [x] Integration tests
+  - [x] Load testing (2x peak traffic)
+  - [x] Security testing (OWASP top 10)
+  - [x] Staging deployment successful
+
+Change Window:
+  Scheduled: 2026-08-07 18:00-20:00 CDT
+  Duration: 2 hours
+  Maintenance window: No (zero-downtime deployment)
+
+Communication Plan:
+  Internal: Post in #support 24h before
+  External: No customer notification needed (backward compatible)
+
+Approvers:
+  Technical Lead: [Name]
+  Change Manager: [Name]
+
+Monitoring Plan:
+  - CloudWatch dashboard: FIPCO-api-health
+  - Key metrics: API error rate, auth success rate, p95 latency
+  - Alert thresholds: Error rate >2%, latency >500ms
+  - Monitoring duration: 2 hours active, 24 hours enhanced
+```
+
+#### Risk Assessment
+
+Use this matrix to assess change risk:
+
+| Factor | Low Risk (1) | Medium Risk (2) | High Risk (3) |
+|--------|-------------|-----------------|---------------|
+| **Scope** | Single component | Multiple components | Critical path or multiple services |
+| **User Impact** | No users affected | Some users (can workaround) | All users or no workaround |
+| **Data** | No data changes | Read-only or new data | Existing data modified |
+| **Rollback** | Automatic/instant | Manual <15min | Complex or data loss risk |
+| **Testing** | Full automated coverage | Mostly tested, some manual | Partial coverage or new code path |
+| **Timing** | Off-peak hours | Low traffic | Peak hours |
+
+**Risk Score** = Sum of factors
+- **6-9 points**: Low risk → Standard/Normal change
+- **10-13 points**: Medium risk → Normal change, extra review
+- **14-18 points**: High risk → Major change, change board approval
+
+**Example**:
+```
+Scope: 2 (API + Database)
+User Impact: 2 (All users, backward compatible)
+Data: 2 (New column)
+Rollback: 1 (Feature flag instant)
+Testing: 1 (Full coverage)
+Timing: 1 (Off-peak)
+Total: 9 → Normal change
+```
+
+---
+
+### Step 2: Approval (1-2 days before change)
+
+#### Approval Workflow
+
+**Standard Changes**:
+- Auto-approved when submitted
+- Notification to #support
+- Proceed to implementation
+
+**Normal Changes**:
+1. Submit change request in Freshdesk/Jira/GitHub Issue
+2. Technical Lead reviews (within 4 hours)
+3. Change Manager approves (within 24 hours)
+4. Schedule change window
+5. Notify stakeholders 24 hours in advance
+
+**Major Changes**:
+1. Submit change request 5 days in advance
+2. Technical Lead + Architecture review
+3. Change Board meeting (weekly on Thursdays)
+4. Requires 2 approvals: Technical + Business
+5. Notify stakeholders 48 hours in advance
+6. Dry-run in staging required
+
+**Emergency Changes**:
+1. On-call Lead verbal approval
+2. Implement change immediately
+3. Document change request during/after
+4. Post-implementation review within 24 hours
+5. Notify stakeholders as soon as practical
+
+#### Change Board
+
+**Members**:
+- Engineering Manager (chair)
+- Technical Lead
+- Product Owner
+- Security Representative
+- Operations Representative
+
+**Meeting**: Thursdays 2:00 PM, 30 minutes
+**Agenda**: Review pending major changes, approve/reject/defer
+
+**Rejection Criteria**:
+- Insufficient testing
+- No rollback plan
+- Conflicts with other changes
+- Too risky for scheduled window
+- Missing required approvals
+
+#### Change Freeze Periods
+
+**No non-emergency changes during**:
+- **End of Quarter**: Last 3 business days
+- **Major Releases**: During release preparation week
+- **Holiday Periods**: Thanksgiving week, Dec 20 - Jan 5
+- **Customer Events**: During announced customer events
+- **Known High-Traffic**: Black Friday, Tax Day, etc.
+
+---
+
+### Step 3: Communication (24-48 hours before change)
+
+#### Internal Communication
+
+**Post in #support**:
+```
+📋 SCHEDULED CHANGE - CHG-2026-08-04-001
+
+What: Deploy API v2.5.0 with new authentication endpoint
+When: Wed Aug 7, 18:00-20:00 CDT (2 hour window)
+Impact: None expected (zero-downtime, backward compatible)
+Risk: Medium
+
+Details:
+- New /auth/refresh endpoint
+- Database: add refresh_token column to sessions table
+- Gradual rollout via feature flag (10% → 100%)
+
+Rollback: Feature flag disable, Lambda rollback (<10 min)
+Monitoring: FIPCO-api-health dashboard
+
+Approvals: ✅ Tech Lead: @alice ✅ Change Manager: @bob
+
+Questions? Reply in thread.
+On-call during change: @charlie
+```
+
+#### External Communication
+
+**When Required**:
+- **Downtime expected**: Notify 48 hours in advance
+- **New features**: Release notes to customers
+- **Deprecations**: 30-day notice minimum
+- **Breaking changes**: 90-day notice minimum
+
+**Status Page Update** (for customer-impacting changes):
+```
+Scheduled Maintenance: FIPCO API Enhancement
+Date: August 7, 2026
+Time: 18:00-20:00 CDT (UTC-5)
+Expected Impact: None
+Duration: 2 hours
+Description: We're deploying enhancements to improve authentication.
+No action required by customers.
+```
+
+**Email Template** (for breaking changes):
+```
+Subject: [FIPCO] Upcoming API Changes - Action Required
+
+Dear FIPCO Customer,
+
+We are making important changes to the FIPCO API that may affect your integration.
+
+What's Changing:
+- Endpoint /v1/auth deprecated (removal date: November 1, 2026)
+- New endpoint /v2/auth with improved security
+
+Action Required:
+- Update your integration to use /v2/auth by October 31, 2026
+- Migration guide: https://docs.FIPCO.com/migration/v2-auth
+
+Timeline:
+- August 7: v2 endpoint available
+- September 15: Deprecation warnings for v1 usage
+- November 1: v1 endpoint removed
+
+Support:
+Questions? Contact msp-team@example.com or reply to this email.
+
+Migration assistance available upon request.
+```
+
+---
+
+### Step 4: Pre-Deployment Checklist
+
+**Complete 30 minutes before change window**:
+
+#### Code & Testing
+- [ ] Code reviewed and approved (PR merged)
+- [ ] All CI/CD tests passing (unit, integration, E2E)
+- [ ] Tested in dev environment
+- [ ] Load testing completed (if applicable)
+- [ ] Security scan passed (no critical/high findings)
+- [ ] Dependency vulnerabilities resolved
+
+#### Documentation
 - [ ] Rollback plan documented and tested
-- [ ] Monitoring dashboards reviewed
-- [ ] Database backups verified (if DB changes)
-- [ ] Feature flags configured (if applicable)
-- [ ] On-call engineer available
+- [ ] Runbook updated (if new procedures)
+- [ ] API documentation updated (if API changes)
+- [ ] Change request fully completed
+- [ ] Deployment commands prepared
 
-### 5. Deployment
+#### Infrastructure & Data
+- [ ] Database backup verified (if DB changes)
+  ```bash
+  aws rds describe-db-snapshots \
+    --db-instance-identifier FIPCO-db-dev \
+    --profile dev \
+    --query 'DBSnapshots[0].[DBSnapshotIdentifier,SnapshotCreateTime,Status]'
+  ```
+- [ ] RDS automated backups enabled
+- [ ] CloudWatch alarms reviewed
+- [ ] Monitoring dashboards accessible
+- [ ] Feature flags configured (if gradual rollout)
 
-**Standard deployment steps**:
-1. Announce start in #support
-2. Take pre-deployment snapshot/backup
-3. Deploy via CI/CD pipeline (preferred) or manual process
-4. Run smoke tests
-5. Monitor key metrics for 30 minutes
-6. Verify functionality in production
-7. Announce completion
+#### Logistics
+- [ ] On-call engineer available and aware
+- [ ] Backup engineer identified
+- [ ] Communication sent 24 hours prior
+- [ ] Calendar holds created for monitoring period
+- [ ] Laptop fully charged, stable internet
+- [ ] VPN connected and tested
 
-**For database changes**:
-1. Backup database first
-2. Test migration on backup/staging
-3. Run migration with transaction rollback ready
-4. Verify data integrity
-5. Monitor query performance
+#### Access & Permissions
+- [ ] AWS credentials valid and tested
+- [ ] Required IAM permissions verified
+- [ ] GitHub/deployment access confirmed
+- [ ] PagerDuty/alerting access confirmed
 
-### 6. Post-Deployment Verification
+---
 
-**Required checks** (15-30 minutes):
-- [ ] Service health checks passing
-- [ ] Error rates normal
-- [ ] Response times acceptable
-- [ ] Key user flows working
-- [ ] No unexpected alerts
+### Step 5: Deployment Execution
 
-**Monitoring**:
-- CloudWatch dashboards: us-east-1
-- Error logs: CloudWatch Logs
-- APM: (if applicable)
+#### Pre-Deployment (0-15 minutes)
 
-### 7. Rollback Procedure
+1. **Announce Start** (0 min)
+   ```
+   🚀 DEPLOYMENT STARTING - CHG-2026-08-04-001
+   Time: 18:00 CDT
+   Engineer: @yourname
+   Monitoring: @backup-engineer
+   Change request: [link]
+   Updates in this thread.
+   ```
 
-**Trigger rollback if**:
-- Critical functionality broken
-- Error rate increase >20%
-- Performance degradation >50%
+2. **Take Pre-Deployment Snapshot** (5 min)
+   ```bash
+   # Infrastructure snapshot
+   cd /path/to/FIPCO/cdk
+   git log -1 --oneline > deployed-version.txt
+
+   # Configuration snapshot
+   aws ssm get-parameters-by-path \
+     --path "/FIPCO/dev/" \
+     --recursive \
+     --profile dev > config-snapshot.json
+
+   # Database snapshot (if DB changes)
+   aws rds create-db-snapshot \
+     --db-snapshot-identifier FIPCO-pre-change-$(date +%Y%m%d-%H%M) \
+     --db-instance-identifier FIPCO-db-dev \
+     --profile dev
+   ```
+
+3. **Verify Baseline Metrics** (5 min)
+   - Current error rate: ____%
+   - Current p95 latency: ____ms
+   - Current request rate: ____/min
+   - All alarms green: Yes/No
+   - Screenshot dashboard for reference
+
+4. **Enable Enhanced Monitoring** (5 min)
+   ```bash
+   # Reduce alarm thresholds temporarily for faster detection
+   aws cloudwatch put-metric-alarm \
+     --alarm-name FIPCO-api-errors-dev \
+     --comparison-operator GreaterThanThreshold \
+     --evaluation-periods 1 \
+     --metric-name Errors \
+     --namespace AWS/ApiGateway \
+     --period 60 \
+     --statistic Sum \
+     --threshold 5 \
+     --profile dev
+   ```
+
+#### Deployment (15-60 minutes)
+
+**For CDK/Infrastructure Changes**:
+```bash
+cd /path/to/FIPCO/cdk
+
+# Review changes
+cdk diff --profile dev
+
+# Deploy with explicit approval
+cdk deploy --all \
+  --require-approval never \
+  --profile dev \
+  2>&1 | tee deployment-log-$(date +%Y%m%d-%H%M).txt
+
+# Verify stack status
+aws cloudformation describe-stacks \
+  --stack-name FIPCO-dev \
+  --profile dev \
+  --query 'Stacks[0].StackStatus'
+```
+
+**For Application Deployments**:
+```bash
+# Via CI/CD (preferred)
+git tag v2.5.0
+git push origin v2.5.0
+# GitHub Actions/CircleCI auto-deploys
+
+# Manual deployment (if needed)
+cd /path/to/FIPCO
+npm run build
+npm run deploy:dev
+
+# ECS deployment
+aws ecs update-service \
+  --cluster FIPCO-cluster-dev \
+  --service FIPCO-api \
+  --force-new-deployment \
+  --profile dev
+
+# Lambda deployment
+aws lambda update-function-code \
+  --function-name FIPCO-api-dev \
+  --zip-file fileb://dist/lambda.zip \
+  --profile dev
+```
+
+**For Database Migrations**:
+```bash
+# Test migration on snapshot first
+# (Already done in staging, but double-check)
+
+# Run migration
+npm run migrate:dev
+
+# Or manually
+psql -h FIPCO-db-dev.xxx.rds.amazonaws.com \
+     -U admin \
+     -d FIPCO \
+     -f migrations/20260804-add-refresh-token.sql
+
+# Verify migration
+psql -h FIPCO-db-dev.xxx.rds.amazonaws.com \
+     -U admin \
+     -d FIPCO \
+     -c "\d sessions"  # Show table structure
+```
+
+**For Gradual Rollouts** (feature flags):
+```bash
+# Enable for 10% of users
+aws ssm put-parameter \
+  --name "/FIPCO/dev/feature/auth-refresh" \
+  --value '{"enabled":true,"percentage":10}' \
+  --type String \
+  --overwrite \
+  --profile dev
+
+# Monitor for 30 minutes at 10%
+# If no issues, increase to 50%
+aws ssm put-parameter \
+  --name "/FIPCO/dev/feature/auth-refresh" \
+  --value '{"enabled":true,"percentage":50}' \
+  --type String \
+  --overwrite \
+  --profile dev
+
+# Monitor for 30 minutes at 50%
+# If no issues, increase to 100%
+aws ssm put-parameter \
+  --name "/FIPCO/dev/feature/auth-refresh" \
+  --value '{"enabled":true,"percentage":100}' \
+  --type String \
+  --overwrite \
+  --profile dev
+```
+
+#### Post-Deployment Smoke Tests (5-10 minutes)
+
+**Automated Tests**:
+```bash
+# API health check
+curl -f https://api.FIPCO.com/health || echo "FAIL"
+
+# Run smoke test suite
+npm run test:smoke:dev
+
+# Synthetic tests
+aws synthetics get-canary-runs \
+  --name FIPCO-api-canary \
+  --max-results 1 \
+  --profile dev
+```
+
+**Manual Verification**:
+- [ ] Load application in browser
+- [ ] Test authentication flow
+- [ ] Test critical user paths (checkout, search, etc.)
+- [ ] Check error logs for new errors
+- [ ] Verify feature flags working as expected
+
+**Update Thread** (every 15-30 minutes):
+```
+⏱️ DEPLOYMENT UPDATE - 18:30 CDT
+
+Status: Deployment complete, monitoring
+Deployed: v2.5.0 to production
+Feature flag: 10% enabled
+Metrics: Error rate 0.2% (baseline), p95 latency 180ms (baseline)
+Next: Increase to 50% at 19:00 if metrics remain stable
+```
+
+---
+
+### Step 6: Post-Deployment Verification (30 minutes - 2 hours)
+
+#### Active Monitoring Period
+
+**SEV Monitoring Duration**:
+- **Standard changes**: 30 minutes active, 24 hours passive
+- **Normal changes**: 1 hour active, 24 hours passive
+- **Major changes**: 2 hours active, 48 hours passive
+- **Emergency changes**: 2 hours active, 24 hours passive
+
+#### Metrics to Monitor
+
+**Application Metrics**:
+```bash
+# API error rate
+aws cloudwatch get-metric-statistics \
+  --namespace AWS/ApiGateway \
+  --metric-name 5XXError \
+  --dimensions Name=ApiName,Value=FIPCO-api \
+  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
+  --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+  --period 300 \
+  --statistics Sum \
+  --profile dev
+
+# API latency
+aws cloudwatch get-metric-statistics \
+  --namespace AWS/ApiGateway \
+  --metric-name Latency \
+  --dimensions Name=ApiName,Value=FIPCO-api \
+  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
+  --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+  --period 300 \
+  --statistics Average \
+  --extended-statistics p95,p99 \
+  --profile dev
+```
+
+**Infrastructure Metrics**:
+- [ ] CPU utilization <70%
+- [ ] Memory utilization <80%
+- [ ] Disk space >20% free
+- [ ] Network throughput within normal range
+- [ ] Database connections <80% of pool
+
+**Business Metrics**:
+- [ ] Request volume normal for time of day
+- [ ] Conversion rate unchanged
+- [ ] User session duration unchanged
+- [ ] Key feature usage unchanged
+
+#### Verification Checklist
+
+- [ ] No increase in error rates (< 2% above baseline)
+- [ ] No increase in latency (< 10% above baseline)
+- [ ] No new CloudWatch alarms triggered
+- [ ] No increase in support tickets/customer reports
+- [ ] All health checks passing
+- [ ] Key user flows working (tested manually)
+- [ ] Database query performance acceptable
+- [ ] No memory leaks or resource exhaustion
+- [ ] Logs show expected behavior
+- [ ] Synthetic tests passing
+
+#### Continuous Monitoring
+
+**Post-Change Alarms** (set for 24-48 hours):
+```bash
+# Create temporary stricter alarm
+aws cloudwatch put-metric-alarm \
+  --alarm-name FIPCO-post-change-monitoring-$(date +%Y%m%d) \
+  --alarm-description "Enhanced monitoring after CHG-2026-08-04-001" \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 2 \
+  --metric-name 5XXError \
+  --namespace AWS/ApiGateway \
+  --period 300 \
+  --statistic Sum \
+  --threshold 10 \
+  --actions-enabled \
+  --alarm-actions arn:aws:sns:us-east-1:123456789012:FIPCO-alerts \
+  --profile dev
+```
+
+---
+
+### Step 7: Rollback Procedure
+
+#### When to Rollback
+
+**Automatic Rollback Triggers**:
+- Error rate increase >20% above baseline
+- Critical functionality broken (user cannot login, checkout, etc.)
 - Data integrity issues detected
+- Security vulnerability introduced
+- Performance degradation >50%
 
-**Rollback steps**:
-1. Announce rollback decision
-2. Execute rollback plan (documented in change request)
-3. Verify rollback successful
-4. Investigate root cause
-5. Document lessons learned
+**Manual Rollback Decision**:
+- Customer reports of issues increasing
+- Unforeseen side effects discovered
+- Change Manager decision
+- Customer request (for breaking changes)
 
-**Common rollback strategies**:
-- Application: Revert to previous image/tag
-- Infrastructure: Terraform/CDK rollback
-- Database: Restore from backup (last resort)
-- Feature flags: Disable feature
+#### Rollback Execution
 
-## Emergency Change Process
+**Announce Rollback**:
+```
+🔄 ROLLBACK INITIATED - CHG-2026-08-04-001
+Time: 19:45 CDT
+Reason: Error rate increased to 5% (baseline 1%)
+ETA: 15 minutes
+```
 
-**When to use**:
-- Critical production issue
-- Security vulnerability
-- Data loss risk
+**Application Rollback**:
+```bash
+# CDK/CloudFormation
+cd /path/to/FIPCO/cdk
+git log --oneline -5  # Find previous commit
+git checkout abc123f  # Previous working version
+cdk deploy --all --profile dev
 
-**Modified process**:
-1. **Act first** - Fix the critical issue
-2. **Communicate** - Notify in #support what is being done
-3. **Document** - Create change record during or immediately after
-4. **Review** - Post-implementation review within 24 hours
+# ECS/Container
+aws ecs update-service \
+  --cluster FIPCO-cluster-dev \
+  --service FIPCO-api \
+  --task-definition FIPCO-api:42 \  # Previous version
+  --force-new-deployment \
+  --profile dev
 
-**Still required**:
-- Monitoring after change
-- Documentation of what changed
-- Post-mortem if incident-related
+# Lambda function
+aws lambda update-function-code \
+  --function-name FIPCO-api-dev \
+  --s3-bucket FIPCO-artifacts \
+  --s3-key lambda/v2.4.9.zip \  # Previous version
+  --profile dev
 
-## Risk Assessment
+# Feature flag disable (fastest)
+aws ssm put-parameter \
+  --name "/FIPCO/dev/feature/auth-refresh" \
+  --value '{"enabled":false}' \
+  --type String \
+  --overwrite \
+  --profile dev
+```
 
-**High risk changes** (require extra scrutiny):
-- Database schema changes
-- Authentication/authorization changes
-- Networking or security group changes
-- Changes to critical path code
-- Multi-service coordinated changes
+**Database Rollback** (CAUTION):
+```bash
+# If schema change was additive (new column), NO rollback needed
+# Application can ignore new column
 
-**Risk mitigation**:
-- Feature flags for gradual rollout
-- Blue/green or canary deployments
-- Increased monitoring during and after
-- Extended verification period
-- Rollback plan tested in advance
+# If schema change breaks old code:
+# Option 1: Deploy code fix (preferred)
+# Option 2: Point-in-time restore (LAST RESORT)
+
+# Restore from snapshot (causes downtime!)
+aws rds restore-db-instance-to-point-in-time \
+  --source-db-instance-identifier FIPCO-db-dev \
+  --target-db-instance-identifier FIPCO-db-dev-restored \
+  --restore-time 2026-08-07T17:55:00Z \
+  --profile dev
+
+# Then swap DNS/connection string (requires application restart)
+```
+
+**Configuration Rollback**:
+```bash
+# Restore parameters from snapshot
+cat config-snapshot.json | jq -r '.Parameters[] |
+  "aws ssm put-parameter --name \(.Name) --value '\''\(.Value)'\'' --type \(.Type) --overwrite --profile dev"' |
+  bash
+```
+
+#### Verify Rollback
+
+- [ ] Error rate returned to baseline
+- [ ] Latency returned to baseline
+- [ ] Health checks passing
+- [ ] Manual smoke tests passing
+- [ ] No new alarms
+- [ ] Customer reports ceased
+
+**Announce Rollback Complete**:
+```
+✅ ROLLBACK COMPLETE - 20:00 CDT
+Duration: 15 minutes
+Status: Service restored to pre-change state
+Metrics: Error rate 1% (baseline), latency 175ms (baseline)
+Next steps: Root cause analysis, update change request, reschedule
+```
+
+#### Post-Rollback Actions
+
+1. **Document** what went wrong in change request
+2. **Investigate** root cause
+3. **Update** change plan with fixes
+4. **Re-test** in staging with new approach
+5. **Reschedule** change with Change Manager approval
+
+---
+
+## Common Rollback Strategies
+
+| Change Type | Rollback Strategy | Speed | Risk |
+|-------------|------------------|-------|------|
+| **Application Code** | Git revert + redeploy | 10-15 min | Low |
+| **Container/ECS** | Update to previous task definition | 5-10 min | Low |
+| **Lambda** | Update to previous version | 2-5 min | Low |
+| **Feature Flag** | Disable flag in parameter store | <1 min | Very Low |
+| **API Gateway** | Revert stage to previous deployment | 2-5 min | Low |
+| **Database Schema** | Forward-fix or restore from snapshot | 30-120 min | High |
+| **Infrastructure** | CDK/Terraform rollback | 15-30 min | Medium |
+| **Configuration** | Restore parameters from backup | 5-10 min | Low |
+| **DNS** | Update Route53 records | 5-60 min (TTL) | Medium |
+
+**Best Practices**:
+- **Feature flags** are fastest and safest rollback method
+- **Blue/green deployments** provide instant rollback for infrastructure
+- **Database changes** should be backward-compatible (no rollback needed)
+- **Always test rollback** procedure in staging before production change
+
+---
 
 ## Change Windows
 
-**Preferred windows** (test environment):
-- Business hours: 9 AM - 5 PM local time (low-risk only)
-- Off-hours: 6 PM - 8 PM local time (preferred)
-- Weekends: Saturday 10 AM - 2 PM (major changes)
+### Preferred Change Windows
+
+**For dev environment**:
+
+| Day | Window | Traffic Level | Best For |
+|-----|--------|---------------|----------|
+| **Monday** | 10:00-12:00 | Medium | Standard changes |
+| **Tuesday-Thursday** | 18:00-20:00 | Low | Normal/Major changes (preferred) |
+| **Friday** | 10:00-14:00 | Medium | Standard changes only |
+| **Saturday** | 10:00-14:00 | Very Low | Major changes, database migrations |
+| **Sunday** | 14:00-18:00 | Very Low | Emergency practice drills |
 
 **Avoid**:
-- Monday mornings (start of week)
-- Friday evenings (weekend coverage risk)
-- Major holidays
-- End of month/quarter
+- **Monday mornings** (8:00-10:00): Start of work week, high support load
+- **Friday afternoons** (16:00+): Weekend coverage risks
+- **Lunch hours** (12:00-13:00): Peak usage for some applications
+- **End of month** (last 2 business days): Financial close activities
+- **Major holidays** (see calendar)
 
-## Metrics & Review
+### Traffic Patterns
 
-**Track**:
-- Change success rate (target: >95%)
-- Rollback rate (target: <5%)
-- Time to deploy (track trends)
-- Incident rate post-deployment
+**Typical FIPCO Traffic** (requests/minute):
+- **8:00-9:00**: 500/min (morning ramp-up)
+- **9:00-12:00**: 1000/min (peak morning)
+- **12:00-13:00**: 800/min (lunch dip)
+- **13:00-17:00**: 1200/min (peak afternoon)
+- **17:00-20:00**: 400/min (evening decline) ← **Best window**
+- **20:00-8:00**: 100/min (overnight)
 
-**Monthly review**:
-- Review failed changes
-- Identify process improvements
-- Update playbook as needed
+---
+
+## Emergency Change Process
+
+### When to Use Emergency Process
+
+- **SEV-1 incident** requiring code/config change to resolve
+- **Critical security vulnerability** (CVE with active exploit)
+- **Data loss risk** imminent
+- **Regulatory compliance** issue requiring immediate fix
+- **Customer-impacting bug** with no workaround
+
+### Emergency Change Procedure
+
+1. **Verbal Approval** (0-5 min)
+   - Contact On-call Lead or Engineering Manager
+   - Explain situation, proposed change, risk
+   - Get verbal "go ahead"
+   - Document approval in incident channel
+
+2. **Implement Change** (5-30 min)
+   - Make minimum change to resolve issue
+   - Test in staging if time permits (but don't delay if critical)
+   - Deploy to production
+   - Monitor closely
+
+3. **Document Change** (during or immediately after)
+   - Create change request ticket
+   - Document what was changed and why
+   - Include rollback plan
+   - Link to incident ticket
+
+4. **Post-Implementation Review** (within 24 hours)
+   - Review change with Change Manager
+   - Assess if emergency process was appropriate
+   - Identify preventative measures
+   - Document lessons learned
+
+5. **Follow-up Actions** (within 1 week)
+   - Implement permanent fix if emergency change was workaround
+   - Update runbooks/playbooks
+   - Add monitoring/alerting to prevent recurrence
+   - Share learnings with team
+
+**Still Required**:
+- Monitoring after change
+- Rollback plan (even if not documented in advance)
+- Communication to stakeholders
+- Documentation in change log
+
+**Example Emergency Change**:
+```
+⚠️ EMERGENCY CHANGE - SEV-1 INCIDENT
+
+Time: 14:30 CDT
+Incident: #INC-2026-08-04-123 (API outage)
+Change: Disable rate limiting rule causing false positives
+Approval: @engineering-manager (verbal)
+Risk: May allow higher traffic, but API is down without change
+Deployed: 14:35 CDT
+Status: API restored, monitoring for traffic spike
+Documentation: Change request CHG-2026-08-04-999 (emergency) created
+Review: Scheduled for tomorrow 10:00 AM
+```
+
+---
+
+## Risk Management
+
+### High-Risk Change Indicators
+
+**Automatically classify as Major Change if**:
+- Database schema changes affecting existing columns
+- Authentication/authorization changes
+- Network security group or VPC changes
+- Changes to critical path code (login, checkout, payment)
+- Multi-service coordinated changes (requires orchestration)
+- Changes affecting >1000 users
+- Changes with complex rollback (>30 minutes)
+
+### Risk Mitigation Strategies
+
+| Risk | Mitigation Strategy |
+|------|-------------------|
+| **Deployment Failure** | Blue/green deployment, canary deployment, feature flags |
+| **Performance Degradation** | Load testing, gradual rollout, auto-scaling |
+| **Data Loss** | Database backups, point-in-time recovery, transaction rollback |
+| **Service Outage** | Zero-downtime deployment, health checks, rollback plan |
+| **Security Vulnerability** | Security scanning, code review, least-privilege IAM |
+| **Rollback Complexity** | Backward-compatible changes, feature flags, tested rollback |
+| **Unknown Impact** | Staging testing, canary deployment, extended monitoring |
+| **Communication Failure** | Change calendar, automated notifications, status page |
+
+### Progressive Rollout Pattern
+
+**For high-risk changes, use gradual rollout**:
+
+1. **10%** of users for 1 hour
+   - Monitor error rates, latency, customer feedback
+   - If issues: rollback immediately
+   - If clean: proceed to 50%
+
+2. **50%** of users for 2 hours
+   - Continue monitoring
+   - Check business metrics (conversion, engagement)
+   - If issues: rollback immediately
+   - If clean: proceed to 100%
+
+3. **100%** of users
+   - Monitor for 24 hours
+   - Keep feature flag ready for instant disable
+
+**Implementation**:
+```typescript
+// Feature flag with percentage rollout
+const isEnabled = (userId: string, featureName: string): boolean => {
+  const config = getFeatureFlag(featureName);
+  if (!config.enabled) return false;
+
+  const userHash = hashString(userId);
+  return (userHash % 100) < config.percentage;
+};
+
+// Usage
+if (isEnabled(user.id, 'auth-refresh')) {
+  // New code path
+  return refreshTokenFlow();
+} else {
+  // Existing code path
+  return existingAuthFlow();
+}
+```
+
+---
+
+## Metrics & Continuous Improvement
+
+### Change Metrics (Track Monthly)
+
+| Metric | Target | Current | Trend |
+|--------|--------|---------|-------|
+| **Change Success Rate** | >95% | - | - |
+| **Rollback Rate** | <5% | - | - |
+| **Emergency Change Rate** | <10% | - | - |
+| **Average Time to Deploy** | <30 min | - | - |
+| **Post-Change Incidents** | <2% | - | - |
+| **Change Lead Time** | <3 days | - | - |
+| **Approval Time** | <4 hours | - | - |
+
+### Monthly Change Review
+
+**Conduct monthly review to**:
+1. Review all changes from previous month
+2. Identify failed changes and root causes
+3. Track action item completion from previous review
+4. Update playbook based on learnings
+5. Recognize successful changes and teams
+
+**Review Questions**:
+- Are we deploying faster over time?
+- Are rollback rates decreasing?
+- Are we following the process consistently?
+- Are emergency changes truly emergencies?
+- Do we have sufficient testing coverage?
+- Are our change windows appropriate?
+
+### Automation Opportunities
+
+**Consider automating**:
+- Change request creation from PR merge
+- Approval workflow (for standard changes)
+- Pre-deployment checklist verification
+- Smoke test execution
+- Monitoring dashboard creation
+- Rollback trigger detection
+- Post-change metrics collection
+- Change calendar updates
+
+---
+
+## Change Calendar
+
+### Visibility
+
+**Maintain shared change calendar** (Google Calendar, Confluence, etc.):
+- All scheduled changes
+- Change freeze periods
+- Holiday periods
+- Customer events
+- Team availability
+
+### Change Conflicts
+
+**Before scheduling, check for**:
+- Other changes in same time window
+- Changes affecting same services
+- Team member availability
+- Customer events or announcements
+- Upcoming holidays
+
+**If conflict detected**:
+- Reschedule one change
+- Combine changes if related
+- Split change window if different services
+- Escalate to Change Manager
+
+---
+
+## Tools & Templates
+
+### Change Request Templates
+
+- [Standard Change Template](./templates/change-standard.md)
+- [Normal Change Template](./templates/change-normal.md)
+- [Major Change Template](./templates/change-major.md)
+- [Emergency Change Template](./templates/change-emergency.md)
+
+### Checklists
+
+- [Pre-Deployment Checklist](./checklists/pre-deployment.md)
+- [Deployment Checklist](./checklists/deployment.md)
+- [Post-Deployment Checklist](./checklists/post-deployment.md)
+- [Rollback Checklist](./checklists/rollback.md)
+
+### Scripts
+
+```bash
+# Deploy script with built-in safety checks
+./scripts/deploy.sh --env dev --version v2.5.0 --rollout gradual
+
+# Rollback script
+./scripts/rollback.sh --env dev --to-version v2.4.9
+
+# Monitoring script
+./scripts/monitor-deployment.sh --env dev --duration 3600
+
+# Pre-flight check script
+./scripts/pre-flight-check.sh --env dev
+```
+
+---
 
 ## Related Documents
 
-- Deployment Playbook
-- Incident Response Playbook
-- Rollback Procedures
-- CI/CD Pipeline Documentation
+- [Incident Response Playbook](./incident-response.md)
+- [Deployment Playbook](./deployment.md)
+- [Rollback Procedures](./rollback-procedures.md)
+- [Disaster Recovery Playbook](./disaster-recovery.md)
+- [CI/CD Pipeline Documentation](../infrastructure/cicd.md)
+- [Feature Flag Management](../development/feature-flags.md)
+- [Database Migration Guide](../development/database-migrations.md)
+
+---
+
+## Appendix: Example Changes
+
+### Example 1: Standard Change (Dependency Update)
+
+```
+Change ID: CHG-2026-08-10-045
+Type: Standard
+Risk: Low
+
+Description: Update lodash from 4.17.20 to 4.17.21 (security patch)
+Testing: Automated tests passing
+Approval: Pre-approved
+Window: Aug 10, 10:00-10:30
+Rollback: Revert package.json, npm install
+Monitoring: 30 minutes
+
+Timeline:
+10:00 - Deployed via CI/CD
+10:05 - Smoke tests passed
+10:10 - Metrics normal
+10:30 - Change complete
+```
+
+### Example 2: Normal Change (Feature Deployment)
+
+```
+Change ID: CHG-2026-08-15-023
+Type: Normal
+Risk: Medium
+
+Description: Deploy new search filters feature
+Testing: Full test suite + staging + load testing
+Approval: Tech Lead ✅ Change Manager ✅
+Window: Aug 15, 18:00-20:00
+Rollback: Feature flag disable
+Monitoring: 2 hours active, 24 hours enhanced
+
+Timeline:
+18:00 - Deployment started
+18:15 - Deployment complete
+18:20 - Feature flag 10% enabled
+18:50 - No issues, increased to 50%
+19:30 - No issues, increased to 100%
+20:00 - Active monitoring complete
+Aug 16 18:00 - Enhanced monitoring complete, change successful
+```
+
+### Example 3: Major Change (Database Migration)
+
+```
+Change ID: CHG-2026-08-20-001
+Type: Major
+Risk: High
+
+Description: Add full-text search to products table (20M rows)
+Testing: Full test suite + staging + load testing + migration tested on backup
+Approval: Change Board ✅ (Tech Lead + CTO + Product)
+Window: Aug 20 (Saturday), 10:00-14:00
+Rollback: Drop index (tested in staging)
+Monitoring: 2 hours active, 48 hours enhanced
+
+Timeline:
+10:00 - Migration started
+10:05 - Backup verified
+10:10 - Migration running (estimated 2 hours)
+12:15 - Migration 90% complete
+12:30 - Migration complete
+12:35 - Index build started
+12:50 - Index build complete
+13:00 - Smoke tests passed
+13:15 - Load testing in production (low traffic)
+13:30 - Performance verified (query time <100ms)
+14:00 - Active monitoring complete, change successful
+Aug 22 14:00 - Enhanced monitoring complete
+```
+
+### Example 4: Emergency Change (Security Fix)
+
+```
+Change ID: CHG-2026-08-25-999
+Type: Emergency
+Risk: High (but higher risk to NOT change)
+
+Description: Patch critical security vulnerability (CVE-2024-xxxxx)
+Incident: #INC-2026-08-25-789 (Security vulnerability)
+Testing: Smoke tests only (critical timing)
+Approval: On-call Lead (verbal) ✅
+Window: Immediate
+Rollback: Revert code commit
+Monitoring: 2 hours active, 24 hours enhanced
+
+Timeline:
+14:00 - Critical CVE published with active exploit
+14:10 - Verbal approval from Engineering Manager
+14:15 - Patch deployed via CI/CD
+14:20 - Smoke tests passed
+14:30 - Vulnerability scan confirms patch applied
+16:30 - Active monitoring complete, no issues
+Post-implementation review: Aug 26, 10:00 AM
+```
+
+---
 
 ## Change Log
 
-| Date | Change | Author |
-|------|--------|--------|
-| 2026-07-27 | Initial playbook generated | MSP Readiness Tool |
+| Date | Version | Change | Author |
+|------|---------|--------|--------|
+| 2026-08-04 | 2.0 | Enhanced with specific FIPCO details, MSP requirements, CIS Controls, detailed procedures, risk assessment, examples, and rollback strategies | MSP Readiness Tool |
+| 2026-08-04 | 1.0 | Initial playbook generated | MSP Readiness Tool |
 
 ---
 
 **🤖 Generated by MSP Readiness Automation**
+
+*This playbook meets AWS MSP Program requirements OPS-006 and OPSP-003 and implements CIS Controls v8 2.3, 2.5, 4.1, 4.2, 16.1, 16.11.*

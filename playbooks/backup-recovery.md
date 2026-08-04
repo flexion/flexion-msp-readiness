@@ -1,0 +1,358 @@
+---
+generated: "2026-08-04T16:01:14.445Z"
+template_version: "1.0"
+status: "approved"
+requirement_id: "OPS-005"
+last_modified: "2026-08-04T16:01:30.612Z"
+---
+
+
+# Backup and Recovery Playbook
+
+**Project**: FIPCO
+**Organization**: Flexion Org
+**Last Updated**: 2026-08-04
+
+## Purpose
+
+This playbook defines backup strategies, recovery procedures, and validation processes to ensure data durability and business continuity for FIPCO.
+
+## Scope
+
+This playbook covers:
+- RDS database backups
+- S3 data replication and versioning
+- EBS volume snapshots
+- Infrastructure as Code (IaC) repository backups
+- Recovery procedures and testing
+
+## Backup Architecture
+
+### AWS Backup Service
+
+**Backup Plan**: `FIPCO-dev-backup-plan`
+
+**Backup Vault**: `FIPCO-dev-vault`
+- Encrypted with KMS key
+- Cross-region replication enabled
+- Backup vault lock: 90-day minimum retention
+
+**Resources Backed Up**:
+- All RDS instances (tagged: `backup=true`)
+- EBS volumes (tagged: `backup=true`)
+- EFS file systems (tagged: `backup=true`)
+
+### RDS Automated Backups
+
+**Configuration**:
+- Automated daily snapshots at 3 AM UTC
+- Retention: 30 days
+- Backup window: 03:00-04:00 UTC
+- Copy to secondary region: 
+- Transaction logs backed up every 5 minutes
+
+**Manual Snapshots**:
+- Before major deployments
+- Before schema changes
+- Ad-hoc for testing
+- Retention: 90 days (tagged for deletion)
+
+### S3 Data Protection
+
+**Versioning**: Enabled on all data buckets
+- Lifecycle policy: Move to Glacier after 90 days
+- Permanently delete after 2 years
+- MFA Delete enabled for production
+
+**Cross-Region Replication**:
+- Primary: us-east-1
+- Replica: 
+- Replication for objects: All objects
+- Replication of delete markers: Enabled
+
+**Backup Bucket**: `FIPCO-dev-backup`
+- Locked retention: 90 days minimum
+- Versioning enabled
+- Lifecycle policy to Glacier Deep Archive
+
+### EBS Snapshots
+
+**Automated via AWS Backup**:
+- Daily snapshots at 2 AM UTC
+- Retention: 30 days
+- Copy to secondary region
+- Fast snapshot restore enabled for critical volumes
+
+**DLM (Data Lifecycle Manager)**:
+- Policy for EC2 root volumes
+- 7-day retention for non-production
+- 30-day retention for production
+
+## Backup Schedule
+
+| Resource Type | Frequency | Retention | RPO | RTO |
+|--------------|-----------|-----------|-----|-----|
+| **RDS Production** | Daily + continuous logs | 30 days | 5 minutes | 1 hour |
+| **RDS Non-Prod** | Daily | 7 days | 24 hours | 2 hours |
+| **S3 Data Buckets** | Continuous (versioning) | 2 years | 0 (versioning) | 15 minutes |
+| **EBS Volumes** | Daily | 30 days | 24 hours | 1 hour |
+| **EFS** | Daily | 30 days | 24 hours | 2 hours |
+
+## Recovery Procedures
+
+### 1. RDS Database Recovery
+
+#### Point-in-Time Recovery (PITR)
+
+**Use Case**: Recover from accidental data deletion or corruption
+
+**Steps**:
+1. Identify the recovery point timestamp
+2. Create new RDS instance from backup:
+```bash
+aws rds restore-db-instance-to-point-in-time \
+  --source-db-instance-identifier FIPCO-dev-db \
+  --target-db-instance-identifier FIPCO-dev-db-recovery \
+  --restore-time 2026-08-04T12:00:00Z
+```
+3. Wait for instance to become available (15-30 minutes)
+4. Verify data integrity
+5. Update application connection string to new instance
+6. Monitor application for 1 hour
+7. Delete old instance after confirmation
+
+**RTO**: 1 hour
+**RPO**: 5 minutes
+
+#### Snapshot Recovery
+
+**Use Case**: Recover from major failure or disaster
+
+**Steps**:
+1. Identify latest valid snapshot
+2. Restore snapshot:
+```bash
+aws rds restore-db-instance-from-db-snapshot \
+  --db-instance-identifier FIPCO-dev-db-restored \
+  --db-snapshot-identifier FIPCO-dev-snapshot-20260804
+```
+3. Verify restored instance
+4. Apply any transaction logs if available
+5. Update DNS/connection strings
+6. Validate application functionality
+
+**RTO**: 1 hour
+**RPO**: 24 hours (to last snapshot)
+
+### 2. S3 Object Recovery
+
+#### Versioning Recovery
+
+**Use Case**: Restore deleted or overwritten objects
+
+**Steps**:
+1. List object versions:
+```bash
+aws s3api list-object-versions \
+  --bucket FIPCO-dev-data \
+  --prefix path/to/object
+```
+2. Identify correct version ID
+3. Restore version:
+```bash
+aws s3api copy-object \
+  --copy-source FIPCO-dev-data/path/to/object?versionId=VERSION_ID \
+  --bucket FIPCO-dev-data \
+  --key path/to/object
+```
+
+**RTO**: 15 minutes
+**RPO**: 0 (versioning captures all changes)
+
+#### Cross-Region Recovery
+
+**Use Case**: Regional failure or corruption in primary region
+
+**Steps**:
+1. Verify replica bucket in 
+2. Update application to point to replica bucket
+3. Enable replication from replica back to primary (when recovered)
+4. Validate data consistency
+
+**RTO**: 30 minutes
+**RPO**: ~15 minutes (replication lag)
+
+### 3. EBS Volume Recovery
+
+**Use Case**: EC2 instance failure or volume corruption
+
+**Steps**:
+1. Identify latest snapshot:
+```bash
+aws ec2 describe-snapshots \
+  --owner-ids self \
+  --filters "Name=volume-id,Values=vol-xxxxx"
+```
+2. Create volume from snapshot:
+```bash
+aws ec2 create-volume \
+  --snapshot-id snap-xxxxx \
+  --availability-zone us-east-1a \
+  --volume-type gp3
+```
+3. Attach to EC2 instance:
+```bash
+aws ec2 attach-volume \
+  --volume-id vol-yyyyy \
+  --instance-id i-xxxxx \
+  --device /dev/sdf
+```
+4. Mount and verify data
+
+**RTO**: 1 hour
+**RPO**: 24 hours
+
+## Recovery Validation
+
+### Monthly Recovery Testing
+
+**Schedule**: First Saturday of each month, 10 AM
+
+**Test Scenarios**:
+1. **RDS PITR**: Restore database to point 1 hour ago
+2. **S3 Version**: Delete and restore test object
+3. **EBS Snapshot**: Create volume and verify data
+
+**Validation Steps**:
+1. Restore resource per procedures
+2. Verify data integrity (checksums, record counts)
+3. Measure actual RTO achieved
+4. Document any issues or deviations
+5. Update playbook if needed
+
+**Success Criteria**:
+- Recovery completes within documented RTO
+- Data integrity verified 100%
+- No manual intervention required beyond documented steps
+
+### Disaster Recovery Drill
+
+**Schedule**: Annually (Q2)
+
+**Scope**: Full region failover
+
+**Steps**:
+1. Simulate primary region failure
+2. Restore all critical services in 
+3. Validate application functionality
+4. Measure total recovery time
+5. Document lessons learned
+6. Update DR plan
+
+## Backup Verification
+
+### Daily Verification (Automated)
+
+**Lambda Function**: `FIPCO-backup-verifier`
+
+**Checks**:
+- All expected backups completed successfully
+- No backup jobs failed
+- Backup sizes within expected range (±20%)
+- Cross-region copies completed
+
+**Alerting**:
+- Failed backups → #support + PagerDuty
+- Missing backups → #support
+- Size anomalies → #support
+
+### Weekly Verification (Manual)
+
+**Checklist**:
+- [ ] Review AWS Backup dashboard
+- [ ] Check RDS automated snapshots
+- [ ] Verify S3 replication metrics
+- [ ] Review EBS snapshot counts
+- [ ] Check backup cost trends
+- [ ] Validate retention policies applied
+
+## Backup Security
+
+### Encryption
+
+- **At Rest**: All backups encrypted with KMS
+- **In Transit**: TLS 1.2+ for all transfers
+- **KMS Key**: `alias/FIPCO-backup-key`
+
+### Access Control
+
+**IAM Policy**: `FIPCO-backup-access`
+- Minimum permissions required
+- MFA required for production backup deletion
+- CloudTrail logging of all access
+
+**Backup Vault Access**:
+- Read: Ops team
+- Restore: Ops team + approved change ticket
+- Delete: Requires VP approval + MFA
+
+### Backup Integrity
+
+**Checksums**: SHA-256 hashes stored with metadata
+**Encryption**: AES-256 via KMS
+**Immutability**: Vault lock prevents deletion before retention period
+
+## Cost Optimization
+
+### Backup Storage Tiers
+
+| Age | Storage Class | Cost ($/GB/month) |
+|-----|---------------|-------------------|
+| 0-30 days | Standard | $0.023 |
+| 30-90 days | Infrequent Access | $0.0125 |
+| 90+ days | Glacier | $0.004 |
+
+### Lifecycle Policies
+
+**RDS Snapshots**:
+- Manual snapshots >90 days → Delete (tagged)
+- Automated snapshots per retention policy
+
+**S3 Versions**:
+- Current version → Standard
+- Previous versions >30 days → IA
+- Previous versions >90 days → Glacier
+- Delete markers >365 days → Delete
+
+## Roles & Responsibilities
+
+| Role | Responsibility |
+|------|----------------|
+| **DevOps Lead** | Backup strategy, policy implementation |
+| **On-Call Engineer** | Execute recovery procedures |
+| **DBA** | RDS backup verification, database recovery |
+| **Security Team** | Backup encryption, access control |
+
+## Compliance Mapping
+
+| MSP Requirement | Evidence |
+|----------------|----------|
+| **OPS-005** | AWS Backup plans, recovery procedures, test results |
+| **CIS Control 11** | Backup configuration, retention policies, DR tests |
+
+## Related Documents
+
+- Disaster Recovery Plan
+- Service Continuity Playbook
+- AWS Backup Console: https://console.aws.amazon.com/backup/home?region=us-east-1
+- RDS Console: https://console.aws.amazon.com/rds/home?region=us-east-1
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-08-04 | Initial playbook generated | MSP Readiness Tool |
+
+---
+
+**🤖 Generated by MSP Readiness Automation**

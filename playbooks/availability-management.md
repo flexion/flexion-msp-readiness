@@ -1,0 +1,470 @@
+---
+generated: "2026-08-04T16:01:14.459Z"
+template_version: "1.0"
+status: "draft"
+requirement_id: "OPS-011"
+---
+
+# Availability Management Playbook
+
+**Project**: FIPCO
+**Organization**: Flexion Org
+**Last Updated**: 2026-08-04
+
+## Purpose
+
+This playbook defines high availability architecture, disaster recovery capabilities, and availability targets for FIPCO.
+
+## Scope
+
+This playbook covers:
+- High availability architecture
+- SLA targets and monitoring
+- Multi-AZ and multi-region strategies
+- Load balancing and auto-scaling
+- Health checks and failover
+- Disaster recovery (DR) capabilities
+
+## Availability Targets
+
+### Service Level Agreements
+
+| Service Tier | Monthly Uptime | Allowed Downtime | Target Users |
+|--------------|----------------|------------------|--------------|
+| **Premium** | 99.95% | 22 minutes | Enterprise customers |
+| **Standard** | 99.9% | 43 minutes | All customers |
+| **Best Effort** | 99.0% | 7.2 hours | Internal tools |
+
+### RTO/RPO Targets
+
+| Component | RTO | RPO | Recovery Method |
+|-----------|-----|-----|-----------------|
+| **API Services** | 1 hour | 5 minutes | Multi-region failover |
+| **Database** | 1 hour | 5 minutes | RDS PITR, read replica promotion |
+| **Static Content** | 15 minutes | 0 | CloudFront + multi-region S3 |
+| **Message Queue** | 30 minutes | 0 | SQS cross-region |
+| **Cache** | 30 minutes | 0 | Rebuild from source |
+
+## High Availability Architecture
+
+### Multi-AZ Deployment
+
+**Compute** (EC2/ECS):
+- Minimum 2 AZs for production
+- Auto-scaling across AZs
+- Health checks automatically remove failed instances
+
+**Database** (RDS):
+- Multi-AZ deployment enabled
+- Automatic failover (1-2 minutes)
+- Synchronous replication to standby
+
+**Load Balancer** (ALB):
+- Distributed across multiple AZs
+- Health checks every 30 seconds
+- Unhealthy targets removed automatically
+
+**Storage** (S3/EFS):
+- Automatically replicated across AZs
+- 99.999999999% (11 9s) durability
+
+### Multi-Region Strategy
+
+**Primary Region**: us-east-1
+- 100% traffic under normal operations
+- All services fully deployed
+
+**Secondary Region**: 
+- Warm standby (reduced capacity)
+- RDS read replica (promotion-ready)
+- S3 cross-region replication
+- Can handle 100% traffic within 1 hour
+
+**Traffic Management** (Route53):
+- Health checks every 30 seconds
+- Automatic failover on 3 consecutive failures
+- Geo-proximity routing for low latency
+
+## Load Balancing
+
+### Application Load Balancer
+
+**Configuration**:
+```typescript
+const alb = new ApplicationLoadBalancer(this, 'ALB', {
+  vpc: vpc,
+  internetFacing: true,
+  crossZoneEnabled: true,
+  http2Enabled: true,
+});
+
+const targetGroup = new ApplicationTargetGroup(this, 'TargetGroup', {
+  vpc: vpc,
+  port: 3000,
+  protocol: ApplicationProtocol.HTTP,
+  targetType: TargetType.IP,
+  healthCheck: {
+    path: '/health',
+    interval: Duration.seconds(30),
+    timeout: Duration.seconds(5),
+    healthyThresholdCount: 2,
+    unhealthyThresholdCount: 3,
+  },
+  deregistrationDelay: Duration.seconds(30),
+});
+```
+
+**Health Check Endpoints**:
+- `/health`: Basic liveness (200 OK)
+- `/health/ready`: Readiness (dependencies available)
+- `/health/deep`: Deep health (database, cache, external APIs)
+
+**Connection Draining**: 30 seconds (allows in-flight requests to complete)
+
+**Sticky Sessions**: Enabled for stateful applications (cookie-based)
+
+### Auto-Scaling
+
+**Target Tracking**:
+```typescript
+const scaling = service.autoScaleTaskCount({
+  minCapacity: 2,
+  maxCapacity: 20,
+});
+
+scaling.scaleOnCpuUtilization('CpuScaling', {
+  targetUtilizationPercent: 70,
+  scaleInCooldown: Duration.seconds(300),
+  scaleOutCooldown: Duration.seconds(60),
+});
+
+scaling.scaleOnRequestCount('RequestScaling', {
+  requestsPerTarget: 1000,
+  targetGroup: targetGroup,
+});
+```
+
+**Scaling Policies**:
+- Scale out: Add capacity within 1 minute when CPU > 70%
+- Scale in: Remove capacity after 5 minutes when CPU < 50%
+- Minimum 2 instances (HA requirement)
+- Maximum 20 instances (cost control)
+
+## Health Checks
+
+### Application Health
+
+**Endpoint**: `GET /health`
+
+**Response**:
+```json
+{
+  "status": "healthy",
+  "version": "1.2.3",
+  "uptime": 3600,
+  "timestamp": "2026-08-04T12:00:00Z",
+  "checks": {
+    "database": "healthy",
+    "cache": "healthy",
+    "queue": "healthy"
+  }
+}
+```
+
+**Success Criteria**:
+- HTTP 200 response
+- Response time < 5 seconds
+- All critical dependencies healthy
+
+**Failure Actions**:
+- ALB removes from target group
+- CloudWatch alarm triggered
+- Auto-scaling replaces instance
+
+### Database Health
+
+**RDS Monitoring**:
+- DatabaseConnections < 80% of max
+- CPUUtilization < 75%
+- FreeableMemory > 1GB
+- ReadLatency < 10ms
+- WriteLatency < 10ms
+
+**Automated Actions**:
+- Alert if thresholds exceeded
+- Consider read replica promotion if primary unhealthy
+
+### External Dependency Health
+
+**Monitor**:
+- Third-party API availability
+- DNS resolution
+- SSL certificate validity
+
+**Graceful Degradation**:
+- Circuit breaker pattern
+- Fallback to cached data
+- Queue requests for retry
+
+## Failure Scenarios and Response
+
+### Scenario 1: Single Instance Failure
+
+**Detection**: Health check fails, CloudWatch alarm
+
+**Response**:
+1. ALB automatically removes instance (30 sec)
+2. Auto-scaling launches replacement (2-3 min)
+3. New instance passes health checks (1 min)
+4. Total recovery time: ~4 minutes
+
+**Impact**: Minimal (other instances handle load)
+
+### Scenario 2: AZ Failure
+
+**Detection**: Multiple health check failures in same AZ
+
+**Response**:
+1. ALB stops routing to affected AZ
+2. Auto-scaling launches instances in healthy AZs
+3. Capacity restored within 5 minutes
+
+**Impact**: Reduced capacity (50%) for 5 minutes
+
+**Manual Verification**: Ensure AZ failure detected correctly
+
+### Scenario 3: Region Failure
+
+**Detection**: Route53 health check fails (3 consecutive failures = 90 sec)
+
+**Response**:
+1. Route53 automatically routes to 
+2. Scale up secondary region capacity (10-30 min)
+3. Promote RDS read replica (5-10 min)
+4. Verify application functionality
+
+**Impact**: 10-30 minutes of reduced capacity or degraded service
+
+**See**: Service Continuity Playbook for detailed DR procedures
+
+### Scenario 4: Database Failover
+
+**Detection**: RDS Multi-AZ automatic failover
+
+**Response**:
+1. RDS promotes standby (1-2 minutes)
+2. DNS automatically updated
+3. Application reconnects (connection pool refresh)
+4. Monitor for performance issues
+
+**Impact**: 1-2 minutes of database unavailability
+
+**Manual Actions**: None (fully automated)
+
+## Monitoring and Alerting
+
+### Key Metrics
+
+**Availability Metrics**:
+- Uptime percentage (rolling 30 days)
+- HTTP 5XX error rate
+- Health check success rate
+- Failover events count
+
+**Performance Metrics**:
+- API response time (p50, p95, p99)
+- Request throughput
+- Database query time
+- Cache hit rate
+
+**Capacity Metrics**:
+- CPU/memory utilization
+- Network throughput
+- Database connections
+- Queue depth
+
+### CloudWatch Dashboard
+
+**Dashboard**: `FIPCO-availability-dashboard`
+
+**Widgets**:
+1. **Service Health Overview**:
+   - Current uptime percentage
+   - Active incidents count
+   - Recent failover events
+
+2. **Regional Status**:
+   - Primary region health
+   - Secondary region health
+   - Route53 routing status
+
+3. **Load Balancer Metrics**:
+   - Healthy target count
+   - Unhealthy target count
+   - Request count by target
+
+4. **Database Health**:
+   - Connection count
+   - Replication lag
+   - CPU/memory usage
+
+### Alerting Rules
+
+**CRITICAL**:
+- Uptime < 99.9% (monthly)
+- All instances in AZ unhealthy
+- Database failover occurred
+- Route53 failover activated
+
+**HIGH**:
+- 5XX error rate > 1%
+- API latency p99 > 3 seconds
+- Unhealthy target count > 0 for 5 minutes
+- Database connection pool > 80%
+
+**MEDIUM**:
+- CPU utilization > 80% for 10 minutes
+- Auto-scaling at maximum capacity
+- Cache hit rate < 80%
+
+## Capacity Planning
+
+### Baseline Metrics
+
+**Current Capacity** (as of 2026-08-04):
+- Average RPS: 500 req/sec
+- Peak RPS: 2,000 req/sec
+- Average CPU: 40%
+- Peak CPU: 70%
+- Database connections: 50 avg, 150 peak
+
+**Growth Projections**:
+- Monthly traffic growth: 10%
+- Black Friday/peak events: 5x normal load
+- New feature launches: 2x normal load
+
+### Capacity Headroom
+
+**Target**: Maintain 30% headroom above peak
+
+**Current Capacity**: 2,000 RPS peak
+**Target Capacity**: 2,600 RPS (30% headroom)
+**Max Capacity**: 10,000 RPS (auto-scaling limit)
+
+**Review Quarterly**: Adjust capacity based on actual growth
+
+## Testing Procedures
+
+### Monthly Availability Test
+
+**Scenario**: Simulate instance failure
+
+**Steps**:
+1. Terminate random production instance
+2. Verify auto-scaling replaces instance
+3. Monitor error rates and latency
+4. Verify zero customer impact
+5. Document actual recovery time
+
+**Success Criteria**:
+- New instance healthy within 5 minutes
+- No 5XX errors
+- Latency within normal range
+
+### Quarterly Failover Test
+
+**Scenario**: AZ failure simulation
+
+**Steps**:
+1. Block traffic to one AZ (NACL)
+2. Verify ALB stops routing to AZ
+3. Monitor performance in remaining AZs
+4. Restore AZ after 30 minutes
+5. Verify traffic resumes normally
+
+**Success Criteria**:
+- Failover automatic within 2 minutes
+- Service remains available
+- Performance acceptable on reduced capacity
+
+### Annual DR Test
+
+**Scenario**: Full regional failover
+
+**See**: Service Continuity Playbook
+
+**Success Criteria**:
+- Failover within 1 hour RTO
+- Data loss within 5 minute RPO
+- All critical services functional
+
+## Incident Response
+
+### Availability Incident
+
+**If uptime SLA breached**:
+1. Create SEV-1 incident
+2. Activate war room
+3. Identify root cause
+4. Implement fix or failover
+5. Post-incident review (PIR)
+
+**Communication**:
+- Update status page
+- Notify customers (email)
+- Post updates every 30 minutes
+
+## Cost Optimization
+
+### Reserved Capacity
+
+**Purchase Reserved Instances**:
+- Baseline capacity (minimum 2 instances per AZ)
+- 1-year or 3-year commitment
+- Save 30-60% vs. on-demand
+
+**Use Spot Instances**:
+- For non-critical workloads
+- As additional capacity beyond baseline
+- With fallback to on-demand
+
+### Right-Sizing
+
+**Monthly Review**:
+- Check actual CPU/memory usage
+- Identify over-provisioned instances
+- Consider smaller instance types
+- Document any changes
+
+## Roles & Responsibilities
+
+| Role | Responsibility |
+|------|----------------|
+| **SRE Team** | Availability monitoring, incident response, capacity planning |
+| **DevOps Team** | Infrastructure automation, auto-scaling configuration |
+| **Engineering Manager** | SLA definition, capacity approval, budget |
+| **On-Call Engineer** | 24/7 monitoring, incident response |
+
+## Compliance Mapping
+
+| MSP Requirement | Evidence |
+|----------------|----------|
+| **OPS-011** | HA architecture, DR procedures, multi-region config, RTO/RPO docs |
+| **CIS Control 11, 12** | Backup procedures, network resilience |
+
+## Related Documents
+
+- Service Continuity Playbook (Disaster Recovery)
+- Monitoring and Alerting Playbook
+- Backup and Recovery Playbook
+- Architecture Diagrams: Multi-AZ and Multi-Region
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-08-04 | Initial playbook generated | MSP Readiness Tool |
+
+---
+
+**🤖 Generated by MSP Readiness Automation**

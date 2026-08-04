@@ -1,0 +1,410 @@
+---
+generated: "2026-08-04T16:01:14.458Z"
+template_version: "1.0"
+status: "approved"
+requirement_id: "OPS-004"
+last_modified: "2026-08-04T16:01:30.611Z"
+---
+
+
+# Logging Playbook
+
+**Project**: FIPCO
+**Organization**: Flexion Org
+**Last Updated**: 2026-08-04
+
+## Purpose
+
+This playbook defines centralized logging strategies, retention policies, and log analysis procedures for FIPCO to support security, compliance, and operational needs.
+
+## Scope
+
+This playbook covers:
+- CloudTrail API audit logging
+- CloudWatch Logs for application logs
+- VPC Flow Logs for network traffic
+- S3 access logs
+- Log retention and lifecycle
+- Log analysis and alerting
+
+## Log Retention Requirements
+
+### MSP Program Requirements
+
+| Log Type | Minimum Retention | FIPCO Retention | Storage Location |
+|----------|-------------------|---------------------------|------------------|
+| **CloudTrail** | 90 days | 7 years | S3 + CloudWatch Logs (90 days) |
+| **Application Logs** | 90 days | 90 days | CloudWatch Logs + S3 archive |
+| **VPC Flow Logs** | 90 days | 90 days | CloudWatch Logs + S3 |
+| **Access Logs** | 90 days | 1 year | S3 |
+| **Security Logs** | 365 days | 7 years | S3 Glacier |
+
+## CloudTrail Configuration
+
+### Organization Trail
+
+**Trail Name**: `Flexion Org-org-trail`
+
+**Configuration**:
+```bash
+aws cloudtrail create-trail \
+  --name Flexion Org-org-trail \
+  --s3-bucket-name Flexion Org-cloudtrail-logs \
+  --is-multi-region-trail \
+  --is-organization-trail \
+  --enable-log-file-validation \
+  --kms-key-id alias/cloudtrail-key
+```
+
+**Management Events**: All API calls (read and write)
+
+**Data Events**:
+- S3: Confidential buckets only (FIPCO-dev-data)
+- Lambda: Functions with elevated privileges
+
+**Insights**: Enabled for API call rate anomalies
+
+**CloudWatch Integration**:
+```bash
+aws cloudtrail put-event-selectors \
+  --trail-name Flexion Org-org-trail \
+  --event-selectors '[{"ReadWriteType":"All","IncludeManagementEvents":true}]'
+```
+
+### Log Aggregation
+
+**S3 Bucket**: `Flexion Org-cloudtrail-logs`
+- Encryption: KMS
+- Versioning: Enabled
+- Object Lock: 7-year retention
+- Lifecycle: Move to Glacier after 90 days
+
+**CloudWatch Log Group**: `/aws/cloudtrail/Flexion Org`
+- Retention: 90 days
+- Encryption: KMS
+
+## CloudWatch Logs
+
+### Application Logs
+
+**Log Groups**:
+- `/aws/lambda/FIPCO-dev-*`: Lambda function logs
+- `/aws/ecs/FIPCO-dev-*`: ECS container logs
+- `/aws/rds/instance/FIPCO-dev-db/*`: RDS logs
+- `/aws/apigateway/FIPCO-dev`: API Gateway logs
+
+**Retention**: 90 days for all groups
+
+**Structured Logging Format**:
+```json
+{
+  "timestamp": "2026-08-04T12:00:00Z",
+  "level": "INFO",
+  "service": "api",
+  "traceId": "abc123",
+  "userId": "user-456",
+  "message": "Request processed successfully",
+  "duration": 125,
+  "statusCode": 200
+}
+```
+
+### VPC Flow Logs
+
+**Enable for All VPCs**:
+```bash
+aws ec2 create-flow-logs \
+  --resource-type VPC \
+  --resource-ids vpc-xxxxx \
+  --traffic-type ALL \
+  --log-destination-type cloud-watch-logs \
+  --log-group-name /aws/vpc/FIPCO-dev \
+  --deliver-logs-permission-arn arn:aws:iam::ACCOUNT:role/VPCFlowLogsRole
+```
+
+**Configuration**:
+- Traffic Type: ALL (accepted and rejected)
+- Log Format: Default (or custom for specific fields)
+- Aggregation: 1 minute intervals
+- Retention: 90 days
+
+**Custom Format** (optional):
+```
+${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${packets} ${bytes} ${start} ${end} ${action} ${log-status}
+```
+
+## Metric Filters and Alarms
+
+### Security Metric Filters
+
+**Root Account Usage**:
+```json
+{
+  "$.userIdentity.type": "Root",
+  "$.userIdentity.invokedBy": "NOT_EXISTS",
+  "$.eventType": "AwsConsoleSignIn"
+}
+```
+
+**Unauthorized API Calls**:
+```json
+{
+  "$.errorCode": "AccessDenied*" || "UnauthorizedOperation"
+}
+```
+
+**IAM Policy Changes**:
+```json
+{
+  "$.eventName": "PutUserPolicy" || "PutRolePolicy" || "PutGroupPolicy" || "CreatePolicy" || "DeletePolicy"
+}
+```
+
+**Security Group Changes**:
+```json
+{
+  "$.eventName": "AuthorizeSecurityGroupIngress" || "RevokeSecurityGroupIngress"
+}
+```
+
+**S3 Bucket Policy Changes**:
+```json
+{
+  "$.eventSource": "s3.amazonaws.com",
+  "$.eventName": "PutBucketPolicy" || "DeleteBucketPolicy"
+}
+```
+
+### Application Metric Filters
+
+**Error Rate**:
+```json
+{ "$.level": "ERROR" }
+```
+
+**Critical Errors**:
+```json
+{ "$.level": "FATAL" || "CRITICAL" }
+```
+
+**Slow Requests**:
+```json
+{ "$.duration" > 3000 }
+```
+
+**Authentication Failures**:
+```json
+{ "$.message": "*authentication failed*" }
+```
+
+## Log Analysis
+
+### CloudWatch Logs Insights
+
+**Query Examples**:
+
+**Top Errors (Last Hour)**:
+```
+fields @timestamp, message, level
+| filter level = "ERROR"
+| stats count() by message
+| sort count desc
+| limit 20
+```
+
+**API Latency Analysis**:
+```
+fields @timestamp, endpoint, duration
+| filter endpoint = "/api/users"
+| stats avg(duration), max(duration), pct(duration, 95) by bin(5m)
+```
+
+**User Activity Tracking**:
+```
+fields @timestamp, userId, action
+| filter userId = "user-123"
+| sort @timestamp desc
+| limit 100
+```
+
+**Failed Authentications**:
+```
+fields @timestamp, sourceIp, userId
+| filter message like /authentication failed/
+| stats count() by sourceIp
+| sort count desc
+```
+
+### Automated Log Analysis
+
+**Lambda Function**: `FIPCO-log-analyzer`
+
+**Scheduled** (daily):
+1. Analyze yesterday's logs
+2. Identify anomalies
+3. Generate summary report
+4. Alert on suspicious patterns
+
+**Anomaly Detection**:
+- Error rate spikes
+- Unusual IP addresses
+- Failed authentication patterns
+- Performance degradation
+
+## S3 Access Logs
+
+### Enable for All Buckets
+
+**Target Bucket**: `FIPCO-dev-logs`
+
+**Enable**:
+```bash
+aws s3api put-bucket-logging \
+  --bucket FIPCO-dev-data \
+  --bucket-logging-status '{
+    "LoggingEnabled": {
+      "TargetBucket": "FIPCO-dev-logs",
+      "TargetPrefix": "s3-access-logs/"
+    }
+  }'
+```
+
+**Log Format**:
+```
+bucket-owner bucket [time] remote-ip requester request-id operation key "request-uri" http-status error-code bytes-sent object-size total-time turn-around-time "referer" "user-agent" version-id
+```
+
+**Analysis**: Athena for querying large log volumes
+
+## Log Storage and Lifecycle
+
+### S3 Log Buckets
+
+**Bucket**: `FIPCO-dev-logs`
+
+**Lifecycle Policy**:
+```json
+{
+  "Rules": [
+    {
+      "Id": "TransitionApplicationLogs",
+      "Status": "Enabled",
+      "Prefix": "application-logs/",
+      "Transitions": [
+        { "Days": 90, "StorageClass": "STANDARD_IA" },
+        { "Days": 365, "StorageClass": "GLACIER" }
+      ]
+    },
+    {
+      "Id": "TransitionCloudTrail",
+      "Status": "Enabled",
+      "Prefix": "cloudtrail/",
+      "Transitions": [
+        { "Days": 90, "StorageClass": "GLACIER" },
+        { "Days": 2555, "StorageClass": "DEEP_ARCHIVE" }
+      ]
+    }
+  ]
+}
+```
+
+**Cost Optimization**:
+- 0-90 days: S3 Standard (~$0.023/GB/month)
+- 90-365 days: S3 IA (~$0.0125/GB/month)
+- 365+ days: Glacier (~$0.004/GB/month)
+
+## Log Security
+
+### Access Control
+
+**IAM Policy** (read-only for security team):
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:FilterLogEvents",
+        "logs:GetLogEvents",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": "arn:aws:logs:us-east-1:*:log-group:/aws/*"
+    }
+  ]
+}
+```
+
+**Log Bucket Policy**:
+- Only CloudTrail/VPC Flow Logs services can write
+- Security team has read access
+- MFA required for deletion
+- Object Lock prevents tampering
+
+### Log Integrity
+
+**CloudTrail Validation**:
+```bash
+aws cloudtrail validate-logs \
+  --trail-arn arn:aws:cloudtrail:us-east-1:ACCOUNT:trail/Flexion Org-org-trail \
+  --start-time 2026-08-01T00:00:00Z
+```
+
+**Tamper Detection**:
+- Log file validation enabled
+- S3 Object Lock for immutability
+- CloudWatch metric on log deletion attempts
+
+## Alerting
+
+### Critical Alerts (Immediate)
+
+- Root account usage
+- IAM policy changes
+- Security group changes allowing 0.0.0.0/0
+- S3 bucket made public
+- Critical errors in application logs
+
+**Target**: SNS → #support + PagerDuty
+
+### Daily Digest
+
+- Unauthorized API call summary
+- Failed authentication attempts
+- Unusual network traffic patterns
+- Error rate trends
+
+**Target**: Email to security team
+
+### Weekly Summary
+
+- Top error messages
+- Most active users
+- API usage trends
+- Storage and cost analysis
+
+**Target**: Email to engineering team
+
+## Compliance Mapping
+
+| MSP Requirement | Evidence |
+|----------------|----------|
+| **OPS-004** | CloudTrail config, log retention policies, log archives |
+| **CIS Control 8** | Log management procedures, retention, monitoring |
+
+## Related Documents
+
+- Monitoring and Alerting Playbook
+- Security Policies Playbook
+- AWS Account Configuration Playbook
+- CloudWatch Console: https://console.aws.amazon.com/cloudwatch/
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-08-04 | Initial playbook generated | MSP Readiness Tool |
+
+---
+
+**🤖 Generated by MSP Readiness Automation**

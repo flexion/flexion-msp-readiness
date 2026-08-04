@@ -1,0 +1,575 @@
+---
+generated: "2026-08-04T16:01:14.451Z"
+template_version: "1.0"
+status: "draft"
+requirement_id: "SEC-001"
+---
+
+# Security Policies and Procedures Playbook
+
+**Project**: FIPCO
+**Organization**: Flexion Org
+**Last Updated**: 2026-08-04
+
+## Purpose
+
+This playbook documents the security policies and procedures for FIPCO, aligned with CIS Controls v8 and AWS security best practices.
+
+## Scope
+
+This playbook covers:
+- Security governance and organization
+- Asset management and inventory
+- Access control policies
+- Vulnerability and patch management
+- Incident response procedures
+- Data protection standards
+- Security awareness and training
+- Audit and compliance
+
+## Security Framework Alignment
+
+### CIS Controls v8
+
+This playbook implements controls from:
+- **CIS Control 1**: Inventory and Control of Enterprise Assets
+- **CIS Control 2**: Inventory and Control of Software Assets
+- **CIS Control 3**: Data Protection
+- **CIS Control 4**: Secure Configuration of Enterprise Assets
+- **CIS Control 5**: Account Management
+- **CIS Control 6**: Access Control Management
+- **CIS Control 7**: Continuous Vulnerability Management
+- **CIS Control 8**: Audit Log Management
+- **CIS Control 11**: Data Recovery
+- **CIS Control 12**: Network Infrastructure Management
+- **CIS Control 13**: Network Monitoring and Defense
+- **CIS Control 17**: Incident Response Management
+
+### AWS Well-Architected Framework
+
+**Security Pillar**:
+- Identity and Access Management
+- Detection
+- Infrastructure Protection
+- Data Protection
+- Incident Response
+
+## Policy 1: Asset Inventory and Management
+
+### Policy Statement
+
+All IT assets used for FIPCO must be inventoried, classified, and managed throughout their lifecycle.
+
+### Implementation
+
+**AWS Config**: Track all AWS resources
+- EC2 instances, RDS databases, S3 buckets
+- Security groups, IAM roles, Lambda functions
+- Configuration changes logged
+
+**Tagging Standard**:
+```
+Project: FIPCO
+Environment: dev
+Owner: team-name
+CostCenter: cost-code
+DataClassification: public|internal|confidential|restricted
+Backup: true|false
+```
+
+**Asset Review**: Quarterly review of all resources
+
+### Procedures
+
+1. **New Resource Deployment**:
+   - Apply standard tags
+   - Register in CMDB
+   - Configure monitoring
+   - Apply security baseline
+
+2. **Resource Decommissioning**:
+   - Backup data if required
+   - Revoke access
+   - Delete resource
+   - Update CMDB
+
+## Policy 2: Identity and Access Management
+
+### Policy Statement
+
+Access to FIPCO resources follows the principle of least privilege. All users must authenticate with MFA.
+
+### Requirements
+
+**AWS IAM**:
+- No root account usage (except initial setup)
+- All users via IAM Identity Center (SSO)
+- MFA required for all human users
+- Service accounts use IAM roles (no long-term keys)
+- Access keys rotated every 90 days
+
+**Access Levels**:
+- **Administrator**: Full access (limited to 2-3 users)
+- **Developer**: Read/write to dev/test, read-only to prod
+- **ReadOnly**: Audit and monitoring access
+- **Service**: Application roles via IRSA/instance profiles
+
+### Procedures
+
+**User Onboarding**:
+1. Manager approval required
+2. Create IAM Identity Center user
+3. Assign to appropriate group
+4. Enforce MFA on first login
+5. Provide security awareness training
+
+**User Offboarding**:
+1. Disable IAM user/SSO access immediately
+2. Rotate any shared credentials user had access to
+3. Review CloudTrail for user activity (last 90 days)
+4. Remove from all systems and groups
+
+**Access Review**: Quarterly review of all IAM users, roles, and permissions
+
+## Policy 3: Data Protection
+
+### Policy Statement
+
+All data must be classified and protected according to its sensitivity level. Encryption required for confidential data.
+
+### Requirements
+
+**Encryption at Rest**:
+- RDS databases: Enabled with KMS
+- S3 buckets: Default encryption enabled
+- EBS volumes: Encryption by default
+- Secrets: AWS Secrets Manager or Parameter Store (encrypted)
+
+**Encryption in Transit**:
+- TLS 1.2+ for all external connections
+- VPC endpoints for AWS service communication
+- No unencrypted HTTP allowed
+
+**Data Classification**: See Data Protection Playbook
+
+### Procedures
+
+**Handling Confidential Data**:
+1. Encrypt at rest and in transit
+2. Access requires MFA
+3. Audit all access (CloudTrail data events)
+4. Retention per data retention policy
+5. Secure deletion when no longer needed
+
+**Data Breach Response**: See Incident Response Playbook
+
+## Policy 4: Vulnerability Management
+
+### Policy Statement
+
+All systems must be regularly scanned for vulnerabilities and patched according to severity-based SLAs.
+
+### Requirements
+
+**Scanning**:
+- AWS Inspector: Continuous scanning of EC2, ECR, Lambda
+- Security Hub: Daily compliance checks
+- Dependency scanning: Automated via Dependabot/Renovate
+
+**Remediation SLAs**:
+- **CRITICAL**: 7 days
+- **HIGH**: 30 days
+- **MEDIUM**: 90 days
+- **LOW**: 180 days
+
+### Procedures
+
+**Vulnerability Remediation**: See Vulnerability Remediation Playbook
+
+**Patch Management**: See Patch Management Playbook
+
+## Policy 5: Network Security
+
+### Policy Statement
+
+Network access must follow a zero-trust model with defense in depth.
+
+### Requirements
+
+**Network Segmentation**:
+- Public subnets: ALB, NAT Gateway only
+- Private subnets: Application tier
+- Database subnets: RDS, isolated
+
+**Security Groups**:
+- Default deny all
+- Explicit allow rules only
+- No 0.0.0.0/0 ingress (except load balancers on 80/443)
+- Named security groups (no references by ID)
+
+**Network ACLs**:
+- Stateless filtering at subnet boundary
+- Explicit deny for known bad IPs
+- Allow required traffic only
+
+**VPC Flow Logs**: Enabled and monitored
+
+### Procedures
+
+**Security Group Change**:
+1. Create change ticket with justification
+2. Security review and approval
+3. Apply change via IaC (CDK/Terraform)
+4. Test connectivity
+5. Monitor for 24 hours
+
+**Network Anomaly Response**:
+1. GuardDuty alerts to #support
+2. Investigate source IP and traffic pattern
+3. Block if malicious (NACL or WAF)
+4. Document incident
+
+## Policy 6: Logging and Monitoring
+
+### Policy Statement
+
+All security-relevant events must be logged, monitored, and retained for audit purposes.
+
+### Requirements
+
+**CloudTrail**:
+- Enabled in all regions
+- Management events: All API calls
+- Data events: S3, Lambda (confidential resources)
+- Retention: 7 years in S3
+- Log file integrity validation enabled
+
+**CloudWatch Logs**:
+- Application logs: Minimum 90 days retention
+- VPC Flow Logs: 90 days retention
+- Lambda logs: 90 days retention
+
+**Security Hub**: Enabled with all standards
+
+**GuardDuty**: Enabled and monitored
+
+### Procedures
+
+**Log Review**:
+- Security team reviews GuardDuty findings daily
+- Monthly CloudTrail analysis for anomalies
+- Automated alerting for critical events
+
+**Log Access**:
+- Read-only access for security team
+- MFA required for production log access
+- All access logged
+
+## Policy 7: Incident Response
+
+### Policy Statement
+
+All security incidents must be detected, contained, and resolved following a defined process.
+
+### Requirements
+
+**Severity Levels**: SEV-1 (Critical) through SEV-4 (Low)
+
+**Response Times**:
+- **SEV-1**: 15 minutes
+- **SEV-2**: 1 hour
+- **SEV-3**: 4 hours
+- **SEV-4**: Next business day
+
+**Post-Incident Review**: Required for SEV-1 and SEV-2 incidents
+
+### Procedures
+
+**Incident Response**: See Incident Response Playbook
+
+**Security Incident**: See Incident Response Playbook (Security Incident Path)
+
+## Policy 8: Change Management
+
+### Policy Statement
+
+All infrastructure and application changes must follow a documented change management process.
+
+### Requirements
+
+**Change Types**:
+- **Standard**: Pre-approved, low-risk (e.g., scaling, config tweaks)
+- **Normal**: Requires approval, tested in non-prod first
+- **Emergency**: For critical issues, expedited approval
+
+**Change Advisory Board (CAB)**:
+- Meets weekly to review normal changes
+- Membership: Engineering Manager, Security Lead, Ops Lead
+
+**Testing Requirements**:
+- All changes tested in dev environment
+- Critical changes tested in staging
+- Automated tests must pass
+- Security scan for code changes
+
+### Procedures
+
+**Change Management**: See Change Management Playbook
+
+## Policy 9: Backup and Disaster Recovery
+
+### Policy Statement
+
+All critical data must be backed up regularly with documented recovery procedures.
+
+### Requirements
+
+**Backup Frequency**:
+- RDS: Daily automated + continuous transaction logs
+- S3: Versioning enabled, cross-region replication
+- EBS: Daily snapshots
+
+**Retention**:
+- Production: 30 days
+- Non-production: 7 days
+- Compliance data: 7 years
+
+**Recovery Testing**: Monthly validation of backup restoration
+
+**RTO/RPO**:
+- RDS: RTO 1 hour, RPO 5 minutes
+- S3: RTO 30 minutes, RPO 15 minutes
+- EBS: RTO 1 hour, RPO 24 hours
+
+### Procedures
+
+**Backup and Recovery**: See Backup and Recovery Playbook
+
+**Disaster Recovery**: See Service Continuity Playbook
+
+## Policy 10: Security Awareness and Training
+
+### Policy Statement
+
+All employees and contractors must complete security awareness training.
+
+### Requirements
+
+**Training Schedule**:
+- New hires: Within first week
+- All staff: Annual refresher
+- Developers: Secure coding training annually
+
+**Training Topics**:
+- Phishing awareness
+- Password security and MFA
+- Data handling procedures
+- Incident reporting
+- Social engineering
+- AWS security best practices
+
+**Phishing Simulations**: Quarterly simulated phishing campaigns
+
+### Procedures
+
+**Onboarding Training**:
+1. Security awareness course (30 min)
+2. AWS security fundamentals (1 hour)
+3. Review this playbook
+4. Sign security policy acknowledgment
+
+**Failed Phishing Simulation**:
+1. Automatic reminder email with training
+2. Manager notification after 2nd failure
+3. Additional training required
+
+## Policy 11: Third-Party Security
+
+### Policy Statement
+
+All third-party services and vendors must meet minimum security requirements.
+
+### Requirements
+
+**Vendor Assessment**:
+- SOC 2 Type II report (if handling confidential data)
+- Security questionnaire completed
+- Data Processing Agreement (DPA) signed
+- Annual security review
+
+**SaaS Tools**:
+- SSO via IAM Identity Center (where possible)
+- MFA required
+- Least privilege access
+- Regular access review
+
+**API Integrations**:
+- API keys rotated every 90 days
+- Stored in Secrets Manager
+- Rate limiting configured
+- Audit logging enabled
+
+### Procedures
+
+**Vendor Onboarding**:
+1. Complete security questionnaire
+2. Review SOC 2 report
+3. Execute DPA and BAA (if required)
+4. Configure SSO integration
+5. Document in vendor registry
+
+## Policy 12: Compliance and Auditing
+
+### Policy Statement
+
+FIPCO maintains compliance with relevant regulations and undergoes regular security audits.
+
+### Applicable Regulations
+
+- **GDPR**: If handling EU customer data
+- **CCPA**: If handling California customer data
+- **SOC 2**: Annual audit
+- **HIPAA**: If handling health data (BAA required)
+
+### Requirements
+
+**Internal Audits**: Quarterly security reviews
+
+**External Audits**: Annual SOC 2 audit
+
+**Audit Artifacts**:
+- Security policies (this document)
+- Playbooks and runbooks
+- CloudTrail logs (7 years)
+- Incident reports
+- Change records
+- Access reviews
+- Training records
+- Vulnerability scan results
+
+### Procedures
+
+**Audit Preparation**:
+1. Collect audit artifacts
+2. Review for completeness
+3. Address any findings proactively
+4. Schedule audit kickoff
+
+**Audit Findings**:
+1. Document all findings
+2. Prioritize by risk
+3. Create remediation plan
+4. Track to closure
+5. Update policies/procedures
+
+## Enforcement and Exceptions
+
+### Policy Violations
+
+**Minor Violations**: Coaching and training
+**Moderate Violations**: Written warning
+**Severe Violations**: Termination and legal action
+
+**Examples of Severe Violations**:
+- Intentional data breach
+- Sharing credentials
+- Disabling security controls without approval
+- Unauthorized access to production
+
+### Policy Exceptions
+
+**Exception Process**:
+1. Document business justification
+2. Document compensating controls
+3. Get approval from Security Lead + Engineering Manager
+4. Set review date (max 90 days)
+5. Document in exception register
+
+## Governance
+
+### Security Team Structure
+
+**Security Lead**: Overall security strategy and compliance
+**DevSecOps Engineer**: Implementation and automation
+**On-Call Engineer**: Incident response
+
+**Escalation**: Security Lead → VP Engineering → CISO
+
+### Policy Review
+
+**Review Schedule**: Annually or after major changes
+
+**Review Process**:
+1. Review policy effectiveness
+2. Update based on new threats/regulations
+3. Get stakeholder feedback
+4. Approve changes
+5. Communicate updates to team
+
+## Metrics and Reporting
+
+### Security Metrics (Monthly)
+
+**Access Management**:
+- MFA adoption rate: Target 100%
+- Access keys >90 days: Target 0
+- IAM users vs. roles: Target all roles
+
+**Vulnerability Management**:
+- Mean time to remediate (MTTR) by severity
+- SLA compliance: Target >95%
+- Open critical vulnerabilities: Target 0
+
+**Incident Management**:
+- Number of incidents by severity
+- Mean time to detect (MTTD)
+- Mean time to resolve (MTTR)
+
+**Compliance**:
+- Config rule compliance: Target >95%
+- Failed security controls: Target 0
+- Audit findings: Track to closure
+
+### Security Dashboard
+
+**CloudWatch Dashboard**: `FIPCO-security-dashboard`
+
+**Widgets**:
+- GuardDuty findings (last 30 days)
+- Security Hub critical findings
+- Config rule compliance
+- IAM access key age
+- Vulnerability counts by severity
+
+## Contact Information
+
+**Security Team**: msp-team@example.com
+**Security Slack Channel**: #security or #support
+**Incident Reporting**: msp-team@example.com
+**Compliance Questions**: msp-team@example.com
+
+## Compliance Mapping
+
+| MSP Requirement | Evidence |
+|----------------|----------|
+| **SEC-001** | This playbook, CIS Controls mapping, policy documentation |
+| **All CIS Controls** | Specific playbooks and procedures for each control |
+
+## Related Documents
+
+- Incident Response Playbook
+- Data Protection Playbook
+- IAM Management Playbook
+- Vulnerability Remediation Playbook
+- Change Management Playbook
+- All other operational playbooks
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-08-04 | Initial playbook generated | MSP Readiness Tool |
+
+---
+
+**🤖 Generated by MSP Readiness Automation**

@@ -5,6 +5,41 @@ All notable changes to the MSP Readiness automation tool will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added - 2026-08-04
+
+**Workspace Model (Issue #37)**
+- Self-assessment mode with `--self` flag to assess workspace completeness
+- Frontmatter metadata in generated documents (status, generated timestamp, template version)
+- Overwrite protection to prevent destroying user customizations
+- Document lifecycle tracking: draft → in-progress → approved → complete
+- Workspace assessor that checks playbook + evidence + approval status
+- Workspace report generator (markdown + JSON formats)
+- Workspace dashboard with progress visualization
+- `--force` and `--dry-run` flags for generate command
+- Completion percentage now correctly calculated (requirements fully complete / total)
+
+**Reporting Improvements (Issue #9)**
+- JSON export format for all assessment reports
+- Markdown report format with detailed requirement breakdowns
+- Assessment comparison with `diff` command to track compliance changes
+- Historical tracking to compare baseline vs current assessments
+- Drift detection to identify compliance regressions
+- CI/CD integration support (exit code 1 on compliance drops)
+
+### Fixed
+
+- Completion percentage calculation (was showing average of percentages, now shows actual complete/total)
+- Assessment reports now show correct completion for workspace mode
+- Evidence collection properly linked to requirements
+
+### Changed
+
+- Assessment mode now defaults to workspace self-assessment
+- Generated playbooks include frontmatter metadata by default
+- Reports distinguish between external project assessment and workspace assessment
+
 ## [1.0.0] - 2026-07-27
 
 ### Added
