@@ -335,3 +335,54 @@ Based on the MSP readiness work for Compliance Concierge (Flexion/FIPCO), specif
 - AWS MSP Program Self-Assessment Checklist (Feb 2026 - Aug 2026)
 - CIS Controls v8 Cloud Companion Guide
 - Operations & Security Playbook patterns
+
+## Documentation
+
+### For Users
+- **README.md** (this file) - Overview and usage
+- **config.example.yaml** - Configuration template
+
+### For Developers
+- **[SETUP.md](SETUP.md)** - Environment setup and prerequisites ⭐ Start here
+- **[CLAUDE.md](CLAUDE.md)** - Architecture and development guidelines
+- **[WORKFLOW.md](WORKFLOW.md)** - Git workflow and PR process
+- **[TESTING.md](TESTING.md)** - Testing procedures and checklist
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute, definition of done
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[PROJECT_ROADMAP.md](PROJECT_ROADMAP.md)** - Development roadmap with all issues
+
+### Quick Start for Developers
+
+```bash
+# 1. Setup environment
+See SETUP.md for complete setup instructions
+
+# 2. Pick an issue from "Ready" column
+https://github.com/orgs/flexion/projects/53
+
+# 3. Start working
+./scripts/move-issue.sh <issue-number> in-progress
+git checkout -b feature/issue-<number>-description
+
+# 4. Make changes, test, commit
+
+# 5. Create PR and move to review
+git push -u origin feature/issue-<number>-description
+gh pr create
+./scripts/move-issue.sh <issue-number> in-review
+```
+
+See [WORKFLOW.md](WORKFLOW.md) for detailed workflow.
+
+## Project Status
+
+**Current Status**: Phase 1 in progress
+
+- ✅ Issue #7 complete: fipco-infra integration with CDK parser
+- 🔄 6 Phase 1 issues ready to start (176 hours)
+- 📋 6 Phase 2-3 issues in backlog (112 hours)
+
+**Project Board**: https://github.com/orgs/flexion/projects/53
+
+**Recommended Next**: Issue #5 (Fix Build Process - 4h quick win)
+
