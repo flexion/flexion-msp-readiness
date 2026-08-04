@@ -218,6 +218,7 @@ export interface Config {
     report_format: 'markdown' | 'html' | 'both';
   };
   assessment: {
+    mode?: 'self' | 'external'; // self = assess workspace, external = assess target project
     skip_requirements: string[];
     custom_priorities: Record<string, RequirementPriority>;
     include_recommended: boolean;

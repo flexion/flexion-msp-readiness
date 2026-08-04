@@ -158,6 +158,7 @@ function validateAndApplyDefaults(raw: any, configPath: string): Config {
       report_format: raw.output.report_format || 'both',
     },
     assessment: {
+      mode: raw.assessment.mode || 'external',
       skip_requirements: raw.assessment.skip_requirements || [],
       custom_priorities: raw.assessment.custom_priorities || {},
       include_recommended: raw.assessment.include_recommended !== false,
