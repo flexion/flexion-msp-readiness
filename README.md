@@ -8,18 +8,21 @@ A Claude Code skill that uses **AI-powered parallel generation** to create compr
 # 1. From your AWS project directory
 cd /path/to/your-aws-project
 
-# 2. Run interactive AI assessment
+# 2. Assess Prerequisites (must be met before audit)
+msp-readiness prerequisites --interactive-ai
+
+# 3. Assess Technical Requirements
 msp-readiness assess --interactive-ai --skip-aws
 
-# 3. In Claude Code conversation:
+# 4. In Claude Code conversation:
 # "Launch parallel agents to generate all MSP documentation"
 
-# 4. Result: 40+ documents (155,000 words) in 5-15 minutes
+# 5. Result: 60+ documents (200,000 words) in 10-20 minutes
 ```
 
 **Real Results**: Compliance Concierge (FIPCO) went from 30% → 93% complete in 3 hours, saving 310 hours of manual work.
 
-👉 **[Quick Start Guide](./docs/QUICK_START_AI.md)** | **[Full AI Generation Guide](./docs/AI_GENERATION_GUIDE.md)**
+👉 **[Quick Start Guide](./docs/QUICK_START_AI.md)** | **[Full AI Generation Guide](./docs/AI_GENERATION_GUIDE.md)** | **[Prerequisites Guide](./docs/PREREQUISITES_GUIDE.md)**
 
 ---
 
@@ -178,9 +181,34 @@ msp-readiness diff --baseline old.json --current new.json
 
 ## Features
 
-### 1. Automated Assessment
+### 1. MSP Prerequisites Assessment
 
-Scans your project for:
+Assesses the 15 prerequisites that must be met **BEFORE** the technical audit:
+
+**Categories**:
+- Business (3): Web presence, case studies, sales accreditations
+- People (1): Training and skills development
+- Governance (3): Supplier management, operations improvement, sustainability
+- Platform (1): Expert design review processes
+- Security (2): Access key detection, public resource prevention
+- Operations (5): Incident/problem management, deployment, FinOps, continuity
+
+**Command**:
+```bash
+msp-readiness prerequisites --interactive-ai
+```
+
+**Output**:
+- Prerequisite completion status (15 requirements)
+- Gap analysis by category
+- AI-ready project context for document generation
+
+See **[Prerequisites Guide](./docs/PREREQUISITES_GUIDE.md)** for details.
+
+### 2. Technical Requirements Assessment
+
+Scans your project for the 46 technical validation requirements:
+
 - Existing documentation (README, CLAUDE.md, docs/)
 - AWS infrastructure state (via AWS SDK)
 - Current security controls (Security Hub, Config)
@@ -188,12 +216,12 @@ Scans your project for:
 - Evidence artifacts
 
 Outputs:
-- Requirement coverage matrix
+- Requirement coverage matrix (46 requirements)
 - Gap analysis with priorities
 - Implementation effort estimates
 - Compliance percentage by category
 
-### 2. Evidence Collection
+### 3. Evidence Collection
 
 Automatically collects evidence for MSP requirements:
 
@@ -206,7 +234,7 @@ Automatically collects evidence for MSP requirements:
 | OPS-004 | CloudTrail | Log retention verification |
 | OPS-005 | AWS Backup | Backup job status + test restores |
 
-### 3. Playbook & Runbook Generation
+### 4. Playbook & Runbook Generation
 
 Generates documentation using templates and project-specific context:
 
@@ -221,7 +249,7 @@ All generated content is:
 - CIS Controls v8 aligned
 - Ready for review (not requiring rewrite)
 
-### 4. Assessment Comparison
+### 5. Assessment Comparison
 
 Compare two assessment runs to track improvements and validate remediation efforts:
 
@@ -273,7 +301,7 @@ Current:
   Reason: Status changed from 'gap' to 'addressed'; Confidence increased by 40%; 2 new findings added; 1 new evidence artifact
 ```
 
-### 5. Compliance Dashboard
+### 6. Compliance Dashboard
 
 Interactive HTML dashboard showing:
 
@@ -304,7 +332,7 @@ Interactive HTML dashboard showing:
 │  📊 12 evidence files collected                       │
 ```
 
-### 5. Automated Drift Detection & Monitoring
+### 7. Automated Drift Detection & Monitoring
 
 **NEW**: Continuous compliance monitoring with automated alerts:
 

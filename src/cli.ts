@@ -1353,6 +1353,214 @@ program
     }
   });
 
+/**
+ * Prerequisites command - assess MSP Prerequisites (pre-audit requirements)
+ */
+program
+  .command('prerequisites')
+  .description('Assess MSP Prerequisites (requirements that must be met before ISSI audit)')
+  .option('-c, --config <path>', 'Path to config file', 'config.yaml')
+  .option('-o, --output <path>', 'Output path for report', './prerequisite-assessment-report')
+  .option('--format <format>', 'Report format: markdown, json, or both', 'both')
+  .option('--interactive-ai', 'Output context for AI-powered prerequisite documentation')
+  .action(async options => {
+    try {
+      console.log(chalk.bold.blue('\n📋 MSP Prerequisites Assessment\n'));
+
+      // Load configuration
+      const spinner = ora('Loading configuration...').start();
+      let config;
+      try {
+        config = loadConfig(options.config);
+        spinner.succeed('Configuration loaded');
+      } catch (error) {
+        spinner.fail('Configuration error');
+        if (error instanceof ConfigError) {
+          console.error(chalk.red('\n' + error.message + '\n'));
+          process.exit(1);
+        }
+        throw error;
+      }
+
+      // Import prerequisite assessor
+      const { PrerequisiteAssessor, formatPrerequisiteReport } = await import(
+        './assessors/prerequisite-assessor'
+      );
+      const { MSP_PREREQUISITES } = await import('./data/msp-prerequisites');
+
+      // Run assessment
+      spinner.text = 'Assessing prerequisites...';
+      spinner.start();
+      const assessor = new PrerequisiteAssessor(config);
+      const assessment = await assessor.assess();
+      spinner.succeed('Prerequisites assessed');
+
+      console.log(chalk.bold('\n📊 Assessment Summary:\n'));
+      console.log(`Total Prerequisites:     ${assessment.summary.total}`);
+      console.log(
+        chalk.green(`✅ Met:                    ${assessment.summary.met}`)
+      );
+      console.log(
+        chalk.yellow(`⚠️  Partial:                ${assessment.summary.partial}`)
+      );
+      console.log(
+        chalk.red(`❌ Not Met:                ${assessment.summary.notMet}`)
+      );
+      console.log(
+        chalk.cyan(`📈 Overall Completion:     ${assessment.summary.completionPercentage}%`)
+      );
+      console.log(
+        chalk.gray(`⏱️  Estimated Effort:       ${assessment.summary.totalEffortHours}h`)
+      );
+
+      console.log(chalk.bold('\n📂 By Category:\n'));
+      Object.keys(assessment.byCategory)
+        .sort()
+        .forEach(cat => {
+          const stats = assessment.byCategory[cat];
+          console.log(
+            `  ${cat.padEnd(15)} ${stats.completionPercentage}% (${stats.met}/${stats.total}) ` +
+              `[Met: ${stats.met}, Partial: ${stats.partial}, Not Met: ${stats.notMet}]`
+          );
+        });
+
+      // Handle interactive AI mode
+      if (options.interactiveAi) {
+        console.log(chalk.bold.cyan('\n🤖 AI-Powered Generation Mode\n'));
+        console.log(
+          chalk.gray('================================================================================')
+        );
+        console.log(
+          chalk.bold.cyan('📊 MSP PREREQUISITES - INTERACTIVE AI GENERATION MODE')
+        );
+        console.log(
+          chalk.gray('================================================================================\n')
+        );
+
+        // Import AI generation utilities
+        const { DocumentCompleter } = await import('./generators/document-completer');
+        const completer = new DocumentCompleter(config);
+        const projectContext = await completer.extractProjectContext();
+
+        // Find prerequisites that need documentation
+        const prereqsNeedingDocs = assessment.prerequisites.filter(
+          p => p.status === 'not-met' || p.status === 'partial'
+        );
+
+        console.log(chalk.green(`✅ Project Analysis Complete\n`));
+        console.log(
+          chalk.yellow(
+            `Found ${prereqsNeedingDocs.length} prerequisites ready for AI-powered documentation.`
+          )
+        );
+        console.log(
+          chalk.gray(`Estimated time savings: ${assessment.summary.totalEffortHours} hours\n`)
+        );
+
+        // Output project context
+        console.log(chalk.bold.white('PROJECT CONTEXT'));
+        console.log(
+          chalk.gray('--------------------------------------------------------------------------------\n')
+        );
+
+        console.log(chalk.bold(`# Project: ${projectContext.projectName}\n`));
+        console.log(chalk.gray('**Technology Stack**'));
+        console.log(`Runtime: ${projectContext.runtime || 'Unknown'}`);
+        console.log(`AWS Services (${projectContext.awsServices.length}): ${projectContext.awsServices.join(', ')}`);
+        console.log(`\nCDK Stacks: ${projectContext.cdkStacks.length}`);
+        const totalTeamMembers = projectContext.teams.reduce((sum, t) => sum + t.members.length, 0);
+        console.log(`Team Members: ${totalTeamMembers}\n`);
+
+        // Output prerequisites needing documentation
+        console.log(chalk.bold.white('\nPREREQUISITES NEEDING DOCUMENTATION'));
+        console.log(
+          chalk.gray('--------------------------------------------------------------------------------\n')
+        );
+
+        prereqsNeedingDocs.forEach(prereq => {
+          console.log(chalk.bold.cyan(`${prereq.prerequisite.id}: ${prereq.prerequisite.name}`));
+          console.log(chalk.gray(`Category: ${prereq.prerequisite.category}`));
+          console.log(chalk.gray(`Status: ${prereq.status} (${prereq.confidence}% confidence)`));
+          console.log(chalk.gray(`Estimated Effort: ${prereq.estimatedEffort}h\n`));
+        });
+
+        // Save context for AI generation
+        const contextPath = path.join(process.cwd(), '.msp-prerequisites-context.json');
+        const fs = await import('fs');
+        fs.writeFileSync(
+          contextPath,
+          JSON.stringify(
+            {
+              projectContext,
+              assessment,
+              prerequisitesNeedingDocs: prereqsNeedingDocs,
+              timestamp: new Date().toISOString(),
+            },
+            null,
+            2
+          )
+        );
+
+        console.log(
+          chalk.green(`\n💾 Context saved to ${chalk.cyan('.msp-prerequisites-context.json')}\n`)
+        );
+        console.log(chalk.bold.yellow('NEXT STEPS'));
+        console.log(
+          chalk.gray('--------------------------------------------------------------------------------\n')
+        );
+        console.log(
+          chalk.white(
+            '1. Use Claude to generate prerequisite documentation for each requirement'
+          )
+        );
+        console.log(
+          chalk.white('2. Save documents to docs/msp/prerequisites/{prereq-id}.md')
+        );
+        console.log(chalk.white('3. Re-run assessment to verify completion\n'));
+
+        console.log(chalk.bold('Example Claude prompt:\n'));
+        console.log(
+          chalk.gray(
+            '   "Launch parallel agents to generate all prerequisite documentation'
+          )
+        );
+        console.log(chalk.gray('    using .msp-prerequisites-context.json"\n'));
+
+        return;
+      }
+
+      // Generate reports
+      const reportFormat = (options.format || 'both') as 'markdown' | 'json' | 'both';
+      const reportPath = options.output || './prerequisite-assessment-report';
+
+      const fs = await import('fs');
+      const savePaths: string[] = [];
+
+      if (reportFormat === 'markdown' || reportFormat === 'both') {
+        const markdownPath = `${reportPath}.md`;
+        const markdownContent = formatPrerequisiteReport(assessment);
+        fs.writeFileSync(markdownPath, markdownContent);
+        savePaths.push(markdownPath);
+      }
+
+      if (reportFormat === 'json' || reportFormat === 'both') {
+        const jsonPath = `${reportPath}.json`;
+        fs.writeFileSync(jsonPath, JSON.stringify(assessment, null, 2));
+        savePaths.push(jsonPath);
+      }
+
+      console.log(chalk.bold('\n📄 Reports generated:\n'));
+      savePaths.forEach(p => {
+        console.log(chalk.cyan(`  ${p}`));
+      });
+      console.log('');
+    } catch (error) {
+      console.error(chalk.red('\n❌ Error:'));
+      console.error(error);
+      process.exit(1);
+    }
+  });
+
 // Parse command line arguments
 program.parse(process.argv);
 
